@@ -1,4 +1,4 @@
-import { useBrowserLocation } from "@vueuse/core";
+import { useBrowserLocation, useTimeoutFn } from "@vueuse/core";
 import {
   parseURL,
   resolveURL,
@@ -6,6 +6,7 @@ import {
   withQuery,
   type QueryObject,
 } from "ufo";
+import { readonly, ref, toRef, watch, type MaybeRefOrGetter } from "vue";
 
 const baseUrl = stringifyParsedURL(
   parseURL(
@@ -45,4 +46,27 @@ export namespace API {
         return leaf.a.map(decodeURIComponent);
       });
   }
+}
+
+/**
+ * Turn a boolean ref into a ref that turns true after a delay, but turns false immediately
+ */
+export function useLoadingState(
+  loading: MaybeRefOrGetter<boolean>,
+  time = 1000,
+) {
+  const state = toRef(loading);
+  const output = ref(state.value);
+  const timer = useTimeoutFn(() => (output.value = true), time, {
+    immediate: false,
+  });
+  watch(state, (state) => {
+    if (state) {
+      if (!timer.isPending.value) timer.start();
+    } else {
+      timer.stop();
+      output.value = false;
+    }
+  });
+  return readonly(output);
 }

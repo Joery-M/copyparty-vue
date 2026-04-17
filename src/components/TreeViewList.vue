@@ -3,6 +3,7 @@ import { useQuery } from "@pinia/colada";
 import { ref } from "vue";
 import { getTreeOptions } from "../stores/fileStore";
 
+import { useLoadingState } from "@/lib/api";
 import { arrayStartsWith, useRouteDirectory } from "@/lib/utils";
 import Collapsible from "@shadcn/collapsible/Collapsible.vue";
 import CollapsibleContent from "@shadcn/collapsible/CollapsibleContent.vue";
@@ -48,6 +49,7 @@ const treeQuery = useQuery({
   ...getTreeOptions(() => props.base)(),
   enabled: isOpen,
 });
+const isLoading = useLoadingState(treeQuery.isLoading, 200);
 </script>
 
 <template>
@@ -56,11 +58,10 @@ const treeQuery = useQuery({
       <SidebarGroupLabel class="h-fit">
         <SidebarMenuButton
           @click="$router.push({ params: { path: base } })"
-          class="p-0 gap-0"
+          class="pl-0"
         >
           <CollapsibleTrigger>
             <ChevronRight
-              :size="18"
               :class="{ ['rotate-90']: isOpen }"
               class="transition-transform m-2"
             />
@@ -68,20 +69,24 @@ const treeQuery = useQuery({
           <span>{{ dir }}</span>
         </SidebarMenuButton>
       </SidebarGroupLabel>
-      <CollapsibleContent>
-        <SidebarGroupContent>
+      <SidebarGroupContent>
+        <CollapsibleContent>
           <SidebarMenu v-if="isOpen">
-            <template v-if="treeQuery.isLoading.value" v-for="i in 8">
-              <SidebarMenuSkeleton />
+            <template v-if="isLoading" v-for="_ in 8">
+              <SidebarMenuSkeleton show-icon />
             </template>
-            <template v-else v-for="dir in treeQuery.data.value" :key="dir">
+            <template
+              v-else-if="treeQuery.data.value"
+              v-for="dir in treeQuery.data.value"
+              :key="dir"
+            >
               <SidebarMenuItem>
                 <TreeViewList :base="base.concat(dir)" :dir />
               </SidebarMenuItem>
             </template>
           </SidebarMenu>
-        </SidebarGroupContent>
-      </CollapsibleContent>
+        </CollapsibleContent>
+      </SidebarGroupContent>
     </Collapsible>
   </SidebarGroup>
 </template>
