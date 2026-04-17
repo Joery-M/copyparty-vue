@@ -1,5 +1,13 @@
 {
   "files": [],
+  // Go to tsconfig.app.json for the actual paths definition
+  // This is only here to stop shadcn from complaining
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shadcn/*": ["./src/components/ui/*"]
+    }
+  },
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }

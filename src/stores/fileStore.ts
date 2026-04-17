@@ -1,6 +1,5 @@
 import { API } from "@/lib/api";
 import { defineQuery, type DefineQueryOptions } from "@pinia/colada";
-import { defineStore } from "pinia";
 import {
   ref,
   shallowReactive,
@@ -28,10 +27,6 @@ export class File {
 }
 
 export type TreeItem = Directory | File;
-
-export const useFileStore = defineStore("file-store", () => {
-  const tree = new Directory("[root]");
-});
 
 export const getTreeOptions = (p: MaybeRefOrGetter<string[]>) => {
   const pathArray = toRef(p);

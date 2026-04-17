@@ -42,7 +42,7 @@ export namespace API {
       .then((r) => r.json())
       .then((r: FileTreeResponse) => {
         const leaf = path.reduce((leaf, key) => leaf[`k${key}`], r);
-        return leaf.a;
+        return leaf.a.map(decodeURIComponent);
       });
   }
 }

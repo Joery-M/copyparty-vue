@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { useQuery } from "@pinia/colada";
-import { useRoute } from "vue-router";
-import { getTreeOptions } from "../stores/fileStore";
+import { useRouteDirectory } from "@/lib/utils";
 import TreeView from "../components/TreeView.vue";
 
-const route = useRoute();
+const route = useRouteDirectory();
 </script>
 
 <template>
-  Main folder viewer {{ route.params }}
-  <TreeView />
+  <TreeView :base="[]" dir="Root"> Main folder viewer {{ route }} </TreeView>
 </template>
