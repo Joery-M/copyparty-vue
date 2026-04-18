@@ -5,6 +5,7 @@ export const router = createRouter({
     routes: [
         { path: '/#login', component: () => import('./pages/Login.vue') },
         {
+            name: 'viewer',
             path: '/:path*',
             component: () => import('./pages/Files.vue'),
             sensitive: true

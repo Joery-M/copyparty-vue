@@ -1,0 +1,90 @@
+export enum FileClassification {
+    Audio,
+    Video,
+    RasterImage,
+    VectorImage,
+    PlainText,
+    RichText,
+    Directory,
+    Unknown
+}
+
+let rasterImageTypes = new Set([
+    'jpg',
+    'jpeg',
+    'png',
+    'avif',
+    'bmp',
+    'exif',
+    'gif',
+    'ico',
+    'jp2',
+    'jxl',
+    'tga',
+    'targa',
+    'tiff',
+    'ep',
+    'webp'
+]);
+
+let vectorImageTypes = new Set(['svg', 'eps']);
+
+let videoTypes = new Set(['mp4', 'webm', 'ogv']);
+
+let richTextTypes = new Set(['md', 'markdown', 'rtf']);
+
+let audioTypes = new Set([
+    'wav',
+    'mp3',
+    'aac',
+    'ogg',
+    'flac',
+    'opus',
+    'm4a',
+    'aiff',
+    'aif',
+    'ac3',
+    'alac',
+    'alaw',
+    'amr',
+    'ape',
+    'au',
+    'dfpwm',
+    'dts',
+    'gsm',
+    'it',
+    'm4b',
+    'm4r',
+    'mo3',
+    'mod',
+    'mp2',
+    'mpc',
+    'mptm',
+    'mt2',
+    'mulaw',
+    'okt',
+    'ra',
+    's3m',
+    'tak',
+    'tta',
+    'ulaw',
+    'wma',
+    'wv',
+    'xm',
+    'xpk'
+]);
+
+// Start with the smaller functions and work up
+export function classifyExtension(ext: string | null | undefined) {
+    if (typeof ext != 'string') return FileClassification.Unknown;
+    const e = ext.toLowerCase().trim().replace(/^\.?/, '');
+
+    if (e === '---') return FileClassification.Directory;
+    if (e === 'txt') return FileClassification.PlainText;
+    if (vectorImageTypes.has(e)) return FileClassification.VectorImage;
+    if (videoTypes.has(e)) return FileClassification.Video;
+    if (richTextTypes.has(e)) return FileClassification.RichText;
+    if (rasterImageTypes.has(e)) return FileClassification.RasterImage;
+    if (audioTypes.has(e)) return FileClassification.RasterImage;
+    return FileClassification.Unknown;
+}

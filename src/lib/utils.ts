@@ -16,6 +16,15 @@ export function useRouteDirectory() {
     const route = useRoute();
     return computed(() => {
         const path = route.params.path ?? [];
-        return typeof path === 'string' ? [] : path;
+        const res = typeof path === 'string' ? [] : path;
+        return res.filter((v) => !!v);
     });
 }
+
+export const byteSizeFormatter = Intl.NumberFormat(undefined, {
+    notation: 'compact',
+    style: 'unit',
+    unit: 'byte',
+    unitDisplay: 'narrow',
+    maximumFractionDigits: 1
+});

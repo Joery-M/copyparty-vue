@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useQuery } from '@pinia/colada';
 import { ref } from 'vue';
-import { getTreeOptions } from '../stores/fileStore';
+import { getTreeOptions } from '../lib/interop';
 
 import { useLoadingState } from '@/lib/api';
 import { arrayStartsWith, useRouteDirectory } from '@/lib/utils';
@@ -56,7 +56,10 @@ const isLoading = useLoadingState(treeQuery.isLoading, 200);
     <SidebarGroup class="py-0">
         <Collapsible v-model:open="isOpen">
             <SidebarGroupLabel class="h-fit">
-                <SidebarMenuButton @click="$router.push({ params: { path: base } })" class="pl-0">
+                <SidebarMenuButton
+                    @click="$router.push({ name: 'viewer', params: { path: base.concat('') } })"
+                    class="pl-0"
+                >
                     <CollapsibleTrigger>
                         <ChevronRight
                             :class="{ ['rotate-90']: isOpen }"
