@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import { useQuery } from '@pinia/colada';
-import { ref } from 'vue';
-import { getTreeOptions } from '../lib/interop';
+import { useQuery } from "@pinia/colada";
+import { whenever } from "@vueuse/core";
+import { ref } from "vue";
 
-import { useLoadingState } from '@/lib/api';
-import { arrayStartsWith, useRouteDirectory } from '@/lib/utils';
-import Collapsible from '@shadcn/collapsible/Collapsible.vue';
-import CollapsibleContent from '@shadcn/collapsible/CollapsibleContent.vue';
-import CollapsibleTrigger from '@shadcn/collapsible/CollapsibleTrigger.vue';
+import { useLoadingState } from "@/lib/api";
+import { getTreeOptions } from "@/lib/interop";
+import { arrayStartsWith } from "@/lib/utils";
+
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shadcn/collapsible";
 import {
     SidebarGroup,
     SidebarGroupContent,
@@ -15,39 +15,38 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarMenuSkeleton
-} from '@shadcn/sidebar';
-import { whenever } from '@vueuse/core';
-import { ChevronRight } from 'lucide-vue-next';
+    SidebarMenuSkeleton,
+} from "@shadcn/sidebar";
+import { ChevronRight } from "lucide-vue-next";
 
 const props = withDefaults(
     defineProps<{
         base?: string[];
         dir: string;
+        // From useRouteDirectory()
+        routePath: string[];
     }>(),
     {
-        base: () => []
-    }
+        base: () => [],
+    },
 );
-
-const routePath = useRouteDirectory();
 
 const isOpen = ref(false);
 // Set to true if we ever enter the dir
 whenever(
-    () => arrayStartsWith(routePath.value, props.base),
+    () => arrayStartsWith(props.routePath, props.base),
     () => {
         isOpen.value = true;
     },
     {
         immediate: true,
-        once: true
-    }
+        once: true,
+    },
 );
 
 const treeQuery = useQuery({
     ...getTreeOptions(() => props.base)(),
-    enabled: isOpen
+    enabled: isOpen,
 });
 const isLoading = useLoadingState(treeQuery.isLoading, 200);
 </script>
@@ -81,7 +80,7 @@ const isLoading = useLoadingState(treeQuery.isLoading, 200);
                             :key="dir"
                         >
                             <SidebarMenuItem>
-                                <TreeViewList :base="base.concat(dir)" :dir />
+                                <TreeViewList :base="base.concat(dir)" :dir :route-path />
                             </SidebarMenuItem>
                         </template>
                     </SidebarMenu>

@@ -20,11 +20,13 @@
     "clsx": "^2.1.1",
     "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.4",
+    "quill": "^2.0.3",
     "reka-ui": "^2.9.6",
     "shadcn-vue": "^2.6.2",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
     "ufo": "^1.6.3",
+    "vaul-vue": "^0.4.1",
     "vue": "^3.5.32",
     "vue-router": "^5.0.4"
   },

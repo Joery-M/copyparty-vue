@@ -1,56 +1,79 @@
 <script lang="ts" setup>
-import { API, getApiUrl } from '@/lib/api';
-import { FileClassification } from '@/lib/classifyExt';
-import { type AnyDirectoryEntry } from '@/lib/interop';
-import { byteSizeFormatter } from '@/lib/utils';
-import { useQuery } from '@pinia/colada';
+import { API, getApiUrl } from "@/lib/api";
+import { FileClassification } from "@/lib/classifyExt";
+import { Directory, File, type AnyDirectoryEntry } from "@/lib/interop";
+import { byteSizeFormatter, type RouteDirectory } from "@/lib/utils";
+import { useQuery } from "@pinia/colada";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
-import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
-import { h } from 'vue';
-import { RouterLink } from 'vue-router';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@shadcn/table";
+import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from "@tanstack/vue-table";
+import { computed, h } from "vue";
+import { RouterLink } from "vue-router";
+import FileViewer from "./viewers/FileViewer.vue";
 
-const props = defineProps<{ cwd: string[] }>();
+const props = defineProps<{ routeDir: RouteDirectory }>();
 
 const listDirQuery = useQuery({
-    key: () => ['ls', ...props.cwd],
-    query: ({ signal }) => API.getListDirectory(props.cwd, signal)
+    key: () => ["ls", ...props.routeDir.dir],
+    query: ({ signal }) => API.getListDirectory(props.routeDir.dir, signal),
+});
+
+const openedFile = computed(() => {
+    const lsDir = listDirQuery.data.value;
+    const routeFile = props.routeDir.file;
+    const entry = lsDir?.entries.find((ent) => ent.name == routeFile);
+    return entry instanceof File ? entry : null;
 });
 
 function getEntryRenderFunction(entry: AnyDirectoryEntry) {
+    if (entry instanceof Directory || entry.classification === FileClassification.Directory) {
+        return h(
+            RouterLink,
+            { to: { name: "viewer", params: { path: entry.fullPath.concat("") } } },
+            () => entry.name,
+        );
+    }
+
     switch (entry.classification) {
-        case FileClassification.Directory:
+        case FileClassification.PlainText:
+        case FileClassification.RichText:
             return h(
                 RouterLink,
-                { to: { name: 'viewer', params: { path: entry.fullPath.concat('') } } },
-                () => entry.name
+                {
+                    to: {
+                        name: "viewer",
+                        params: { path: props.routeDir.dir.concat("") },
+                        hash: "#" + entry.name,
+                    },
+                },
+                () => entry.name,
             );
 
         default:
             return h(
-                'a',
-                { href: getApiUrl(entry.fullPath), download: entry.name, target: '_blank' },
-                entry.name
+                "a",
+                { href: getApiUrl(entry.fullPath), download: entry.name, target: "_blank" },
+                entry.name,
             );
     }
 }
 
 const columns: ColumnDef<AnyDirectoryEntry>[] = [
     {
-        accessorKey: 'name',
-        header: () => 'File name',
-        cell: ({ row: { original } }) => getEntryRenderFunction(original)
+        accessorKey: "name",
+        header: () => "File name",
+        cell: ({ row: { original } }) => getEntryRenderFunction(original),
     },
     {
-        accessorKey: 'classification',
-        header: () => 'File name',
-        cell: ({ getValue }) => FileClassification[getValue<FileClassification>()]
+        accessorKey: "classification",
+        header: () => "File name",
+        cell: ({ getValue }) => FileClassification[getValue<FileClassification>()],
     },
     {
-        accessorKey: 'size',
-        header: () => 'Size',
-        cell: ({ getValue }) => byteSizeFormatter.format(getValue<number>())
-    }
+        accessorKey: "size",
+        header: () => "Size",
+        cell: ({ getValue }) => byteSizeFormatter.format(getValue<number>()),
+    },
 ];
 
 const table = useVueTable({
@@ -58,7 +81,7 @@ const table = useVueTable({
         return listDirQuery.data.value?.entries ?? [];
     },
     columns,
-    getCoreRowModel: getCoreRowModel()
+    getCoreRowModel: getCoreRowModel(),
 });
 </script>
 
@@ -92,4 +115,6 @@ const table = useVueTable({
             </TableBody>
         </Table>
     </div>
+
+    <FileViewer v-if="openedFile" :file="openedFile"></FileViewer>
 </template>

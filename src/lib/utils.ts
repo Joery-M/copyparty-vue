@@ -12,12 +12,18 @@ export function arrayStartsWith(whole: any[], part: any[]) {
     return part.length === 0 || !part.some((v, i) => whole[i] !== v);
 }
 
+export interface RouteDirectory {
+    dir: string[];
+    file: string | null;
+}
+
 export function useRouteDirectory() {
     const route = useRoute();
-    return computed(() => {
+    return computed<RouteDirectory>(() => {
         const path = route.params.path ?? [];
-        const res = typeof path === 'string' ? [] : path;
-        return res.filter((v) => !!v);
+        const pathArr = (typeof path === 'string' ? [] : path).filter((v) => !!v);
+        const file: string | null = route.hash.startsWith('#') ? route.hash.slice(1) : null;
+        return { dir: pathArr, file };
     });
 }
 
