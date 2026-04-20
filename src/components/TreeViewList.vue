@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import { useQuery } from "@pinia/colada";
-import { whenever } from "@vueuse/core";
-import { ref } from "vue";
+import { useQuery } from '@pinia/colada';
+import { whenever } from '@vueuse/core';
+import { ref } from 'vue';
 
-import { useLoadingState } from "@/lib/api";
-import { getTreeOptions } from "@/lib/interop";
-import { arrayStartsWith } from "@/lib/utils";
+import { useLoadingState } from '@/lib/api';
+import { getTreeOptions } from '@/lib/interop';
+import { arrayStartsWith } from '@/lib/utils';
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shadcn/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shadcn/collapsible';
 import {
     SidebarGroup,
     SidebarGroupContent,
@@ -15,9 +15,9 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarMenuSkeleton,
-} from "@shadcn/sidebar";
-import { ChevronRight } from "lucide-vue-next";
+    SidebarMenuSkeleton
+} from '@shadcn/sidebar';
+import { ChevronRight } from 'lucide-vue-next';
 
 const props = withDefaults(
     defineProps<{
@@ -27,8 +27,8 @@ const props = withDefaults(
         routePath: string[];
     }>(),
     {
-        base: () => [],
-    },
+        base: () => []
+    }
 );
 
 const isOpen = ref(false);
@@ -40,13 +40,13 @@ whenever(
     },
     {
         immediate: true,
-        once: true,
-    },
+        once: true
+    }
 );
 
 const treeQuery = useQuery({
     ...getTreeOptions(() => props.base)(),
-    enabled: isOpen,
+    enabled: isOpen
 });
 const isLoading = useLoadingState(treeQuery.isLoading, 200);
 </script>

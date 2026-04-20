@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import FileListView from "@/components/FileListView.vue";
-import { useRouteDirectory } from "@/lib/utils";
-import { useLocalStorage } from "@vueuse/core";
-import TreeView from "../components/TreeView.vue";
+import FileListView from '@/components/FileListView.vue';
+import { useRouteDirectory } from '@/lib/utils';
+import { useLocalStorage } from '@vueuse/core';
+import TreeView from '../components/TreeView.vue';
 
 const routeDir = useRouteDirectory();
 
-const fileListType = useLocalStorage<"list" | "grid">("list-type", "list");
+const fileListType = useLocalStorage<'list' | 'grid'>('list-type', 'list');
 </script>
 
 <template>

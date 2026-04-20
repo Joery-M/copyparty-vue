@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { X } from "lucide-vue-next";
-import { VisuallyHidden } from "reka-ui";
+import { X } from 'lucide-vue-next';
+import { VisuallyHidden } from 'reka-ui';
 import {
     DrawerContent,
     DrawerDescription,
     DrawerOverlay,
     DrawerPortal,
     DrawerRoot,
-    DrawerTitle,
-} from "vaul-vue";
-import { ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+    DrawerTitle
+} from 'vaul-vue';
+import { ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 defineProps<{ title: string; description: string }>();
 

@@ -1,16 +1,16 @@
 <script lang="ts" setup>
-import { useRouteDirectory } from "@/lib/utils";
+import { useRouteDirectory } from '@/lib/utils';
 import {
     Sidebar,
     SidebarContent,
     SidebarHeader,
     SidebarInset,
     SidebarMenu,
-    SidebarProvider,
-} from "@shadcn/sidebar";
-import { ChevronLeftIcon } from "lucide-vue-next";
-import { ref } from "vue";
-import TreeViewList from "./TreeViewList.vue";
+    SidebarProvider
+} from '@shadcn/sidebar';
+import { ChevronLeftIcon } from 'lucide-vue-next';
+import { ref } from 'vue';
+import TreeViewList from './TreeViewList.vue';
 
 const routePath = useRouteDirectory();
 
