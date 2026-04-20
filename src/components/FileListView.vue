@@ -8,8 +8,9 @@ import { useQuery } from '@pinia/colada';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
-import { effect, h } from 'vue';
+import { computed, effect, h } from 'vue';
 import { RouterLink } from 'vue-router';
+import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
 const props = defineProps<{ routeDir: RouteState }>();
 
@@ -17,6 +18,8 @@ const listDirQuery = useQuery({
     key: () => ['ls', ...props.routeDir.dir],
     query: ({ signal }) => API.getListDirectory(props.routeDir.dir, signal)
 });
+
+const readmes = computed(() => (listDirQuery.data.value?.raw.readmes ?? []).filter((v) => !!v));
 
 const previewStore = usePreview();
 
@@ -119,4 +122,8 @@ const table = useVueTable({
             </TableBody>
         </Table>
     </div>
+
+    <template v-for="readme in readmes">
+        <MarkdownViewer :input="readme"></MarkdownViewer>
+    </template>
 </template>
