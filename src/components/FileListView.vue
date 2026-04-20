@@ -2,27 +2,31 @@
 import { API, getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { Directory, File, type AnyDirectoryEntry } from '@/lib/interop';
-import { byteSizeFormatter, type RouteDirectory } from '@/lib/utils';
+import { byteSizeFormatter, type RouteState } from '@/lib/utils';
+import { usePreview } from '@/stores/usePreview';
 import { useQuery } from '@pinia/colada';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
-import { computed, h } from 'vue';
+import { effect, h } from 'vue';
 import { RouterLink } from 'vue-router';
-import FileViewer from './viewers/FileViewer.vue';
 
-const props = defineProps<{ routeDir: RouteDirectory }>();
+const props = defineProps<{ routeDir: RouteState }>();
 
 const listDirQuery = useQuery({
     key: () => ['ls', ...props.routeDir.dir],
     query: ({ signal }) => API.getListDirectory(props.routeDir.dir, signal)
 });
 
-const openedFile = computed(() => {
+const previewStore = usePreview();
+
+effect(() => {
     const lsDir = listDirQuery.data.value;
     const routeFile = props.routeDir.file;
     const entry = lsDir?.entries.find((ent) => ent.name == routeFile);
-    return entry instanceof File ? entry : null;
+    if (entry instanceof File) {
+        previewStore.openedFile = entry;
+    }
 });
 
 function getEntryRenderFunction(entry: AnyDirectoryEntry) {
@@ -115,6 +119,4 @@ const table = useVueTable({
             </TableBody>
         </Table>
     </div>
-
-    <FileViewer v-if="openedFile" :file="openedFile"></FileViewer>
 </template>

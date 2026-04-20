@@ -9,7 +9,7 @@ export enum FileClassification {
     Unknown
 }
 
-let rasterImageTypes = new Set([
+const rasterImageTypes = new Set([
     'jpg',
     'jpeg',
     'png',
@@ -27,13 +27,17 @@ let rasterImageTypes = new Set([
     'webp'
 ]);
 
-let vectorImageTypes = new Set(['svg', 'eps']);
+const vectorImageTypes = new Set(['svg', 'eps']);
 
-let videoTypes = new Set(['mp4', 'webm', 'ogv']);
+const videoTypes = new Set(['mp4', 'webm', 'ogv']);
 
-let richTextTypes = new Set(['md', 'markdown', 'rtf']);
+const richTextTypes = new Set([
+    'md',
+    'markdown'
+    // 'rtf' -- Try support again in the future
+]);
 
-let audioTypes = new Set([
+const audioTypes = new Set([
     'wav',
     'mp3',
     'aac',

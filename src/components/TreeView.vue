@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useRouteDirectory } from '@/lib/utils';
+import { useRouteState } from '@/lib/utils';
 import {
     Sidebar,
     SidebarContent,
@@ -12,7 +12,7 @@ import { ChevronLeftIcon } from 'lucide-vue-next';
 import { ref } from 'vue';
 import TreeViewList from './TreeViewList.vue';
 
-const routePath = useRouteDirectory();
+const routePath = useRouteState();
 
 const isOpen = ref(true);
 </script>
