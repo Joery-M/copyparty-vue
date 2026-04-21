@@ -92,9 +92,6 @@ const table = useVueTable({
     columns,
     getCoreRowModel: getCoreRowModel()
 });
-
-const mounted = shallowRef(false);
-requestIdleCallback(() => (mounted.value = true));
 </script>
 
 <template>
@@ -130,7 +127,7 @@ requestIdleCallback(() => (mounted.value = true));
 
     <br />
 
-    <template v-if="mounted" v-for="readme in readmes">
+    <template v-for="readme in readmes">
         <MarkdownViewer :input="readme"></MarkdownViewer>
     </template>
 </template>
