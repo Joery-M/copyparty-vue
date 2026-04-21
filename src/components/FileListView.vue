@@ -6,12 +6,13 @@ import { byteSizeFormatter } from '@/lib/utils';
 import { usePreview } from '@/stores/usePreview';
 import { useRouteState } from '@/stores/useRouteState';
 import { useQuery } from '@pinia/colada';
-import { computed, effect, h } from 'vue';
+import { computed, effect, h, shallowRef } from 'vue';
 import { RouterLink } from 'vue-router';
 import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
+import { useIdle, useMounted, useTimeout } from '@vueuse/core';
 
 const routeState = useRouteState();
 
@@ -91,6 +92,9 @@ const table = useVueTable({
     columns,
     getCoreRowModel: getCoreRowModel()
 });
+
+const mounted = shallowRef(false);
+requestIdleCallback(() => (mounted.value = true));
 </script>
 
 <template>
@@ -124,7 +128,9 @@ const table = useVueTable({
         </Table>
     </div>
 
-    <template v-for="readme in readmes">
+    <br />
+
+    <template v-if="mounted" v-for="readme in readmes">
         <MarkdownViewer :input="readme"></MarkdownViewer>
     </template>
 </template>
