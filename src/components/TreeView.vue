@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useRouteState } from '@/lib/utils';
+import { useRouteState } from '@/stores/useRouteState';
 import {
     Sidebar,
     SidebarContent,

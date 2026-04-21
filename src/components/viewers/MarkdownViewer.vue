@@ -3,14 +3,14 @@ import { useDark } from '@vueuse/core';
 import DOMPurify from 'dompurify';
 import MarkdownIt from 'markdown-it';
 import allowedHtmlElements from 'markdown-it/lib/common/html_blocks.mjs';
-import { computed, effect, useTemplateRef } from 'vue';
+import { computed, effect, useTemplateRef, type HTMLAttributes } from 'vue';
 
 import { getApiUrl } from '@/lib/api';
 import { parseURL } from 'ufo';
 import markdownDark from './github-markdown/github-markdown-dark.css?url';
 import markdownLight from './github-markdown/github-markdown-light.css?url';
 
-const props = defineProps<{ input: string }>();
+const props = defineProps<{ input: string; class?: HTMLAttributes['class'] }>();
 
 const container = useTemplateRef('container');
 
@@ -31,6 +31,7 @@ const markdownHtml = computed(() => {
         RETURN_DOM_FRAGMENT: true,
         ALLOWED_TAGS: allowedHtmlElements
     });
+    // Replace relative links with resolved files
     for (const elem of sanitized.querySelectorAll('img')) {
         // is the source non-absolute
         const parsed = parseURL(elem.src, 'http://');
@@ -38,9 +39,6 @@ const markdownHtml = computed(() => {
             elem.src = getApiUrl(parsed.pathname.split('/'));
         }
     }
-
-    // Replace relative links with resolved files
-    sanitized;
     return sanitized;
 });
 effect(() => {
@@ -55,7 +53,7 @@ const isDark = useDark();
 <template>
     <link v-if="isDark" rel="stylesheet" :href="markdownDark" />
     <link v-else rel="stylesheet" :href="markdownLight" />
-    <div class="wrapper">
+    <div class="wrapper" :class>
         <div class="markdown-body" ref="container"></div>
     </div>
 </template>

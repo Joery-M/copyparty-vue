@@ -2,21 +2,22 @@
 import { API, getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { Directory, File, type AnyDirectoryEntry } from '@/lib/interop';
-import { byteSizeFormatter, type RouteState } from '@/lib/utils';
+import { byteSizeFormatter } from '@/lib/utils';
 import { usePreview } from '@/stores/usePreview';
+import { useRouteState } from '@/stores/useRouteState';
 import { useQuery } from '@pinia/colada';
-
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
-import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
 import { computed, effect, h } from 'vue';
 import { RouterLink } from 'vue-router';
 import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
-const props = defineProps<{ routeDir: RouteState }>();
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
+import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
+
+const routeState = useRouteState();
 
 const listDirQuery = useQuery({
-    key: () => ['ls', ...props.routeDir.dir],
-    query: ({ signal }) => API.getListDirectory(props.routeDir.dir, signal)
+    key: () => ['ls', ...routeState.dir],
+    query: ({ signal }) => API.getListDirectory(routeState.dir, signal)
 });
 
 const readmes = computed(() => (listDirQuery.data.value?.raw.readmes ?? []).filter((v) => !!v));
@@ -25,7 +26,7 @@ const previewStore = usePreview();
 
 effect(() => {
     const lsDir = listDirQuery.data.value;
-    const routeFile = props.routeDir.file;
+    const routeFile = routeState.file;
     const entry = lsDir?.entries.find((ent) => ent.name == routeFile);
     if (entry instanceof File) {
         previewStore.openedFile = entry;
@@ -49,7 +50,7 @@ function getEntryRenderFunction(entry: AnyDirectoryEntry) {
                 {
                     to: {
                         name: 'viewer',
-                        params: { path: props.routeDir.dir.concat('') },
+                        params: { path: routeState.dir.concat('') },
                         hash: '#' + entry.name
                     }
                 },

@@ -14,16 +14,5 @@ const fileData = useQuery({
 </script>
 
 <template>
-    <div class="a">
-        <MarkdownViewer v-if="fileData.data.value" :input="fileData.data.value" />
-    </div>
+    <MarkdownViewer v-if="fileData.data.value" :input="fileData.data.value" class="h-full" />
 </template>
-
-<style lang="scss" scoped>
-.a {
-    display: contents;
-    &:deep(.wrapper) {
-        height: 100%;
-    }
-}
-</style>

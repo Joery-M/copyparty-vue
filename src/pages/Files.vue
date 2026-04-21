@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import FileListView from '@/components/FileListView.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
-import { useRouteState } from '@/lib/utils';
 import { useLocalStorage } from '@vueuse/core';
 import TreeView from '../components/TreeView.vue';
-
-const routeDir = useRouteState();
 
 const fileListType = useLocalStorage<'list' | 'grid'>('list-type', 'list');
 </script>
@@ -14,7 +11,7 @@ const fileListType = useLocalStorage<'list' | 'grid'>('list-type', 'list');
     <main data-vaul-drawer-wrapper>
         <TreeView :base="[]" dir="Root">
             <div class="my-12 mx-6">
-                <FileListView :route-dir v-if="fileListType === 'list'" />
+                <FileListView v-if="fileListType === 'list'" />
             </div>
         </TreeView>
     </main>

@@ -1,6 +1,6 @@
 import type { FileClassification } from '@/lib/classifyExt';
 import type { File } from '@/lib/interop';
-import { useRouteState } from '@/lib/utils';
+import { useRouteState } from '@/stores/useRouteState';
 import { whenever } from '@vueuse/core';
 import { useRouteHash } from '@vueuse/router';
 import { defineStore } from 'pinia';
@@ -18,7 +18,7 @@ export const usePreview = defineStore('preview', () => {
     );
     const routeState = useRouteState();
     whenever(
-        () => !routeState.value.file,
+        () => !routeState.file,
         () => {
             openedFile.value = null;
         }

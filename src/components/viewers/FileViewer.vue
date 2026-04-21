@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { FileClassification } from '@/lib/classifyExt';
-import { useLastDefined, useRouteState } from '@/lib/utils';
+import { useLastDefined } from '@/lib/utils';
 import { usePreview } from '@/stores/usePreview';
+import { useRouteState } from '@/stores/useRouteState';
 import { computedAsync } from '@vueuse/core';
 import { computed, defineComponent, h } from 'vue';
 import DrawerViewer from './DrawerViewer.vue';
@@ -57,12 +58,6 @@ const description = computed(() => {
 </script>
 
 <template>
-    <p>
-        {{ previewStore.openedFile?.name }}
-    </p>
-    <p>
-        {{ lastFile?.name }}
-    </p>
     <drawer-viewer
         v-if="viewerType === 'drawer'"
         :open="!!routeState.file"
