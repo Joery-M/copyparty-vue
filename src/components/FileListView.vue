@@ -6,13 +6,12 @@ import { byteSizeFormatter } from '@/lib/utils';
 import { usePreview } from '@/stores/usePreview';
 import { useRouteState } from '@/stores/useRouteState';
 import { useQuery } from '@pinia/colada';
-import { computed, effect, h, shallowRef } from 'vue';
+import { computed, effect, h } from 'vue';
 import { RouterLink } from 'vue-router';
 import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
-import { useIdle, useMounted, useTimeout } from '@vueuse/core';
 
 const routeState = useRouteState();
 
@@ -46,6 +45,9 @@ function getEntryRenderFunction(entry: AnyDirectoryEntry) {
     switch (entry.classification) {
         case FileClassification.PlainText:
         case FileClassification.RichText:
+        case FileClassification.RasterImage:
+        case FileClassification.VectorImage:
+        case FileClassification.Video:
             return h(
                 RouterLink,
                 {

@@ -7,6 +7,8 @@ import { computedAsync, whenever } from '@vueuse/core';
 import { computed, defineComponent, h, shallowRef } from 'vue';
 import DrawerViewer from './DrawerViewer.vue';
 
+import DialogViewer from './DialogViewer.vue';
+
 const routeState = useRouteState();
 const previewStore = usePreview();
 
@@ -34,6 +36,10 @@ const currentEditor = computedAsync(async () => {
             return import('./PlainTextEditor.vue').then((r) => r.default);
         case FileClassification.RichText:
             return import('./RichTextEditor.vue').then((r) => r.default);
+        case FileClassification.RasterImage:
+        case FileClassification.VectorImage:
+        case FileClassification.Video:
+            return import('./MediaViewer.vue').then((r) => r.default);
         default:
             return defaultComponent;
     }
@@ -74,9 +80,18 @@ const description = computed(() => {
             <component :is="currentEditor" :file="lastFile" />
         </suspense>
     </drawer-viewer>
-    <template v-else>
+    <dialog-viewer
+        v-else
+        :open="!!routeState.file"
+        :title
+        :description
+        @closed="
+            previewStore.close();
+            lastFile = null;
+        "
+    >
         <suspense v-if="lastFile">
             <component :is="currentEditor" :file="lastFile" />
         </suspense>
-    </template>
+    </dialog-viewer>
 </template>
