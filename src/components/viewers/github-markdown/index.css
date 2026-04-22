@@ -1,0 +1,2 @@
+@import './github-markdown-dark.css' (prefers-color-scheme: dark);
+@import './github-markdown-light.css' (prefers-color-scheme: light);

@@ -1,91 +1,104 @@
 <script setup lang="ts">
+import { getApiUrl } from '@/lib/api';
+import { fromHighlighter } from '@shikijs/markdown-exit';
 import { computedAsync, useDark } from '@vueuse/core';
 import DOMPurify from 'dompurify';
 import { createMarkdownExit } from 'markdown-exit';
-import { effect, nextTick, ref, useTemplateRef, type HTMLAttributes } from 'vue';
 import taskList from 'markdown-it-task-lists';
-import { getApiUrl } from '@/lib/api';
-import { parseURL } from 'ufo';
+import { joinRelativeURL, parseURL } from 'ufo';
+import { effect, shallowRef, triggerRef, type HTMLAttributes } from 'vue';
 
-import { fromHighlighter } from '@shikijs/markdown-exit';
-
-import markdownDark from './github-markdown/github-markdown-dark.css?url';
-import markdownLight from './github-markdown/github-markdown-light.css?url';
+import { useRouteState } from '@/stores/useRouteState';
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{ input: string; class?: HTMLAttributes['class'] }>();
 
-const container = useTemplateRef('container');
-
 const isDark = useDark();
 
 const router = useRouter();
+const routeState = useRouteState();
 
-// Slight optimization for basic markdown files
-const shikiRequired = ref(props.input.includes('`'));
-const shiki = computedAsync(async () => {
-    if (!shikiRequired.value) return;
+const parser = shallowRef(createMarkdownExit({ html: true }).use(taskList));
+const sanitizer = DOMPurify(window);
+
+// This hook replaces relative image urls with their respective paths
+sanitizer.addHook('afterSanitizeElements', (node) => {
+    if (!(node instanceof HTMLImageElement)) return;
+    node.crossOrigin = 'anonymous';
+    node.loading = 'lazy';
+
+    const src = node.getAttribute('src');
+    if (!src) return;
+    const parsed = parseURL(src);
+    // If not relative, exit
+    if (parsed.host) return;
+
+    // Create URL relative to cwd
+    const path = joinRelativeURL(...routeState.dir, parsed.pathname).split('/');
+    node.src = getApiUrl(path);
+
+    // Get filename and set last element to empty string for trailing slash
+    const filename = path[path.length - 1];
+    path[path.length - 1] = '';
+
+    // If the img is not directly wrapped in an anchor tag, add our own
+    if (!(node.parentNode instanceof HTMLAnchorElement)) {
+        const anchor = document.createElement('a');
+        anchor.appendChild(node.cloneNode());
+        const routeLink = router.resolve({
+            name: 'viewer',
+            params: { path },
+            hash: '#' + filename
+        });
+        anchor.href = routeLink.href;
+        anchor.onclick = (e) => {
+            e.stopPropagation();
+            router.push(routeLink);
+        };
+        node.replaceWith(anchor);
+    }
+});
+// This hook adds target="_blank" to anchor tags that aren't in this page
+sanitizer.addHook('afterSanitizeElements', (node) => {
+    if (!(node instanceof HTMLAnchorElement)) return;
+
+    const href = node.getAttribute('href');
+    if (!href) return;
+    const parsed = parseURL(href);
+    if (parsed.host && parsed.host !== location.host) node.setAttribute('target', '_blank');
+});
+
+// Load shiki into the parser only when it's required
+effect(async () => {
+    // Slight optimization for basic markdown files
+    if (!props.input.includes('```')) return;
+    const dark = isDark.value;
 
     const { CustomShiki } = await import('@/lib/shiki');
-    return await CustomShiki.getInstance();
+    const shiki = await CustomShiki.getInstance();
+    parser.value.use(
+        fromHighlighter(shiki, {
+            theme: dark ? 'horizon' : 'one-light',
+            fallbackLanguage: 'text' as any
+        })
+    );
+    triggerRef(parser);
 });
 
-const sanitizer = DOMPurify(window);
-effect(async () => {
-    const dark = isDark.value;
+const renderedHtml = computedAsync(async () => {
     const source = props.input;
-    if (!container.value) return;
+    const rendered = await parser.value.renderAsync(source);
 
-    const parser = createMarkdownExit({ html: true });
-    parser.use(taskList);
-
-    // If Shiki is loaded, use it, if not, render anyway without highlighting
-    if (shiki.value) {
-        parser.use(
-            fromHighlighter(shiki.value, {
-                theme: dark ? 'horizon' : 'one-light',
-                fallbackLanguage: 'text' as any
-            })
-        );
-    }
-
-    const parsed = await parser.renderAsync(source);
-
-    const sanitized = sanitizer.sanitize(parsed, {
+    return sanitizer.sanitize(rendered, {
         USE_PROFILES: { html: true },
-        RETURN_DOM_FRAGMENT: true
+        ADD_ATTR: (attr, elem) => attr === 'target' && elem === 'a'
     });
-    // Replace relative links with resolved files
-    for (const elem of sanitized.querySelectorAll('img')) {
-        // is the source non-absolute
-        const parsed = parseURL(elem.src, 'http://');
-        if (!parsed.host || parsed.host === location.host) {
-            const path = parsed.pathname.split('/').filter((v) => !!v);
-            const filename = path[path.length - 1];
-            path[path.length - 1] = '';
-
-            elem.onclick = () =>
-                router.push({
-                    name: 'viewer',
-                    params: { path },
-                    hash: '#' + filename
-                });
-
-            elem.src = getApiUrl(parsed.pathname.split('/'));
-        }
-        elem.crossOrigin = 'anonymous';
-    }
-    if (container.value) {
-        container.value.replaceChildren(sanitized);
-    }
-});
+}, '');
 </script>
 
 <template>
-    <link v-if="isDark" rel="stylesheet" :href="markdownDark" />
-    <link v-else rel="stylesheet" :href="markdownLight" />
     <div class="wrapper" :class>
-        <div class="markdown-body" ref="container"></div>
+        <div class="markdown-body" v-html="renderedHtml"></div>
     </div>
 </template>
 
@@ -102,3 +115,5 @@ effect(async () => {
     }
 }
 </style>
+
+<style src="./github-markdown/index.css"></style>
