@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { FileClassification } from '@/lib/classifyExt';
-import { useLastDefined } from '@/lib/utils';
+import type { File } from '@/lib/interop';
 import { usePreview } from '@/stores/usePreview';
 import { useRouteState } from '@/stores/useRouteState';
-import { computedAsync } from '@vueuse/core';
-import { computed, defineComponent, h } from 'vue';
+import { computedAsync, whenever } from '@vueuse/core';
+import { computed, defineComponent, h, shallowRef } from 'vue';
 import DrawerViewer from './DrawerViewer.vue';
 
 const routeState = useRouteState();
@@ -39,7 +39,11 @@ const currentEditor = computedAsync(async () => {
     }
 });
 
-const lastFile = useLastDefined(() => previewStore.openedFile!);
+const lastFile = shallowRef<File | null>(null);
+whenever(
+    () => previewStore.openedFile,
+    (f) => (lastFile.value = f)
+);
 
 const title = computed(() => {
     if (lastFile.value?.name) {
@@ -64,7 +68,7 @@ const description = computed(() => {
         :title
         :description
         @closing="previewStore.close()"
-        @closed="previewStore.close()"
+        @closed="lastFile = null"
     >
         <suspense v-if="lastFile">
             <component :is="currentEditor" :file="lastFile" />

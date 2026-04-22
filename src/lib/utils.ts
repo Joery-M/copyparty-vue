@@ -1,9 +1,8 @@
-import { whenever } from '@vueuse/core';
 import { useRouteQuery } from '@vueuse/router';
 import type { ClassValue } from 'clsx';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { computed, readonly, shallowRef, toRef, type MaybeRefOrGetter, type ShallowRef } from 'vue';
+import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { FileClassification } from './classifyExt';
 
@@ -48,15 +47,3 @@ export const byteSizeFormatter = Intl.NumberFormat(undefined, {
     unitDisplay: 'narrow',
     maximumFractionDigits: 1
 });
-
-export function useLastDefined<T>(value: MaybeRefOrGetter<T>): Readonly<ShallowRef<T>> {
-    const value$ = toRef(value);
-    const definedValue = shallowRef(value$.value);
-    whenever(
-        () => value$.value != null,
-        () => {
-            definedValue.value = value$.value;
-        }
-    );
-    return readonly(definedValue);
-}
