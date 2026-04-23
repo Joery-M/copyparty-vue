@@ -15,14 +15,20 @@ const emits = defineEmits<{ closing: []; closed: [] }>();
 
 <template>
     <Dialog v-model:open="isOpen" @update:open="$event || $emit('closing')">
-        <DialogContent data-slot="dialog-content" full-screen :show-close-button="false">
+        <DialogContent full-screen :show-close-button="false">
             <VisuallyHidden>
                 <DialogHeader @vue:unmounted="$emit('closed')">
                     <DialogTitle>{{ title }}</DialogTitle>
                     <DialogDescription>{{ description }}</DialogDescription>
                 </DialogHeader>
             </VisuallyHidden>
-            <slot />
+            <div class="fixed size-full top-0 left-0" @click="isOpen = false"></div>
+            <div
+                ref="content"
+                class="flex flex-col gap-2 p-5 size-full min-h-0 z-1 pointer-events-none *:pointer-events-auto"
+            >
+                <slot />
+            </div>
         </DialogContent>
     </Dialog>
 </template>

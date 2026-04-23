@@ -29,7 +29,7 @@ const rasterImageTypes = new Set([
 
 const vectorImageTypes = new Set(['svg', 'eps']);
 
-const videoTypes = new Set(['mp4', 'webm', 'ogv']);
+const videoTypes = new Set(['mp4', 'webm', 'ogv', 'mkv', 'mov']);
 
 const richTextTypes = new Set([
     'md',
