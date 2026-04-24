@@ -2,7 +2,7 @@
 import { getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import type { File } from '@/lib/interop';
-import { Fullscreen, PaintBucket, ZoomIn, ZoomOut } from 'lucide-vue-next';
+import { Fullscreen, PaintBucket, RotateCcw, RotateCw, ZoomIn, ZoomOut } from 'lucide-vue-next';
 import DialogFooter from '../ui/dialog/DialogFooter.vue';
 
 import { Button } from '@shadcn/button';
@@ -15,7 +15,7 @@ import {
     useKeyModifier,
     useLocalStorage
 } from '@vueuse/core';
-import { computed, nextTick, ref, useTemplateRef } from 'vue';
+import { computed, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{ file: File }>();
 
@@ -33,7 +33,7 @@ const backgroundType = useLocalStorage<BackgroundType>(
 );
 
 const backgroundClass = computed(() => {
-    if (isLoading.value) return [];
+    if (isLoading.value) return {};
     if (fullscreenElement.isFullscreen.value) return { 'bg-black': true };
 
     switch (backgroundType.value) {
@@ -43,8 +43,8 @@ const backgroundClass = computed(() => {
             return { 'bg-white': true };
         case BackgroundType.Transparent:
             return { 'bg-transparent': true };
-        case BackgroundType.Grid:
-            return { 'background-grid': true };
+        default:
+            return {};
     }
 });
 
@@ -75,10 +75,6 @@ const containerMiddle = computed<[number, number]>(() => [
     containerSize.width.value / 2,
     containerSize.height.value / 2
 ]);
-const mediaMiddleInContainer = computed<[number, number]>(() => [
-    containerMiddle.value[0] - mediaSize.value[0] / 2,
-    containerMiddle.value[1] - mediaSize.value[1] / 2
-]);
 
 const _zoomedMediaSize = ref<[number, number]>();
 const zoomedMediaSize = computed<[number, number]>({
@@ -100,8 +96,8 @@ const zoomFactor = computed(() => largestZoomedMediaAxis.value / largestMediaAxi
 function zoom(ratio: number) {
     if (ratio < 0) {
         if (smallestMediaAxis.value < 5) return;
-    } else if (ratio > 0 && containerSize.width.value > 0) {
-        if (largestMediaAxis.value > containerSize.width.value * 4) return;
+    } else if (ratio > 0 && largestContainerAxis.value > 0) {
+        if (largestZoomedMediaAxis.value > largestContainerAxis.value * 8) return;
     }
 
     const r = 1 + ratio;
@@ -122,9 +118,10 @@ function calculateFitRatio(
 }
 
 function zoomToFit() {
+    const isSideways = (rotation.value / 2) % 1 != 0;
     const ratio = calculateFitRatio(
-        mediaSize.value[0],
-        mediaSize.value[1],
+        mediaSize.value[isSideways ? 1 : 0],
+        mediaSize.value[isSideways ? 0 : 1],
         containerSize.width.value,
         containerSize.height.value
     );
@@ -148,13 +145,29 @@ async function loaded() {
 // These 2 numbers work and I don't really care why
 const zoomOutFactor = -0.25;
 const zoomInFactor = 1 / 3;
+
+const rotation = ref(0);
+
+const computedStyle = computed(() => ({
+    transform: `translateX(-50%) translateY(-50%) rotateZ(${rotation.value * 90}deg)`,
+    left: containerMiddle.value[0] + 'px',
+    top: containerMiddle.value[1] + 'px',
+    width: mediaSize.value[0] * zoomFactor.value + 'px',
+    height: mediaSize.value[1] * zoomFactor.value + 'px'
+}));
 </script>
 
 <template>
     <div
-        class="container self-center justify-self-center h-0 min-w-full flex-1 flex m-10"
+        class="container self-center justify-self-center h-0 min-w-full flex-1 m-10"
         ref="container"
     >
+        <div
+            v-if="backgroundType === BackgroundType.Grid"
+            class="background-grid"
+            :class="{ 'transition-all': isDoneZooming }"
+            :style="computedStyle"
+        />
         <img
             ref="media"
             v-if="
@@ -162,14 +175,7 @@ const zoomInFactor = 1 / 3;
                 file.classification === FileClassification.VectorImage
             "
             class="media"
-            :style="{
-                transform: `scale(${zoomFactor})`,
-                left: mediaMiddleInContainer[0] + 'px',
-                top: mediaMiddleInContainer[1] + 'px',
-                width: mediaSize[0] + 'px',
-                height: mediaSize[1] + 'px',
-                cursor: isHoldingShift ? 'zoom-out' : 'zoom-in'
-            }"
+            :style="{ ...computedStyle, cursor: isHoldingShift ? 'zoom-out' : 'zoom-in' }"
             :class="{ ...backgroundClass, 'transition-all': isDoneZooming }"
             :src="mediaUrl"
             :alt="file.name"
@@ -181,13 +187,7 @@ const zoomInFactor = 1 / 3;
             v-else-if="file.classification === FileClassification.Video"
             class="media"
             :class="{ ...backgroundClass, 'transition-all': isDoneZooming }"
-            :style="{
-                transform: `scale(${zoomFactor})`,
-                left: mediaMiddleInContainer[0] + 'px',
-                top: mediaMiddleInContainer[1] + 'px',
-                width: mediaSize[0] + 'px',
-                height: mediaSize[1] + 'px'
-            }"
+            :style="computedStyle"
             :src="mediaUrl"
             :alt="file.name"
             @loadeddata="loaded()"
@@ -214,6 +214,7 @@ const zoomInFactor = 1 / 3;
                     variant="accent"
                     size="icon-lg"
                     aria-label="Zoom in"
+                    :disabled="largestZoomedMediaAxis > largestContainerAxis * 8"
                 >
                     <ZoomIn />
                 </Button>
@@ -243,6 +244,24 @@ const zoomInFactor = 1 / 3;
                     <ZoomOut />
                 </Button>
             </ButtonGroup>
+            <ButtonGroup>
+                <Button
+                    @click="rotation--"
+                    variant="accent"
+                    size="icon-lg"
+                    aria-label="Rotate Counter-clockwise"
+                >
+                    <RotateCcw />
+                </Button>
+                <Button
+                    @click="rotation++"
+                    variant="accent"
+                    size="icon-lg"
+                    aria-label="Rotate Clockwise"
+                >
+                    <RotateCw />
+                </Button>
+            </ButtonGroup>
         </ButtonGroup>
     </DialogFooter>
 
@@ -260,13 +279,15 @@ const zoomInFactor = 1 / 3;
 </template>
 
 <style lang="scss" scoped>
-.background-grid {
-    // https://stackoverflow.com/a/65129916
-    background: repeating-conic-gradient(#ffffff 0 25%, #cacaca 0 50%) 50% / 10px 10px;
-}
-
 .container {
     position: relative;
+
+    .background-grid {
+        position: absolute;
+        background-image: url('@/assets/transparency.png');
+        background-size: 10px 10px;
+        image-rendering: crisp-edges;
+    }
 
     // Pass through to background and close dialog
     pointer-events: none !important;
@@ -275,6 +296,8 @@ const zoomInFactor = 1 / 3;
         position: absolute;
         max-width: none;
         max-height: none;
+
+        will-change: transform, top, left;
     }
 }
 </style>
