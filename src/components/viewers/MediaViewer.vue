@@ -8,8 +8,14 @@ import DialogFooter from '../ui/dialog/DialogFooter.vue';
 import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
-import { useElementSize, useFullscreen, useKeyModifier, useLocalStorage } from '@vueuse/core';
-import { computed, ref, useTemplateRef } from 'vue';
+import {
+    until,
+    useElementSize,
+    useFullscreen,
+    useKeyModifier,
+    useLocalStorage
+} from '@vueuse/core';
+import { computed, nextTick, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{ file: File }>();
 
@@ -28,17 +34,17 @@ const backgroundType = useLocalStorage<BackgroundType>(
 
 const backgroundClass = computed(() => {
     if (isLoading.value) return [];
-    if (fullscreenElement.isFullscreen.value) return ['bg-black'];
+    if (fullscreenElement.isFullscreen.value) return { 'bg-black': true };
 
     switch (backgroundType.value) {
         case BackgroundType.Black:
-            return ['bg-black'];
+            return { 'bg-black': true };
         case BackgroundType.White:
-            return ['bg-white'];
+            return { 'bg-white': true };
         case BackgroundType.Transparent:
-            return ['bg-transparent'];
+            return { 'bg-transparent': true };
         case BackgroundType.Grid:
-            return ['background-grid'];
+            return { 'background-grid': true };
     }
 });
 
@@ -46,6 +52,7 @@ const backgroundTypeButton = useTemplateRef('backgroundTypeButton');
 const backgroundTypeSelectOpen = ref(false);
 
 const isLoading = ref(true);
+const isDoneZooming = ref(false);
 const isHoldingShift = useKeyModifier('Shift');
 
 const containerElem = useTemplateRef('container');
@@ -54,14 +61,14 @@ const containerSize = useElementSize(containerElem);
 const mediaElem = useTemplateRef('media');
 const fullscreenElement = useFullscreen(mediaElem);
 const mediaSize = computed<[number, number]>(() => {
-    if (mediaElem.value && !isLoading.value) {
-        if (mediaElem.value instanceof HTMLImageElement) {
-            return [mediaElem.value.naturalWidth, mediaElem.value.naturalHeight];
-        } else if (mediaElem.value instanceof HTMLVideoElement) {
-            return [mediaElem.value.videoWidth, mediaElem.value.videoHeight];
-        }
+    if (!mediaElem.value || isLoading.value) return [0, 0];
+    if (mediaElem.value instanceof HTMLImageElement) {
+        return [mediaElem.value.naturalWidth, mediaElem.value.naturalHeight];
+    } else if (mediaElem.value instanceof HTMLVideoElement) {
+        return [mediaElem.value.videoWidth, mediaElem.value.videoHeight];
+    } else {
+        return [0, 0];
     }
-    return [0, 0];
 });
 
 const containerMiddle = computed<[number, number]>(() => [
@@ -124,10 +131,18 @@ function zoomToFit() {
     zoomedMediaSize.value = ratio;
 }
 
-function loaded() {
+async function loaded() {
     isLoading.value = false;
+    await Promise.all([
+        until(largestContainerAxis).not.toBe(0),
+        until(largestZoomedMediaAxis).not.toBe(0)
+    ]);
     // If it's larger than the container on load, resize it
     if (largestZoomedMediaAxis.value > largestContainerAxis.value) zoomToFit();
+    // Not the best, but it prevents jumping at the start
+    requestIdleCallback(() => {
+        isDoneZooming.value = true;
+    });
 }
 
 // These 2 numbers work and I don't really care why
@@ -146,7 +161,7 @@ const zoomInFactor = 1 / 3;
                 file.classification === FileClassification.RasterImage ||
                 file.classification === FileClassification.VectorImage
             "
-            class="media transition-all"
+            class="media"
             :style="{
                 transform: `scale(${zoomFactor})`,
                 left: mediaMiddleInContainer[0] + 'px',
@@ -155,7 +170,7 @@ const zoomInFactor = 1 / 3;
                 height: mediaSize[1] + 'px',
                 cursor: isHoldingShift ? 'zoom-out' : 'zoom-in'
             }"
-            :class="backgroundClass"
+            :class="{ ...backgroundClass, 'transition-all': isDoneZooming }"
             :src="mediaUrl"
             :alt="file.name"
             @load="loaded()"
@@ -164,8 +179,8 @@ const zoomInFactor = 1 / 3;
         <video
             ref="media"
             v-else-if="file.classification === FileClassification.Video"
-            class="media transition-all"
-            :class="backgroundClass"
+            class="media"
+            :class="{ ...backgroundClass, 'transition-all': isDoneZooming }"
             :style="{
                 transform: `scale(${zoomFactor})`,
                 left: mediaMiddleInContainer[0] + 'px',
@@ -220,6 +235,7 @@ const zoomInFactor = 1 / 3;
                 </Button>
                 <Button
                     @click="zoom(zoomOutFactor)"
+                    :disabled="smallestMediaAxis < 5"
                     variant="accent"
                     size="icon-lg"
                     aria-label="Zoom out"
