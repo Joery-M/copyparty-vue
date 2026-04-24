@@ -6,3 +6,7 @@ declare module 'markdown-it-task-lists' {
     const taskList: PluginSimple;
     export default taskList;
 }
+
+declare interface DataTransferItem {
+    getAsEntry?: DataTransferItem['webkitGetAsEntry'];
+}
