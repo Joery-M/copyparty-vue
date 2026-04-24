@@ -2,14 +2,14 @@
 import { getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import type { File } from '@/lib/interop';
-import { PaintBucket, ZoomIn, ZoomOut } from 'lucide-vue-next';
+import { Fullscreen, PaintBucket, ZoomIn, ZoomOut } from 'lucide-vue-next';
 import DialogFooter from '../ui/dialog/DialogFooter.vue';
 
 import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
-import { useElementSize, useKeyModifier, useLocalStorage, whenever } from '@vueuse/core';
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { useElementSize, useFullscreen, useKeyModifier, useLocalStorage } from '@vueuse/core';
+import { computed, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{ file: File }>();
 
@@ -25,8 +25,10 @@ const backgroundType = useLocalStorage<BackgroundType>(
     'preview-background-type',
     BackgroundType.Transparent
 );
+
 const backgroundClass = computed(() => {
     if (isLoading.value) return [];
+    if (fullscreenElement.isFullscreen.value) return ['bg-black'];
 
     switch (backgroundType.value) {
         case BackgroundType.Black:
@@ -44,56 +46,99 @@ const backgroundTypeButton = useTemplateRef('backgroundTypeButton');
 const backgroundTypeSelectOpen = ref(false);
 
 const isLoading = ref(true);
-
-const zoomFactor = ref(100);
-
 const isHoldingShift = useKeyModifier('Shift');
 
-const mediaElem = useTemplateRef('media');
-const mediaSize = useElementSize(mediaElem);
+const containerElem = useTemplateRef('container');
+const containerSize = useElementSize(containerElem);
 
-const zoomedMediaWidth = computed(() => (zoomFactor.value / 100) * mediaSize.width.value);
-const zoomedMediaHeight = computed(() => (zoomFactor.value / 100) * mediaSize.height.value);
-const smallestMediaAxis = computed(() => Math.min(zoomedMediaWidth.value, zoomedMediaHeight.value));
-const largestMediaAxis = computed(() => Math.min(zoomedMediaWidth.value, zoomedMediaHeight.value));
+const mediaElem = useTemplateRef('media');
+const fullscreenElement = useFullscreen(mediaElem);
+const mediaSize = computed<[number, number]>(() => {
+    if (mediaElem.value && !isLoading.value) {
+        if (mediaElem.value instanceof HTMLImageElement) {
+            return [mediaElem.value.naturalWidth, mediaElem.value.naturalHeight];
+        } else if (mediaElem.value instanceof HTMLVideoElement) {
+            return [mediaElem.value.videoWidth, mediaElem.value.videoHeight];
+        }
+    }
+    return [0, 0];
+});
+
+const containerMiddle = computed<[number, number]>(() => [
+    containerSize.width.value / 2,
+    containerSize.height.value / 2
+]);
+const mediaMiddleInContainer = computed<[number, number]>(() => [
+    containerMiddle.value[0] - mediaSize.value[0] / 2,
+    containerMiddle.value[1] - mediaSize.value[1] / 2
+]);
+
+const _zoomedMediaSize = ref<[number, number]>();
+const zoomedMediaSize = computed<[number, number]>({
+    get: () => _zoomedMediaSize.value ?? mediaSize.value,
+    set: (v) => (_zoomedMediaSize.value = v)
+});
+const smallestMediaAxis = computed(() =>
+    Math.min(zoomedMediaSize.value[0], zoomedMediaSize.value[1])
+);
+const largestMediaAxis = computed(() => Math.max(mediaSize.value[0], mediaSize.value[1]));
+const largestContainerAxis = computed(() =>
+    Math.max(containerSize.width.value, containerSize.height.value)
+);
+const largestZoomedMediaAxis = computed(() =>
+    Math.max(zoomedMediaSize.value[0], zoomedMediaSize.value[1])
+);
+const zoomFactor = computed(() => largestZoomedMediaAxis.value / largestMediaAxis.value || 0);
 
 function zoom(ratio: number) {
     if (ratio < 0) {
         if (smallestMediaAxis.value < 5) return;
-    } else if (ratio > 0) {
-        if (largestMediaAxis.value > window.innerWidth * 4) return;
+    } else if (ratio > 0 && containerSize.width.value > 0) {
+        if (largestMediaAxis.value > containerSize.width.value * 4) return;
     }
 
-    zoomFactor.value *= 1 + ratio;
-    zoomFactor.value = Math.max(zoomFactor.value, 1);
+    const r = 1 + ratio;
+    zoomedMediaSize.value = [zoomedMediaSize.value[0] * r, zoomedMediaSize.value[1] * r];
 }
-whenever(
-    smallestMediaAxis,
-    (size) => {
-        const desiredMinSize = Math.max(window.innerHeight, window.innerWidth) * 0.2;
-        const desiredMaxSize = Math.min(window.innerHeight, window.innerWidth);
-        if (size < desiredMinSize) {
-            zoomFactor.value = (desiredMinSize / size) * 100;
-        }
-        if (size > desiredMaxSize) {
-            // Fix this
-            zoomFactor.value = (size / desiredMaxSize) * 100;
-        }
-    },
-    { once: true }
-);
+
+/**
+ * @source https://stackoverflow.com/a/14731922
+ */
+function calculateFitRatio(
+    srcWidth: number,
+    srcHeight: number,
+    maxWidth: number,
+    maxHeight: number
+): [number, number] {
+    var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
+    return [Math.floor(srcWidth * ratio), Math.floor(srcHeight * ratio)];
+}
+
+function zoomToFit() {
+    const ratio = calculateFitRatio(
+        mediaSize.value[0],
+        mediaSize.value[1],
+        containerSize.width.value,
+        containerSize.height.value
+    );
+    zoomedMediaSize.value = ratio;
+}
 
 function loaded() {
     isLoading.value = false;
+    // If it's larger than the container on load, resize it
+    if (largestZoomedMediaAxis.value > largestContainerAxis.value) zoomToFit();
 }
 
-const zoomOutFactor = -0.5;
-const zoomInFactor = zoomOutFactor * -2;
+// These 2 numbers work and I don't really care why
+const zoomOutFactor = -0.25;
+const zoomInFactor = 1 / 3;
 </script>
 
 <template>
     <div
-        class="self-center justify-self-center h-0 flex-1 flex pointer-events-none! *:pointer-events-auto p-10"
+        class="container self-center justify-self-center h-0 min-w-full flex-1 flex m-10"
+        ref="container"
     >
         <img
             ref="media"
@@ -101,9 +146,13 @@ const zoomInFactor = zoomOutFactor * -2;
                 file.classification === FileClassification.RasterImage ||
                 file.classification === FileClassification.VectorImage
             "
-            class="self-center justify-self-center transition-transform"
+            class="media transition-all"
             :style="{
-                transform: `scale(${zoomFactor / 100})`,
+                transform: `scale(${zoomFactor})`,
+                left: mediaMiddleInContainer[0] + 'px',
+                top: mediaMiddleInContainer[1] + 'px',
+                width: mediaSize[0] + 'px',
+                height: mediaSize[1] + 'px',
                 cursor: isHoldingShift ? 'zoom-out' : 'zoom-in'
             }"
             :class="backgroundClass"
@@ -115,10 +164,18 @@ const zoomInFactor = zoomOutFactor * -2;
         <video
             ref="media"
             v-else-if="file.classification === FileClassification.Video"
-            class="self-center justify-self-center transition-transform"
-            :style="{ transform: `scale(${zoomFactor / 100})` }"
+            class="media transition-all"
+            :class="backgroundClass"
+            :style="{
+                transform: `scale(${zoomFactor})`,
+                left: mediaMiddleInContainer[0] + 'px',
+                top: mediaMiddleInContainer[1] + 'px',
+                width: mediaSize[0] + 'px',
+                height: mediaSize[1] + 'px'
+            }"
             :src="mediaUrl"
             :alt="file.name"
+            @loadeddata="loaded()"
             controls
             autoplay
         />
@@ -146,12 +203,20 @@ const zoomInFactor = zoomOutFactor * -2;
                     <ZoomIn />
                 </Button>
                 <Button
-                    @click="zoomFactor = 100"
+                    @click="zoomedMediaSize = mediaSize"
                     variant="accent"
                     size="lg"
                     aria-label="Reset zoom"
                 >
-                    {{ (zoomFactor / 100).toLocaleString(undefined, { style: 'percent' }) }}
+                    {{ zoomFactor.toLocaleString([], { style: 'percent' }) }}
+                </Button>
+                <Button
+                    @click="zoomToFit()"
+                    variant="accent"
+                    size="icon-lg"
+                    aria-label="Zoom to fit"
+                >
+                    <Fullscreen />
                 </Button>
                 <Button
                     @click="zoom(zoomOutFactor)"
@@ -182,5 +247,18 @@ const zoomInFactor = zoomOutFactor * -2;
 .background-grid {
     // https://stackoverflow.com/a/65129916
     background: repeating-conic-gradient(#ffffff 0 25%, #cacaca 0 50%) 50% / 10px 10px;
+}
+
+.container {
+    position: relative;
+
+    // Pass through to background and close dialog
+    pointer-events: none !important;
+    .media {
+        pointer-events: auto;
+        position: absolute;
+        max-width: none;
+        max-height: none;
+    }
 }
 </style>
