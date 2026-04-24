@@ -1,0 +1,11 @@
+<svg data-v-a812e4a7="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class="lucide lucide-image-icon lucide-image" aria-hidden="true">
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+    <rect x="7.5" y="19" width="0.25" height="0.25" stroke-linejoin="miter" />
+    <rect x="9.75" y="16.75" width="0.25" height="0.25" stroke-linejoin="miter" />
+    <rect x="12" y="14.5" width="0.25" height="0.25" stroke-linejoin="miter" />
+    <rect x="14.25" y="12.25" width="0.25" height="0.25" stroke-linejoin="miter" />
+    <rect x="16.5" y="10" width="0.25" height="0.25" stroke-linejoin="miter" />
+    <rect x="18.75" y="12.25" width="0.3" height="0.25" stroke-linejoin="miter" />
+</svg>

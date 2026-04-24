@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ImagePixelated from '@/assets/image-pixelated.svg?raw';
+import ImageSmooth from '@/assets/image-smooth.svg?raw';
 import { getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import type { File } from '@/lib/interop';
@@ -31,6 +33,7 @@ const backgroundType = useLocalStorage<BackgroundType>(
     'preview-background-type',
     BackgroundType.Transparent
 );
+const renderPixelated = useLocalStorage('preview-render-pixelated', false);
 
 const backgroundClass = computed(() => {
     if (isLoading.value) return {};
@@ -175,7 +178,11 @@ const computedStyle = computed(() => ({
                 file.classification === FileClassification.VectorImage
             "
             class="media"
-            :style="{ ...computedStyle, cursor: isHoldingShift ? 'zoom-out' : 'zoom-in' }"
+            :style="{
+                ...computedStyle,
+                cursor: isHoldingShift ? 'zoom-out' : 'zoom-in',
+                imageRendering: renderPixelated ? 'pixelated' : 'smooth'
+            }"
             :class="{ ...backgroundClass, 'transition-all': isDoneZooming }"
             :src="mediaUrl"
             :alt="file.name"
@@ -195,7 +202,10 @@ const computedStyle = computed(() => ({
             autoplay
         />
     </div>
-    <DialogFooter class="sm:justify-center pointer-events-none! *:pointer-events-auto z-10">
+    <DialogFooter
+        class="sm:justify-center pointer-events-none! *:pointer-events-auto z-10"
+        style="--spacing: 0.3rem"
+    >
         <ButtonGroup>
             <ButtonGroup>
                 <Button
@@ -206,6 +216,18 @@ const computedStyle = computed(() => ({
                     aria-label="Background"
                 >
                     <PaintBucket />
+                </Button>
+                <Button
+                    v-if="
+                        file.classification === FileClassification.RasterImage ||
+                        file.classification === FileClassification.VectorImage
+                    "
+                    @click="renderPixelated = !renderPixelated"
+                    variant="accent"
+                    size="icon-lg"
+                    aria-label="Background"
+                    v-html="renderPixelated ? ImagePixelated : ImageSmooth"
+                >
                 </Button>
             </ButtonGroup>
             <ButtonGroup>
@@ -222,6 +244,7 @@ const computedStyle = computed(() => ({
                     @click="zoomedMediaSize = mediaSize"
                     variant="accent"
                     size="lg"
+                    class="text-base"
                     aria-label="Reset zoom"
                 >
                     {{ zoomFactor.toLocaleString([], { style: 'percent' }) }}
