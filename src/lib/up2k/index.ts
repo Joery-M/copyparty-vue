@@ -5,23 +5,21 @@ interface Up2KOptions {
     turbo: boolean;
     u2rand: boolean;
     fsearch: boolean;
+    lifetime?: number;
 }
 
-type FileOrDir = File | FileSystemDirectoryEntry;
+export type FileOrDir = File | FileSystemDirectoryEntry;
+export type FileOrDirMap = Map<FileOrDir, string>;
 
 interface CollectResult {
-    bad: Map<FileOrDir, string>;
-    nil: Map<FileOrDir, string>;
-    good: Map<FileOrDir, string>;
+    bad: FileOrDirMap;
+    nil: FileOrDirMap;
+    good: FileOrDirMap;
     dirs: FileSystemDirectoryEntry[];
 }
 
 interface Up2KEvents {
-    'got-all-files': [
-        good: Map<FileOrDir, string>,
-        nil: Map<FileOrDir, string>,
-        bad: Map<FileOrDir, string>
-    ];
+    'got-all-files': [good: FileOrDirMap, nil: FileOrDirMap, bad: FileOrDirMap];
 }
 
 export class Up2K {
@@ -271,6 +269,12 @@ export class Up2K {
         //     }
         // );
     }
+
+    gotAllFiles2(good_files: FileOrDirMap) {
+        // TODO: Ask for confirmation of upload
+    }
+
+    private uploadFiles(files: FileOrDirMap) {}
 }
 
 function rdFlatten(pf: Set<string>, dirs: FileSystemDirectoryEntry[]) {

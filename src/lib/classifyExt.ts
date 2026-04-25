@@ -89,6 +89,6 @@ export function classifyExtension(ext: string | null | undefined) {
     if (videoTypes.has(e)) return FileClassification.Video;
     if (richTextTypes.has(e)) return FileClassification.RichText;
     if (rasterImageTypes.has(e)) return FileClassification.RasterImage;
-    if (audioTypes.has(e)) return FileClassification.RasterImage;
+    if (audioTypes.has(e)) return FileClassification.Audio;
     return FileClassification.Unknown;
 }
