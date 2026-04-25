@@ -5,19 +5,20 @@ self.onmessage = async (ev) => {
 
     const chunkSize = get_chunksize(file.size);
     const chunkCount = Math.ceil(file.size / chunkSize);
+    self.postMessage({ type: 'start', chunkCount, chunkSize, start });
 
-    const hashChunks: Promise<string>[] = new Array(chunkCount);
+    const hashChunks: string[] = new Array(chunkCount);
     let hashChunkI = 0;
 
     let cursor = 0;
     while (cursor < file.size) {
         const section = file.slice(cursor, cursor + chunkSize);
-        hashChunks[hashChunkI++] = section
+        hashChunks[hashChunkI++] = await section
             .arrayBuffer()
             .then((d) => crypto.subtle.digest('SHA-512', d))
             .then((a) => buf2b64(new Uint8Array(a), 33));
         cursor += chunkSize;
-        self.postMessage({ type: 'progress', cursor, start });
+        self.postMessage(1);
     }
 
     const digested = await Promise.all(hashChunks);
