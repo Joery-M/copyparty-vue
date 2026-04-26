@@ -35,12 +35,12 @@ export namespace API {
     }
 
     export interface ListDirectoryEntry {
-        load: string;
+        load?: string;
         href: string;
-        sz: number;
+        sz?: number;
         ext: string;
-        ts: number;
-        tags: Record<string, _JSONPrimitive>;
+        ts?: number;
+        tags?: Record<string, _JSONPrimitive>;
     }
 
     export interface LsConfig {
