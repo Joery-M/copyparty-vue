@@ -1,5 +1,4 @@
 import { defu } from 'defu';
-import { EventEmitter } from 'eventemitter3';
 
 interface Up2KOptions {
     turbo: boolean;
@@ -9,24 +8,33 @@ interface Up2KOptions {
 }
 
 export type FileOrDir = File | FileSystemDirectoryEntry;
+export type FileMap = Map<File, string>;
 export type FileOrDirMap = Map<FileOrDir, string>;
 
 interface CollectResult {
+    nil: FileMap;
+    good: FileMap;
     bad: FileOrDirMap;
-    nil: FileOrDirMap;
-    good: FileOrDirMap;
     dirs: FileSystemDirectoryEntry[];
 }
 
-interface Up2KEvents {
-    'got-all-files': [good: FileOrDirMap, nil: FileOrDirMap, bad: FileOrDirMap];
+interface ReadDirResult {
+    nil: FileMap;
+    good: FileMap;
+    bad: FileOrDirMap;
+}
+
+interface ReadDirState {
+    rd?: FileSystemDirectoryReader;
+    rdMissingRef: Set<string>;
+    pf: Set<string>;
+    spins: number;
 }
 
 export class Up2K {
-    events = new EventEmitter<Up2KEvents>();
     options: Up2KOptions;
 
-    constructor(options: Partial<Up2KOptions>) {
+    constructor(options?: Partial<Up2KOptions>) {
         this.options = defu(options, { turbo: false, u2rand: false, fsearch: false });
     }
 
@@ -35,7 +43,7 @@ export class Up2K {
      */
     collectInput(input: DataTransferItemList | FileList | File[] | File) {
         const collected = this.collectFilesAndDirs(input);
-        this.readDirs(collected);
+        return this.readDirs(collected);
     }
 
     /**
@@ -47,14 +55,12 @@ export class Up2K {
         if (files instanceof File) files = [files];
 
         const badFiles = new Map<FileOrDir, string>();
-        const nilFiles = new Map<FileOrDir, string>();
-        const goodFiles = new Map<FileOrDir, string>();
+        const nilFiles = new Map<File, string>();
+        const goodFiles = new Map<File, string>();
         const dirs: FileSystemDirectoryEntry[] = [];
 
         for (let a = 0; a < files.length; a++) {
             let fObj = files[a];
-            let dst = goodFiles;
-
             if (fObj instanceof DataTransferItem) {
                 if (fObj.kind !== 'file' && fObj.type !== 'text/uri-list') continue;
 
@@ -70,36 +76,35 @@ export class Up2K {
                 fObj = fileObj;
             }
             try {
-                if (fObj.size < 1) dst = nilFiles;
+                if (fObj.size < 1) {
+                    nilFiles.set(fObj, fObj.name);
+                } else {
+                    goodFiles.set(fObj, fObj.name);
+                }
             } catch (ex) {
-                dst = badFiles;
+                badFiles.set(fObj, fObj.name);
             }
-            dst.set(fObj, fObj.name);
         }
         return { bad: badFiles, nil: nilFiles, good: goodFiles, dirs };
     }
-
-    private rd_missing_ref: Set<string> | undefined;
 
     /**
      * Recursively read through all directories and find files that are maybe 'bad' or empty and categorize them
      *
      * @emits `got-all-files`
      */
-    private readDirs(
+    private async readDirs(
         collected: CollectResult,
-        rd?: FileSystemDirectoryReader,
-        pf = new Set<string>(),
-        spins = 0
-    ) {
+        state: ReadDirState = { pf: new Set(), rdMissingRef: new Set(), spins: 0 }
+    ): Promise<ReadDirResult> {
         const { dirs, good, nil, bad } = collected;
-        if (++spins == 5) this.rd_missing_ref = rdFlatten(pf, dirs);
+        if (++state.spins == 5) state.rdMissingRef = rdFlatten(state.pf, dirs);
 
-        if (spins == 200) {
+        if (state.spins == 200) {
             // Kinda annoying losing performance just to be able to index a set
-            const missing = Array.from(rdFlatten(pf, dirs));
+            const missing = Array.from(rdFlatten(state.pf, dirs));
             missing.sort();
-            const rdMissingRef = Array.from(this.rd_missing_ref ?? []);
+            const rdMissingRef = Array.from(state.rdMissingRef ?? []);
             let match = rdMissingRef.length == missing.length;
             const aa = match ? missing.length : 0;
 
@@ -108,72 +113,73 @@ export class Up2K {
             }
 
             if (match) {
-                // var msg = [L.u_dirstuck.format(missing.length) + '<ul>'];
-                // for (var a = 0; a < Math.min(20, missing.length); a++)
-                //     msg.push('<li>' + esc(missing[a]) + '</li>');
-                // return modal.alert(msg.join('') + '</ul>', () => {
-                //     this.readDirs(rd, new Set(), { dirs: [], good, nil, bad }, spins);
-                // });
+                const list = missing.map((v) => `- ${v}`).join('\n');
+                const ye = confirm(
+                    `directory iterator got stuck trying to access the following ${missing.length} items; will skip: \n${list}`
+                );
+                if (ye) {
+                    return this.readDirs({ dirs: [], good, nil, bad }, state);
+                } else {
+                    return { good, nil, bad };
+                }
             }
-            spins = 0;
+            state.spins = 0;
         }
 
         if (!dirs.length) {
-            if (!pf.size)
+            if (!state.pf.size)
                 // call first hook, pass list of remaining hooks to call
-                return this.events.emit('got-all-files', good, nil, bad);
+                return { good, bad, nil };
 
-            console.log('retry pf, ' + pf.size);
-            setTimeout(() => {
-                this.readDirs(collected, rd, pf, spins);
-            }, 50);
-            return;
+            console.log('retry pf, ' + state.pf.size);
+            return sleep(50).then(() => this.readDirs(collected, state));
         }
 
-        if (!rd) rd = dirs[0].createReader();
+        if (!state.rd) state.rd = dirs[0].createReader();
 
-        rd.readEntries(
-            (entries) => {
-                let ngot = 0;
-                entries.forEach(function (dn) {
-                    if (dn.isDirectory) {
-                        dirs.push(dn as FileSystemDirectoryEntry);
-                    } else {
-                        let name = dn.fullPath;
-                        if (name.startsWith('/')) name = name.slice(1);
+        try {
+            const entries = await new Promise(state.rd.readEntries.bind(state.rd));
+            let ngot = 0;
+            for (const dn of entries) {
+                if (isDirectoryEntry(dn)) {
+                    dirs.push(dn);
+                } else if (isFileEntry(dn)) {
+                    let name = dn.fullPath;
+                    if (name.startsWith('/')) name = name.slice(1);
 
-                        pf.add(name);
-                        (dn as FileSystemFileEntry).file(function (fobj) {
-                            pf.delete(name);
-                            let dst = good;
-                            try {
-                                if (fobj.size < 1) dst = nil;
-                            } catch (ex) {
-                                dst = bad;
+                    state.pf.add(name);
+                    dn.file((fobj) => {
+                        state.pf.delete(name);
+                        try {
+                            if (fobj.size < 1) {
+                                nil.set(fobj, name);
+                            } else {
+                                good.set(fobj, name);
                             }
-                            dst.set(fobj, name);
-                        });
-                    }
-                    ngot += 1;
-                });
-                if (!ngot) {
-                    dirs.shift();
-                    rd = undefined;
+                        } catch (ex) {
+                            bad.set(fobj, name);
+                        }
+                    });
                 }
-                this.readDirs(collected, rd, pf, spins);
-            },
-            () => {
-                const dn = dirs[0];
-                let name = dn.fullPath;
-                if (name.startsWith('/')) name = name.slice(1);
-
-                bad.set(dn, name + '/');
-                this.readDirs({ dirs: dirs.slice(1), good, nil, bad }, undefined, pf, spins);
+                ngot += 1;
             }
-        );
+            if (!ngot) {
+                dirs.shift();
+                state.rd = undefined;
+            }
+            return this.readDirs(collected, state);
+        } catch (err) {
+            console.error(err);
+            const dn = dirs[0];
+            let name = dn.fullPath;
+            if (name.startsWith('/')) name = name.slice(1);
+
+            bad.set(dn, name + '/');
+            return this.readDirs({ dirs: dirs.slice(1), good, nil, bad }, state);
+        }
     }
 
-    gotAllFiles({ bad: bad_files, nil: nil_files, good: good_files }: Omit<CollectResult, 'dirs'>) {
+    gotAllFiles({ bad: bad_files, nil: nil_files, good: good_files }: ReadDirResult) {
         if (this.options.fsearch && !this.options.turbo) {
             nil_files = new Map();
         }
@@ -290,3 +296,9 @@ function vsplit(vp: string) {
 
     return [base, fn];
 }
+
+const isDirectoryEntry = (item: FileSystemEntry): item is FileSystemDirectoryEntry =>
+    item.isDirectory;
+const isFileEntry = (item: FileSystemEntry): item is FileSystemFileEntry => !item.isDirectory;
+
+const sleep = (time: number) => new Promise((r) => setTimeout(r, time));

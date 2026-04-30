@@ -2,7 +2,7 @@ import defu from 'defu';
 import EventEmitter from 'eventemitter3';
 import { shallowReactive, watch } from 'vue';
 import type { FileOrDir, FileOrDirMap } from '.';
-import HashWorker from './hashWorker?worker';
+import { Hasher } from './hasher';
 
 export interface TaskPoolOptions {
     files: FileOrDirMap;
@@ -14,28 +14,30 @@ export interface TaskPoolEvents {
     'task-completed': [];
 }
 
+interface HashedFileOrDir {
+    data: FileOrDir;
+    hashes: string[];
+}
+
 export class Up2KTaskPool {
     events = new EventEmitter<TaskPoolEvents>();
+    private hasher: Hasher;
 
     private options: TaskPoolOptions;
 
     private queuedFiles = new Set<FileOrDir>();
-    private hashPool = shallowReactive(new Map<Worker, FileOrDir>());
-    private pendingUploadPool = new Set<FileOrDir>();
-    private uploadPool = shallowReactive(new Set<FileOrDir>());
-
-    private workers: Worker[];
+    private hashPool = shallowReactive(new Set<FileOrDir>());
+    private pendingUploadPool = new Set<HashedFileOrDir>();
+    private uploadPool = shallowReactive(new Set<HashedFileOrDir>());
 
     constructor(options: Pick<TaskPoolOptions, 'files'> & Partial<TaskPoolOptions>) {
         this.queuedFiles = new Set(options.files.keys());
         this.options = defu(options, {
-            hashConcurrency: Math.min(navigator.hardwareConcurrency || 4, 16),
+            hashConcurrency: navigator.hardwareConcurrency || 4,
             uploadConcurrency: 2
         });
 
-        this.workers = new Array(this.options.hashConcurrency)
-            .fill(null)
-            .map((_, i) => new HashWorker({ name: `hash-worker-${i}` }));
+        this.hasher = new Hasher(this.options.hashConcurrency);
     }
 
     /**
@@ -67,25 +69,22 @@ export class Up2KTaskPool {
         }
     }
 
-    private async doUpload(file: FileOrDir) {
+    private async doUpload(file: HashedFileOrDir) {
         this.uploadPool.add(file);
         this.pendingUploadPool.delete(file);
+        console.log('Uploading', file);
+        await sleep(1000);
+        console.log('Upload done', file);
+        this.uploadPool.delete(file);
     }
     private async doHash(file: FileOrDir) {
-        // Find a worker that is not used
-        const worker = this.workers.find((w) => !this.hashPool.has(w));
-        if (!worker) {
-            console.error('Could not find free worker');
-            return;
-        }
-
-        this.hashPool.set(worker, file);
+        this.hashPool.add(file);
         this.queuedFiles.delete(file);
-
-        worker.postMessage(file, [file]);
-        worker.addEventListener('message', (ev) => {
-            console.log(ev.data);
-        });
+        if (file instanceof File) {
+            const hashes = await this.hasher.hashFile(file);
+            this.pendingUploadPool.add({ data: file, hashes });
+        }
+        this.hashPool.delete(file);
     }
 
     /**
@@ -103,3 +102,5 @@ export class Up2KTaskPool {
         });
     }
 }
+
+const sleep = (time: number) => new Promise((r) => setTimeout(r, time));

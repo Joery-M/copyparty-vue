@@ -1,45 +1,85 @@
-self.onmessage = async (ev) => {
-    const file = ev.data;
-    if (!(file instanceof Blob)) throw new Error(`Expected blob, got ${file}`);
-    const start = performance.now();
+import { createSHA512 } from 'hash-wasm';
 
-    const chunkSize = get_chunksize(file.size);
-    const chunkCount = Math.ceil(file.size / chunkSize);
-    self.postMessage({ type: 'start', chunkCount, chunkSize, start });
-
-    const hashChunks: string[] = new Array(chunkCount);
-    let hashChunkI = 0;
-
-    let cursor = 0;
-    while (cursor < file.size) {
-        const section = file.slice(cursor, cursor + chunkSize);
-        hashChunks[hashChunkI++] = await section
-            .arrayBuffer()
-            .then((d) => crypto.subtle.digest('SHA-512', d))
-            .then((a) => buf2b64(new Uint8Array(a), 33));
-        cursor += chunkSize;
-        self.postMessage(1);
-    }
-
-    const digested = await Promise.all(hashChunks);
-    self.postMessage({ type: 'done', start, digested });
-};
-
-function get_chunksize(filesize: number) {
-    var chunkSize = 1024 * 1024,
-        stepSize = 512 * 1024;
-
-    while (true) {
-        for (var mul = 1; mul <= 2; mul++) {
-            var nchunks = Math.ceil(filesize / chunkSize);
-            if (nchunks <= 256 || (chunkSize >= 32 * 1024 * 1024 && nchunks <= 4096))
-                return chunkSize;
-
-            chunkSize += stepSize;
-            stepSize *= mul;
-        }
-    }
+interface Payload {
+    file: Blob;
+    start: number;
+    end: number;
+    chunkSize: number;
+    chunkCount: number;
+    workerI: number;
 }
+
+self.onmessage = async (ev) => {
+    const { file, start, end, chunkCount, chunkSize, workerI }: Payload = ev.data;
+    if (!(file instanceof Blob)) throw new Error(`Expected blob, got ${file}`);
+    const timeStart = performance.now();
+
+    self.postMessage({ type: 'start', chunkCount, chunkSize, start: timeStart });
+
+    await new Promise<void>(async (resolve, reject) => {
+        const hasher = await createSHA512();
+        let offset = start;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (!(reader.result instanceof ArrayBuffer)) return;
+
+            hasher.init();
+            self.postMessage({
+                type: 'progress',
+                hash: buf2b64(hasher.update(new Uint8Array(reader.result)).digest('binary'), 33)
+            });
+            if (offset < end) {
+                readChunk();
+            } else {
+                resolve();
+            }
+        };
+        reader.onerror = (e) => {
+            console.error(workerI, 'Error in reader');
+            reject(e);
+        };
+        reader.onerror = (e) => {
+            console.error(workerI, 'Error in reader');
+            reject(e);
+        };
+
+        const readChunk = () => {
+            const sliceEnd = Math.min(offset + chunkSize, end);
+            reader.readAsArrayBuffer(file.slice(offset, sliceEnd));
+            offset = sliceEnd;
+        };
+        readChunk();
+    });
+
+    // let buffer = new Uint8Array(chunkSize * 2);
+    // let chunk;
+    // while (((chunk = await reader.read()), !chunk.done)) {
+    //     buffer.set(chunk.value, offset);
+    //     offset += chunk.value.byteLength;
+    //     while (offset >= chunkSize) {
+    //         hasher.init();
+    //         const piece = buffer.slice(0, chunkSize);
+    //         hashChunks[hashChunkI++] = buf2b64(hasher.update(piece).digest('binary'), 33);
+
+    //         const newBuf = new Uint8Array(chunkSize * 2);
+    //         newBuf.set(buffer.subarray(chunkSize));
+    //         buffer = newBuf;
+    //         offset -= chunkSize;
+    //         self.postMessage(1);
+    //     }
+    // }
+    // if (buffer.byteLength > 0) {
+    //     hasher.init();
+    //     console.log(buffer.slice(0, offset));
+    //     hashChunks[hashChunkI++] = buf2b64(
+    //         hasher.update(buffer.slice(0, offset)).digest('binary'),
+    //         33
+    //     );
+    // }
+
+    self.postMessage({ type: 'done' });
+};
 
 function buf2b64(src: Uint8Array, nbytes = src.byteLength) {
     var base64 = '',
