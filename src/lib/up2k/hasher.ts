@@ -1,36 +1,49 @@
-import { releaseProxy, wrap, type Remote } from 'comlink';
-import { computed, shallowReactive } from 'vue';
+import { wrap, type Remote } from 'comlink';
+import EventEmitter from 'eventemitter3';
+import { shallowReactive } from 'vue';
+import type { IndexedFile } from '.';
 import type { HashWorkerPayload } from './hash.worker';
 import HashWorker from './hash.worker?worker';
+
+interface HasherEvents {
+    workerIdle: [];
+}
 
 type ComlinkHashWorker = Remote<{
     hashFile: (payload: HashWorkerPayload) => string[];
 }>;
 
-export class Hasher implements Disposable {
-    private workers;
-    private idleWorkers;
-    private wantsWorkerQueue: ((w: ComlinkHashWorker) => void)[] = [];
-
-    activeWorkerCount = computed(() => {
+export class Hasher {
+    private static workers: ComlinkHashWorker[];
+    private static idleWorkers: ComlinkHashWorker[];
+    static get activeWorkerCount() {
         return this.workers.length - this.idleWorkers.length;
-    });
-
-    constructor(
-        concurrency: number,
-        private onWorkerDone: () => void
-    ) {
-        this.workers = shallowReactive(
-            new Array(concurrency)
-                .fill(undefined)
-                .map(() => wrap(new HashWorker()) satisfies ComlinkHashWorker)
-        );
-        this.idleWorkers = shallowReactive([...this.workers]);
     }
 
-    async hashFile(file: File) {
-        const chunkSize = getChunksize(file.size);
-        const sections = splitSections(file.size, this.workers.length * 4, chunkSize * 10); // chunkSize * 10 to make smaller files faster
+    events = new EventEmitter<HasherEvents>();
+
+    private wantsWorkerQueue: ((w: ComlinkHashWorker) => void)[] = [];
+
+    constructor(concurrency: number) {
+        if (!Hasher.workers) {
+            Hasher.workers = shallowReactive(
+                new Array(concurrency)
+                    .fill(undefined)
+                    .map(() => wrap(new HashWorker()) satisfies ComlinkHashWorker)
+            );
+            Hasher.idleWorkers = [...Hasher.workers];
+        }
+    }
+
+    async hashFile(entry: IndexedFile) {
+        const chunkSize = entry.chunkSize;
+        // If smaller than 1 KiB, don't split into multiple workers
+        let sections: [number, number][];
+        if (entry.file.size > 1024) {
+            sections = splitSections(entry.file.size, Hasher.workers.length, chunkSize);
+        } else {
+            sections = [[0, entry.file.size]];
+        }
         const results = sections.map(async ([start, end], workerIndex) => {
             const worker = await this.waitForWorkerToBeReady();
 
@@ -38,7 +51,7 @@ export class Hasher implements Disposable {
 
             return worker
                 .hashFile({
-                    file,
+                    file: entry.file,
                     start,
                     end,
                     chunkSize,
@@ -51,7 +64,7 @@ export class Hasher implements Disposable {
     }
 
     private waitForWorkerToBeReady() {
-        const idleWorker = this.idleWorkers.shift();
+        const idleWorker = Hasher.idleWorkers.shift();
         if (idleWorker) return idleWorker;
 
         return new Promise<ComlinkHashWorker>((resolve) => {
@@ -62,13 +75,8 @@ export class Hasher implements Disposable {
     private workerDone(worker: ComlinkHashWorker) {
         const cb = this.wantsWorkerQueue.shift();
         if (cb) cb(worker);
-        else this.idleWorkers.push(worker);
-        this.onWorkerDone();
-    }
-
-    [Symbol.dispose]() {
-        console.log('Clearing workers');
-        this.workers.forEach((w) => w[releaseProxy]());
+        else Hasher.idleWorkers.push(worker);
+        this.events.emit('workerIdle');
     }
 }
 
@@ -98,7 +106,7 @@ function splitSections(amount: number, chunkCount: number, ofMultiple: number): 
     return chunks;
 }
 
-function getChunksize(filesize: number) {
+export function getChunksize(filesize: number) {
     var chunkSize = 1024 * 1024,
         stepSize = 512 * 1024;
 

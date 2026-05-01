@@ -1,5 +1,5 @@
 import { expose } from 'comlink';
-import { createSHA512 } from 'hash-wasm';
+// import { createSHA512 } from 'hash-wasm';
 
 export interface HashWorkerPayload {
     file: File;
@@ -21,7 +21,7 @@ async function hashFile({
     if (!(file instanceof File)) throw new Error(`Expected blob, got ${file}`);
     const timeStart = performance.now();
 
-    const hasher = await createSHA512();
+    // const hasher = await createSHA512();
     let offset = start;
 
     return new Promise(async (resolve, reject) => {
@@ -29,17 +29,20 @@ async function hashFile({
         let hashI = 0;
 
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = async () => {
             if (!(reader.result instanceof ArrayBuffer)) return;
 
-            hasher.init();
-            const hash = buf2b64(hasher.update(new Uint8Array(reader.result)).digest('binary'), 33);
+            // hasher.init();
+            // const hash = buf2b64(hasher.update(new Uint8Array(reader.result)).digest('binary'), 33);
+            const hash = buf2b64(
+                new Uint8Array(await crypto.subtle.digest('SHA-512', reader.result)),
+                33
+            );
             hashChunks[hashI++] = hash;
 
             if (offset < end) {
                 readChunk();
             } else {
-                // Done
                 resolve(hashChunks);
                 performance.measure(`Hash ${file.name}`, {
                     start: timeStart,

@@ -1,7 +1,10 @@
 import { defu } from 'defu';
+import { getChunksize } from './hasher';
 import { Up2KTaskPool } from './taskPool';
 
 interface Up2KOptions {
+    hashConcurrency: number;
+    uploadConcurrency: number;
     turbo: boolean;
     u2rand: boolean;
     fsearch: boolean;
@@ -32,11 +35,23 @@ interface ReadDirState {
     spins: number;
 }
 
+export type IndexedFile<Hashed extends boolean = false> = {
+    file: File;
+    name: string;
+    chunkSize: number;
+} & (Hashed extends true ? { hashes: string[] } : { hashes?: string[] });
+
 export class Up2K {
     options: Up2KOptions;
 
     constructor(options?: Partial<Up2KOptions>) {
-        this.options = defu(options, { turbo: false, u2rand: false, fsearch: false });
+        this.options = defu(options, {
+            hashConcurrency: navigator.hardwareConcurrency || 4,
+            uploadConcurrency: 4,
+            turbo: false,
+            u2rand: false,
+            fsearch: false
+        });
     }
 
     /**
@@ -224,8 +239,20 @@ export class Up2K {
 
     // TODO: Before this, ask for confirmation of upload
     async uploadFiles(files: FileMap) {
-        const pool = new Up2KTaskPool({ files });
+        const indexed = this.indexFiles(files);
+        const pool = new Up2KTaskPool({
+            files: indexed,
+            hashConcurrency: this.options.hashConcurrency,
+            uploadConcurrency: this.options.uploadConcurrency
+        });
         await pool.execute();
+    }
+    private indexFiles(files: FileMap): IndexedFile[] {
+        return Array.from(files.entries()).map(([file, name]) => ({
+            file,
+            name,
+            chunkSize: getChunksize(file.size)
+        }));
     }
 }
 
