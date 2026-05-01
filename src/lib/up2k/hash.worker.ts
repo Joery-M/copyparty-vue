@@ -1,38 +1,50 @@
+import { expose } from 'comlink';
 import { createSHA512 } from 'hash-wasm';
 
-interface Payload {
+export interface HashWorkerPayload {
     file: File;
     start: number;
     end: number;
     chunkSize: number;
     chunkCount: number;
-    workerI: number;
+    workerIndex: number;
 }
 
-self.onmessage = async (ev) => {
-    const { file, start, end, chunkCount, chunkSize, workerI }: Payload = ev.data;
+async function hashFile({
+    file,
+    start,
+    end,
+    chunkCount,
+    chunkSize,
+    workerIndex: workerI
+}: HashWorkerPayload): Promise<string[]> {
     if (!(file instanceof File)) throw new Error(`Expected blob, got ${file}`);
     const timeStart = performance.now();
 
-    self.postMessage({ type: 'start', chunkCount, chunkSize, start: timeStart });
+    const hasher = await createSHA512();
+    let offset = start;
 
-    await new Promise<void>(async (resolve, reject) => {
-        const hasher = await createSHA512();
-        let offset = start;
+    return new Promise(async (resolve, reject) => {
+        const hashChunks: string[] = new Array(chunkCount);
+        let hashI = 0;
 
         const reader = new FileReader();
         reader.onload = () => {
             if (!(reader.result instanceof ArrayBuffer)) return;
 
             hasher.init();
-            self.postMessage({
-                type: 'progress',
-                hash: buf2b64(hasher.update(new Uint8Array(reader.result)).digest('binary'), 33)
-            });
+            const hash = buf2b64(hasher.update(new Uint8Array(reader.result)).digest('binary'), 33);
+            hashChunks[hashI++] = hash;
+
             if (offset < end) {
                 readChunk();
             } else {
-                resolve();
+                // Done
+                resolve(hashChunks);
+                performance.measure(`Hash ${file.name}`, {
+                    start: timeStart,
+                    detail: `${start}/${end}`
+                });
             }
         };
         reader.onabort = reader.onerror = (e) => {
@@ -47,10 +59,9 @@ self.onmessage = async (ev) => {
         };
         readChunk();
     });
-    performance.measure(file.name, { start: timeStart, detail: `${start}/${end}` });
+}
 
-    self.postMessage({ type: 'done' });
-};
+expose({ hashFile });
 
 function buf2b64(src: Uint8Array, nbytes = src.byteLength) {
     var base64 = '',

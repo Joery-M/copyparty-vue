@@ -8,8 +8,6 @@ import { Up2K } from "@/lib/up2k";
 
 const fileListType = useLocalStorage<"list" | "grid">("list-type", "list");
 
-const up2k = new Up2K();
-
 useDropZone(document.body, {
     async onDrop(files, event) {
         const f = event.dataTransfer?.items ?? files;
@@ -25,14 +23,13 @@ fileDialog.onChange(async (fileList) => {
     }
 });
 async function doIt(f: File[] | DataTransferItemList | FileList) {
+    const up2k = new Up2K();
+    const start = performance.now();
     const allFiles = await up2k.collectInput(f);
     console.log(allFiles);
-    const fileMap = up2k.gotAllFiles(allFiles);
-    console.log(fileMap);
-    if (fileMap) {
-        await up2k.uploadFiles(fileMap);
-        console.log("Done");
-    }
+    // TODO: Warn about bad, nill and junk files
+    await up2k.uploadFiles(allFiles.good);
+    console.log("Done", performance.now() - start);
 }
 </script>
 

@@ -42,9 +42,10 @@ export class Up2K {
     /**
      * First function to be called, collects files
      */
-    collectInput(input: DataTransferItemList | FileList | File[] | File) {
+    async collectInput(input: DataTransferItemList | FileList | File[] | File) {
         const collected = this.collectFilesAndDirs(input);
-        return this.readDirs(collected);
+        const readDirsResult = await this.readDirs(collected);
+        return { ...readDirsResult, junk: this.collectJunkFiles(readDirsResult.good) };
     }
 
     /**
@@ -180,43 +181,9 @@ export class Up2K {
         }
     }
 
-    gotAllFiles(readDirResult: ReadDirResult) {
-        let { bad: bad_files, nil: nil_files, good: good_files } = readDirResult;
-        if (this.options.fsearch && !this.options.turbo) {
-            nil_files = new Map();
-        }
-        const ntot = good_files.size + nil_files.size + bad_files.size;
-        if (bad_files.size) {
-            // TODO: Show dialog talking about 'bad' files
-            // var msg = L.u_badf.format(bad_files.length, ntot);
-            // for (var a = 0, aa = Math.min(20, bad_files.length); a < aa; a++)
-            //     msg += '-- ' + esc(bad_files[a][1]) + '\n';
-            // msg += L.u_just1;
-            // return modal.alert(msg, function () {
-            //     start_actx();
-            //     gotallfiles(good_files, nil_files, []);
-            // });
-        }
-        if (nil_files.size) {
-            // TODO: Show dialog talking about empty files
-            // var msg = L.u_blankf.format(nil_files.length, ntot);
-            // for (var a = 0, aa = Math.min(20, nil_files.length); a < aa; a++)
-            //     msg += '-- ' + esc(nil_files[a][1]) + '\n';
-            // msg += L.u_just1;
-            // return modal.confirm(
-            //     msg,
-            //     function () {
-            //         start_actx();
-            //         gotallfiles(good_files.concat(nil_files), [], []);
-            //     },
-            //     function () {
-            //         start_actx();
-            //         gotallfiles(good_files, [], []);
-            //     }
-            // );
-        }
-        let fps = new Set(),
-            pdp = '';
+    private collectJunkFiles(good_files: FileMap) {
+        const fps = new Set();
+        let pdp = '';
         for (const fp of good_files.values()) {
             let dp = vsplit(fp)[0];
             fps.add(fp);
@@ -231,7 +198,7 @@ export class Up2K {
         }
 
         // Files to remove from upload if the user so desires
-        const junk = new Map<FileOrDir, string>();
+        const junk: FileMap = new Map();
 
         const junkPathRegex =
             /\/__MACOS|\/\.(DS_Store|AppleDouble|LSOverride|DocumentRevisions-|fseventsd|Spotlight-V[0-9]|TemporaryItems|Trashes|VolumeIcon\.icns|com\.apple\.timemachine\.donotpresent|AppleDB|AppleDesktop|apdisk)/;
@@ -252,37 +219,13 @@ export class Up2K {
                 junk.set(entry[0], entry[1]);
             }
         }
-
-        if (!junk.size) return good_files;
-        console.log(junk);
-
-        // TODO: Show dialog asking if the user wants to upload junk files
-        // var msg = L.u_applef.format(junk.size, good_files.size);
-        // for (var a = 0, aa = Math.min(1000, junk.size); a < aa; a++)
-        //     msg += '-- ' + esc(junk[a][1]) + '\n';
-
-        // return modal.confirm(
-        //     msg,
-        //     function () {
-        //         const newGoodFiles = new Map<FileOrDir, string>();
-        //         for (const [file, name] of good_files.entries()) {
-        //             if (!junk.has(file)) newGoodFiles.set(file, name);
-        //         }
-
-        //         // start_actx();
-        //         gotallfiles2(newGoodFiles);
-        //     },
-        //     function () {
-        //         // start_actx();
-        //         gotallfiles2(good_files);
-        //     }
-        // );
+        return junk;
     }
 
     // TODO: Before this, ask for confirmation of upload
     async uploadFiles(files: FileMap) {
         const pool = new Up2KTaskPool({ files });
-        await pool.execute()
+        await pool.execute();
     }
 }
 
