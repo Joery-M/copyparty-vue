@@ -1,4 +1,5 @@
 import { defu } from 'defu';
+import { Up2KTaskPool } from './taskPool';
 
 interface Up2KOptions {
     turbo: boolean;
@@ -179,7 +180,8 @@ export class Up2K {
         }
     }
 
-    gotAllFiles({ bad: bad_files, nil: nil_files, good: good_files }: ReadDirResult) {
+    gotAllFiles(readDirResult: ReadDirResult) {
+        let { bad: bad_files, nil: nil_files, good: good_files } = readDirResult;
         if (this.options.fsearch && !this.options.turbo) {
             nil_files = new Map();
         }
@@ -251,7 +253,8 @@ export class Up2K {
             }
         }
 
-        // if (!junk.size) return gotallfiles2(good_files);
+        if (!junk.size) return good_files;
+        console.log(junk);
 
         // TODO: Show dialog asking if the user wants to upload junk files
         // var msg = L.u_applef.format(junk.size, good_files.size);
@@ -276,11 +279,11 @@ export class Up2K {
         // );
     }
 
-    gotAllFiles2(good_files: FileOrDirMap) {
-        // TODO: Ask for confirmation of upload
+    // TODO: Before this, ask for confirmation of upload
+    async uploadFiles(files: FileMap) {
+        const pool = new Up2KTaskPool({ files });
+        await pool.execute()
     }
-
-    private uploadFiles(files: FileOrDirMap) {}
 }
 
 function rdFlatten(pf: Set<string>, dirs: FileSystemDirectoryEntry[]) {

@@ -1,11 +1,11 @@
 import defu from 'defu';
 import EventEmitter from 'eventemitter3';
-import { shallowReactive, watch } from 'vue';
-import type { FileOrDir, FileOrDirMap } from '.';
+import { shallowReactive } from 'vue';
+import type { FileMap } from '.';
 import { Hasher } from './hasher';
 
 export interface TaskPoolOptions {
-    files: FileOrDirMap;
+    files: FileMap;
     hashConcurrency: number;
     uploadConcurrency: number;
 }
@@ -14,8 +14,8 @@ export interface TaskPoolEvents {
     'task-completed': [];
 }
 
-interface HashedFileOrDir {
-    data: FileOrDir;
+interface HashedFile {
+    data: File;
     hashes: string[];
 }
 
@@ -25,19 +25,21 @@ export class Up2KTaskPool {
 
     private options: TaskPoolOptions;
 
-    private queuedFiles = new Set<FileOrDir>();
-    private hashPool = shallowReactive(new Set<FileOrDir>());
-    private pendingUploadPool = new Set<HashedFileOrDir>();
-    private uploadPool = shallowReactive(new Set<HashedFileOrDir>());
+    private queuedFiles;
+    private hashPool = shallowReactive(new Set<File>());
+    private pendingUploadPool = shallowReactive(new Set<HashedFile>());
+    private uploadPool = shallowReactive(new Set<HashedFile>());
 
     constructor(options: Pick<TaskPoolOptions, 'files'> & Partial<TaskPoolOptions>) {
-        this.queuedFiles = new Set(options.files.keys());
+        this.queuedFiles = shallowReactive(new Set(options.files.keys()));
         this.options = defu(options, {
             hashConcurrency: navigator.hardwareConcurrency || 4,
             uploadConcurrency: 2
         });
 
-        this.hasher = new Hasher(this.options.hashConcurrency);
+        this.hasher = new Hasher(this.options.hashConcurrency, () =>
+            this.events.emit('task-completed')
+        );
     }
 
     /**
@@ -49,35 +51,46 @@ export class Up2KTaskPool {
      */
     async execute() {
         while (
-            this.queuedFiles.size > 0 &&
-            this.uploadPool.size > 0 &&
-            this.hashPool.size > 0 &&
+            this.queuedFiles.size > 0 ||
+            this.uploadPool.size > 0 ||
+            this.hashPool.size > 0 ||
             this.pendingUploadPool.size > 0
         ) {
-            if (
+            console.log(
+                'queuedFiles: ',
+                this.queuedFiles.size,
+                ', uploadPool: ',
+                this.uploadPool.size,
+                ', hashPool: ',
+                this.hashPool.size,
+                ', pendingUploadPool: ',
+                this.pendingUploadPool.size
+            );
+            while (
                 this.pendingUploadPool.size > 0 &&
                 this.uploadPool.size < this.options.uploadConcurrency
             ) {
                 const file = this.pendingUploadPool.values().next().value;
-                if (file) this.doUpload(file);
+                if (file) void this.doUpload(file).then(() => this.events.emit('task-completed'));
             }
-            if (this.queuedFiles.size > 0 && this.hashPool.size < this.options.hashConcurrency) {
+            while (this.queuedFiles.size > 0 && this.hasher.idleWorkerCount > 0) {
                 const file = this.queuedFiles.values().next().value;
-                if (file) this.doHash(file);
+                if (file) void this.doHash(file).then(() => this.events.emit('task-completed'));
             }
-            await this.waitForChange();
+            await new Promise<void>((r) => this.events.once('task-completed', r));
         }
     }
 
-    private async doUpload(file: HashedFileOrDir) {
+    private async doUpload(file: HashedFile) {
         this.uploadPool.add(file);
         this.pendingUploadPool.delete(file);
         console.log('Uploading', file);
-        await sleep(1000);
+        // Fake 20MB/s
+        await sleep(file.data.size / 20_000_000);
         console.log('Upload done', file);
         this.uploadPool.delete(file);
     }
-    private async doHash(file: FileOrDir) {
+    private async doHash(file: File) {
         this.hashPool.add(file);
         this.queuedFiles.delete(file);
         if (file instanceof File) {
@@ -85,21 +98,6 @@ export class Up2KTaskPool {
             this.pendingUploadPool.add({ data: file, hashes });
         }
         this.hashPool.delete(file);
-    }
-
-    /**
-     * TODO: Find a better way of doing this.
-     *
-     * The goal of this function is to asynchronously continue execution once there is work to do.
-     */
-    private waitForChange() {
-        return new Promise<void>((resolve) => {
-            watch(
-                () => [this.uploadPool.size, this.hashPool.size],
-                () => resolve(),
-                { once: true }
-            );
-        });
     }
 }
 

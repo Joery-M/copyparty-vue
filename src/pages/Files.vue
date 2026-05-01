@@ -14,24 +14,26 @@ useDropZone(document.body, {
     async onDrop(files, event) {
         const f = event.dataTransfer?.items ?? files;
         if (f) {
-            console.log(f);
-            const allFiles = await up2k.collectInput(f);
-            console.log(allFiles);
-            up2k.gotAllFiles(allFiles);
+            doIt(f);
         }
     },
 });
 const fileDialog = useFileDialog({ reset: true, directory: true });
 fileDialog.onChange(async (fileList) => {
     if (fileList && fileList.length > 0) {
-        const allFiles = await up2k.collectInput(fileList);
-        console.log(allFiles);
-        up2k.gotAllFiles(allFiles);
-
-        // const res = await doHashTest(fileList.item(0)!);
-        // console.log(res);
+        doIt(fileList);
     }
 });
+async function doIt(f: File[] | DataTransferItemList | FileList) {
+    const allFiles = await up2k.collectInput(f);
+    console.log(allFiles);
+    const fileMap = up2k.gotAllFiles(allFiles);
+    console.log(fileMap);
+    if (fileMap) {
+        await up2k.uploadFiles(fileMap);
+        console.log("Done");
+    }
+}
 </script>
 
 <template>

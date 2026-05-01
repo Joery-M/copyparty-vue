@@ -1,14 +1,20 @@
-import { whenever } from '@vueuse/core';
-import { reactive } from 'vue';
 import HashWorker from './hash.worker?worker';
 
 export class Hasher {
     private workers;
     private idleWorkers;
+    private wantsWorkerQueue: ((w: Worker) => void)[] = [];
 
-    constructor(concurrency: number) {
+    get idleWorkerCount() {
+        return this.idleWorkers.length;
+    }
+
+    constructor(
+        concurrency: number,
+        private onWorkerDone: () => void
+    ) {
         this.workers = new Array(concurrency).fill(undefined).map(() => new HashWorker());
-        this.idleWorkers = reactive(new Set(this.workers));
+        this.idleWorkers = [...this.workers];
     }
 
     async hashFile(file: File) {
@@ -16,10 +22,9 @@ export class Hasher {
         const sections = splitSections(file.size, this.workers.length, chunkSize * 10); // chunkSize * 10 to make smaller files faster
         const start = performance.now();
         const results = sections.map(async ([start, end], i) => {
-            const worker = this.workers[i];
-            await this.waitForWorkerToBeReady(worker);
+            const worker = await this.waitForWorkerToBeReady();
             return runWorker(file, start, end, chunkSize, worker, i).finally(() =>
-                this.idleWorkers.add(worker)
+                this.workerDone(worker)
             );
         });
         const res = (await Promise.all(results)).flat();
@@ -27,17 +32,20 @@ export class Hasher {
         return res;
     }
 
-    private waitForWorkerToBeReady(worker: Worker) {
-        return new Promise<void>((resolve) =>
-            whenever(
-                () => this.idleWorkers.has(worker),
-                () => {
-                    this.idleWorkers.delete(worker);
-                    resolve();
-                },
-                { once: true, immediate: true }
-            )
-        );
+    private waitForWorkerToBeReady() {
+        const idleWorker = this.idleWorkers.shift();
+        if (idleWorker) return idleWorker;
+
+        return new Promise<Worker>((resolve) => {
+            this.wantsWorkerQueue.push((w) => resolve(w));
+        });
+    }
+
+    private workerDone(worker: Worker) {
+        const cb = this.wantsWorkerQueue.shift();
+        if (cb) cb(worker);
+        else this.idleWorkers.push(worker);
+        this.onWorkerDone();
     }
 }
 

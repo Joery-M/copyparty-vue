@@ -1,7 +1,7 @@
 import { createSHA512 } from 'hash-wasm';
 
 interface Payload {
-    file: Blob;
+    file: File;
     start: number;
     end: number;
     chunkSize: number;
@@ -11,7 +11,7 @@ interface Payload {
 
 self.onmessage = async (ev) => {
     const { file, start, end, chunkCount, chunkSize, workerI }: Payload = ev.data;
-    if (!(file instanceof Blob)) throw new Error(`Expected blob, got ${file}`);
+    if (!(file instanceof File)) throw new Error(`Expected blob, got ${file}`);
     const timeStart = performance.now();
 
     self.postMessage({ type: 'start', chunkCount, chunkSize, start: timeStart });
@@ -35,11 +35,7 @@ self.onmessage = async (ev) => {
                 resolve();
             }
         };
-        reader.onerror = (e) => {
-            console.error(workerI, 'Error in reader');
-            reject(e);
-        };
-        reader.onerror = (e) => {
+        reader.onabort = reader.onerror = (e) => {
             console.error(workerI, 'Error in reader');
             reject(e);
         };
@@ -51,32 +47,7 @@ self.onmessage = async (ev) => {
         };
         readChunk();
     });
-
-    // let buffer = new Uint8Array(chunkSize * 2);
-    // let chunk;
-    // while (((chunk = await reader.read()), !chunk.done)) {
-    //     buffer.set(chunk.value, offset);
-    //     offset += chunk.value.byteLength;
-    //     while (offset >= chunkSize) {
-    //         hasher.init();
-    //         const piece = buffer.slice(0, chunkSize);
-    //         hashChunks[hashChunkI++] = buf2b64(hasher.update(piece).digest('binary'), 33);
-
-    //         const newBuf = new Uint8Array(chunkSize * 2);
-    //         newBuf.set(buffer.subarray(chunkSize));
-    //         buffer = newBuf;
-    //         offset -= chunkSize;
-    //         self.postMessage(1);
-    //     }
-    // }
-    // if (buffer.byteLength > 0) {
-    //     hasher.init();
-    //     console.log(buffer.slice(0, offset));
-    //     hashChunks[hashChunkI++] = buf2b64(
-    //         hasher.update(buffer.slice(0, offset)).digest('binary'),
-    //         33
-    //     );
-    // }
+    performance.measure(file.name, { start: timeStart, detail: `${start}/${end}` });
 
     self.postMessage({ type: 'done' });
 };
