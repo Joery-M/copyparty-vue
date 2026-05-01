@@ -1,10 +1,12 @@
 import { defu } from 'defu';
 import { getChunksize } from './hasher';
 import { Up2KTaskPool } from './taskPool';
+import { sleep, type PartialExcept } from './utils';
 
 interface Up2KOptions {
     hashConcurrency: number;
     uploadConcurrency: number;
+    baseUrl: URL;
     turbo: boolean;
     u2rand: boolean;
     fsearch: boolean;
@@ -44,7 +46,7 @@ export type IndexedFile<Hashed extends boolean = false> = {
 export class Up2K {
     options: Up2KOptions;
 
-    constructor(options?: Partial<Up2KOptions>) {
+    constructor(options: PartialExcept<Up2KOptions, 'baseUrl'>) {
         this.options = defu(options, {
             hashConcurrency: navigator.hardwareConcurrency || 4,
             uploadConcurrency: 4,
@@ -243,7 +245,8 @@ export class Up2K {
         const pool = new Up2KTaskPool({
             files: indexed,
             hashConcurrency: this.options.hashConcurrency,
-            uploadConcurrency: this.options.uploadConcurrency
+            uploadConcurrency: this.options.uploadConcurrency,
+            baseUrl: this.options.baseUrl
         });
         await pool.execute();
     }
@@ -273,5 +276,3 @@ function vsplit(vp: string) {
 const isDirectoryEntry = (item: FileSystemEntry): item is FileSystemDirectoryEntry =>
     item.isDirectory;
 const isFileEntry = (item: FileSystemEntry): item is FileSystemFileEntry => !item.isDirectory;
-
-const sleep = (time: number) => new Promise((r) => setTimeout(r, time));

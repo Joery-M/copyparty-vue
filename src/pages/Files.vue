@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import FileListView from "@/components/FileListView.vue";
 import FileViewer from "@/components/viewers/FileViewer.vue";
+import { useQueryCache } from "@pinia/colada";
 import { useDropZone, useFileDialog, useLocalStorage } from "@vueuse/core";
 import TreeView from "../components/TreeView.vue";
 
+import { getApiUrl } from "@/lib/api";
 import { Up2K } from "@/lib/up2k";
 
 const fileListType = useLocalStorage<"list" | "grid">("list-type", "list");
@@ -22,14 +24,17 @@ fileDialog.onChange(async (fileList) => {
         doIt(fileList);
     }
 });
+const queryCache = useQueryCache();
 async function doIt(f: File[] | DataTransferItemList | FileList) {
-    const up2k = new Up2K();
+    const up2k = new Up2K({ baseUrl: new URL(getApiUrl([])) });
     const start = performance.now();
     const allFiles = await up2k.collectInput(f);
     console.log(allFiles);
     // TODO: Warn about bad, nill and junk files
     await up2k.uploadFiles(allFiles.good);
     console.log("Done", performance.now() - start);
+
+    queryCache.invalidateQueries({ key: ["ls"] });
 }
 </script>
 

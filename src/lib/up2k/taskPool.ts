@@ -1,11 +1,14 @@
 import EventEmitter from 'eventemitter3';
 import type { IndexedFile } from '.';
 import { Hasher } from './hasher';
+import { Uploader } from './uploader';
+import { sleep } from './utils';
 
 export interface TaskPoolOptions {
     files: IndexedFile[];
     hashConcurrency: number;
     uploadConcurrency: number;
+    baseUrl: URL;
 }
 
 export interface TaskPoolEvents {
@@ -17,7 +20,7 @@ export class Up2KTaskPool {
 
     private queuedFiles;
     private hashPool = new Set<IndexedFile>();
-    private pendingUploadPool = new Set<IndexedFile<true>>();
+    private queuedUploadPool = new Set<IndexedFile<true>>();
     private uploadPool = new Set<IndexedFile<true>>();
     private donePool = new Set<IndexedFile<true>>();
     private failedPool = new Set<IndexedFile>();
@@ -40,17 +43,20 @@ export class Up2KTaskPool {
      *  - Initialize hasher
      *  - Each cycle of the pool starts by checking for pending upload tasks
      *      - If there are no pending uploads, continue with a hash task
-     *          - When a hash task is done, it will add an upload task to the pending upload pool
+     *      - If there is a file in the first queue, hash it, then add the file to the queued uploads pool
+     *      - Wait for a task to finish and repeat
      */
-    async execute() {
-        const hasher = new Hasher(this.options.hashConcurrency);
+    async execute(
+        hasher = new Hasher(this.options.hashConcurrency),
+        uploader = new Uploader({ baseUrl: this.options.baseUrl })
+    ) {
         hasher.events.on('workerIdle', () => this.events.emit('task-completed'));
 
         const activeTasks = new Set<Promise<void>>();
         while (
             this.queuedFiles.size > 0 ||
             this.hashPool.size > 0 ||
-            this.pendingUploadPool.size > 0
+            this.queuedUploadPool.size > 0
         ) {
             performance.mark('Pool tick');
             console.log({
@@ -60,24 +66,24 @@ export class Up2KTaskPool {
                 queuedFiles: this.queuedFiles.size,
                 uploadPool: this.uploadPool.size,
                 activeWorkers: Hasher.activeWorkerCount,
-                pendingUploadPool: this.pendingUploadPool.size
+                pendingUploadPool: this.queuedUploadPool.size
             });
             while (
-                this.pendingUploadPool.size > 0 &&
+                this.queuedUploadPool.size > 0 &&
                 this.uploadPool.size < this.options.uploadConcurrency
             ) {
-                const entry = this.pendingUploadPool.values().next().value;
+                const entry = this.queuedUploadPool.values().next().value;
                 if (entry) {
                     this.uploadPool.add(entry);
-                    this.pendingUploadPool.delete(entry);
-                    const task = this.doUpload(entry)
+                    this.queuedUploadPool.delete(entry);
+                    const task = uploader
+                        .uploadFile(entry)
                         .then(() => {
                             this.uploadPool.delete(entry);
                             this.donePool.add(entry);
                         })
                         .catch((err) => {
                             console.error(err);
-                            this.pendingUploadPool.delete(entry);
                             this.uploadPool.delete(entry);
                             this.failedPool.add(entry);
                         })
@@ -98,7 +104,7 @@ export class Up2KTaskPool {
                     const task = hasher
                         .hashFile(entry)
                         .then((hashes) => {
-                            this.pendingUploadPool.add({ ...entry, hashes });
+                            this.queuedUploadPool.add({ ...entry, hashes });
                             this.hashPool.delete(entry);
                         })
                         .catch((err) => {
@@ -112,10 +118,7 @@ export class Up2KTaskPool {
                     activeTasks.add(task);
                 }
             }
-            await new Promise<void>(async (r) => {
-                // await sleep(1);
-                this.events.once('task-completed', r);
-            });
+            await new Promise<void>((r) => this.events.once('task-completed', r));
         }
 
         await Promise.all(activeTasks);
@@ -126,7 +129,7 @@ export class Up2KTaskPool {
             queuedFiles: this.queuedFiles.size,
             uploadPool: this.uploadPool.size,
             activeWorkers: Hasher.activeWorkerCount,
-            pendingUploadPool: this.pendingUploadPool.size
+            pendingUploadPool: this.queuedUploadPool.size
         });
     }
 
@@ -139,5 +142,3 @@ export class Up2KTaskPool {
         console.log('Upload done', entry);
     }
 }
-
-const sleep = (time: number) => new Promise((r) => setTimeout(r, time));
