@@ -1,7 +1,14 @@
 import { defu } from 'defu';
 import { getChunksize } from './hasher';
 import { Up2KTaskPool } from './taskPool';
-import { sleep, type PartialExcept } from './utils';
+import {
+    isDirectoryEntry,
+    isFileEntry,
+    rdFlatten,
+    sleep,
+    vsplit,
+    type PartialExcept
+} from './utils';
 
 interface Up2KOptions {
     hashConcurrency: number;
@@ -44,7 +51,7 @@ export type IndexedFile<Hashed extends boolean = false> = {
 } & (Hashed extends true ? { hashes: string[] } : { hashes?: string[] });
 
 export class Up2K {
-    options: Up2KOptions;
+    private options: Up2KOptions;
 
     constructor(options: PartialExcept<Up2KOptions, 'baseUrl'>) {
         this.options = defu(options, {
@@ -259,20 +266,7 @@ export class Up2K {
     }
 }
 
-function rdFlatten(pf: Set<string>, dirs: FileSystemDirectoryEntry[]) {
-    return new Set([...pf, ...dirs.map((d) => d.fullPath || '')].sort());
-}
+export { Hasher } from './hasher';
+export { Up2KTaskPool } from './taskPool';
+export { Uploader } from './uploader';
 
-function vsplit(vp: string) {
-    if (vp.endsWith('/')) vp = vp.slice(0, -1);
-
-    var ofs = vp.lastIndexOf('/') + 1,
-        base = vp.slice(0, ofs),
-        fn = vp.slice(ofs);
-
-    return [base, fn];
-}
-
-const isDirectoryEntry = (item: FileSystemEntry): item is FileSystemDirectoryEntry =>
-    item.isDirectory;
-const isFileEntry = (item: FileSystemEntry): item is FileSystemFileEntry => !item.isDirectory;

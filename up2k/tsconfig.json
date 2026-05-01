@@ -1,0 +1,12 @@
+{
+  "extends": ["@vue/tsconfig/tsconfig.dom.json", "../tsconfig.json"],
+  "compilerOptions": {
+    "types": ["vite/client", "node"],
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "./globals.d.ts"]
+}

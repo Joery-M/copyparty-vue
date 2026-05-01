@@ -6,7 +6,7 @@ import { useDropZone, useFileDialog, useLocalStorage } from "@vueuse/core";
 import TreeView from "../components/TreeView.vue";
 
 import { getApiUrl } from "@/lib/api";
-import { Up2K } from "@/lib/up2k";
+import { Up2K } from "up2k";
 
 const fileListType = useLocalStorage<"list" | "grid">("list-type", "list");
 
@@ -25,8 +25,9 @@ fileDialog.onChange(async (fileList) => {
     }
 });
 const queryCache = useQueryCache();
+const up2k = new Up2K({ baseUrl: new URL(getApiUrl([])) });
+
 async function doIt(f: File[] | DataTransferItemList | FileList) {
-    const up2k = new Up2K({ baseUrl: new URL(getApiUrl([])) });
     const start = performance.now();
     const allFiles = await up2k.collectInput(f);
     console.log(allFiles);

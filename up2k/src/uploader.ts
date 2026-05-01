@@ -85,7 +85,6 @@ export class Uploader {
         return fetch(resolveURL(this.options.baseUrl.href, dir), {
             method: 'POST',
             headers: {
-                // idk
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({

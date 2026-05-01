@@ -38,21 +38,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      comlink:
-        specifier: ^4.4.2
-        version: 4.4.2
-      defu:
-        specifier: ^6.1.7
-        version: 6.1.7
       dompurify:
         specifier: ^3.4.0
         version: 3.4.1
-      eventemitter3:
-        specifier: ^5.0.4
-        version: 5.0.4
-      hash-wasm:
-        specifier: ^4.12.0
-        version: 4.12.0
       lucide-vue-next:
         specifier: ^1.0.0
         version: 1.0.0(vue@3.5.33(typescript@6.0.3))
@@ -86,6 +74,9 @@ importers:
       ufo:
         specifier: ^1.6.3
         version: 1.6.3
+      up2k:
+        specifier: workspace:^
+        version: link:up2k
       vaul-vue:
         specifier: ^0.4.1
         version: 0.4.1(reka-ui@2.9.6(vue@3.5.33(typescript@6.0.3)))(vue@3.5.33(typescript@6.0.3))
@@ -129,6 +120,31 @@ importers:
       vue-tsc:
         specifier: ^3.2.6
         version: 3.2.7(typescript@6.0.3)
+
+  up2k:
+    dependencies:
+      comlink:
+        specifier: ^4.4.2
+        version: 4.4.2
+      defu:
+        specifier: ^6.1.7
+        version: 6.1.7
+      eventemitter3:
+        specifier: ^5.0.4
+        version: 5.0.4
+      hash-wasm:
+        specifier: ^4.12.0
+        version: 4.12.0
+      pathe:
+        specifier: ^2.0.3
+        version: 2.0.3
+      ufo:
+        specifier: ^1.6.3
+        version: 1.6.3
+    devDependencies:
+      '@types/node':
+        specifier: ^25.6.0
+        version: 25.6.0
 
 packages:
 
