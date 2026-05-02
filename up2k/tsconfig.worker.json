@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "lib": ["WebWorker", "ESNext"],
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src/**/*.worker.ts", "./globals.d.ts"]
+}

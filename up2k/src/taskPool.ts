@@ -2,7 +2,6 @@ import EventEmitter from 'eventemitter3';
 import type { IndexedFile } from '.';
 import { Hasher } from './hasher';
 import { Uploader } from './uploader';
-import { sleep } from './utils';
 
 export interface TaskPoolOptions {
     files: IndexedFile[];
@@ -131,14 +130,5 @@ export class Up2KTaskPool {
             activeWorkers: Hasher.activeWorkerCount,
             pendingUploadPool: this.queuedUploadPool.size
         });
-    }
-
-    private async doUpload(entry: IndexedFile<true>) {
-        console.log('Uploading', entry);
-        const timeStart = performance.now();
-        // Fake 20MB/s
-        await sleep(entry.file.size / 20_000_000);
-        performance.measure(`Upload ${entry.file.name}`, { start: timeStart });
-        console.log('Upload done', entry);
     }
 }

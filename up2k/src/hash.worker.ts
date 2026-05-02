@@ -10,6 +10,54 @@ export interface HashWorkerPayload {
     workerIndex: number;
 }
 
+type Hasher = (d: ArrayBuffer) => Promise<Uint8Array>;
+
+let hasher: undefined | Hasher = undefined;
+async function getHasher(): Promise<Hasher> {
+    if (hasher) return hasher;
+
+    const testData = new Uint8Array([1, 2, 3]);
+    try {
+        // Try native digest
+        const test = await crypto.subtle.digest('SHA-512', testData);
+        console.log(test);
+        if (new Uint8Array(test)[51] === 69) {
+            return (hasher = (d) =>
+                crypto.subtle.digest('SHA-512', d).then((d) => new Uint8Array(d)));
+        }
+    } catch (err) {
+        console.error('Could not use native digest', err);
+    }
+    try {
+        // Try hash-wasm
+        const { createSHA512 } = await import('hash-wasm');
+        const sha512 = await createSHA512();
+        const test = sha512.init().update(testData).digest('binary');
+        if (test[51] === 69) {
+            return (hasher = async (d) => sha512.init().update(d).digest('binary'));
+        }
+    } catch (err) {
+        console.error('Could not use hash-wasm', err);
+    }
+    // Fall back to js-sha512
+    const { sha512 } = await import('js-sha512');
+    return (hasher = async (d) => new Uint8Array(sha512.digest(d)));
+}
+
+type HashEncoder = (d: Uint8Array) => string;
+
+let hashEncoder: undefined | HashEncoder = undefined;
+function getHashEncoder(): HashEncoder {
+    if (hashEncoder) return hashEncoder;
+
+    if ('toBase64' in Uint8Array.prototype) {
+        return (hashEncoder = (d) =>
+            d.slice(0, 33).toBase64({ alphabet: 'base64url', omitPadding: true }));
+    } else {
+        return (hashEncoder = (d) => buf2b64(d, 33));
+    }
+}
+
 async function hashFile({
     file,
     start,
@@ -21,47 +69,34 @@ async function hashFile({
     if (!(file instanceof File)) throw new Error(`Expected blob, got ${file}`);
     const timeStart = performance.now();
 
-    // const hasher = await createSHA512();
     let offset = start;
 
-    return new Promise(async (resolve, reject) => {
-        const hashChunks: string[] = new Array(chunkCount);
-        let hashI = 0;
+    await getHasher();
+    getHashEncoder();
 
-        const reader = new FileReader();
-        reader.onload = async () => {
-            if (!(reader.result instanceof ArrayBuffer)) return;
+    const hashChunks: string[] = new Array(chunkCount);
+    let hashI = 0;
 
-            // hasher.init();
-            // const hash = buf2b64(hasher.update(new Uint8Array(reader.result)).digest('binary'), 33);
-            const hash = buf2b64(
-                new Uint8Array(await crypto.subtle.digest('SHA-512', reader.result)),
-                33
-            );
-            hashChunks[hashI++] = hash;
+    const reader = new FileReaderSync();
 
-            if (offset < end) {
-                readChunk();
-            } else {
-                resolve(hashChunks);
-                performance.measure(`Hash ${file.name}`, {
-                    start: timeStart,
-                    detail: `${start}/${end}`
-                });
-            }
-        };
-        reader.onabort = reader.onerror = (e) => {
-            console.error(workerI, 'Error in reader');
-            reject(e);
-        };
+    const readChunk = async () => {
+        const sliceEnd = Math.min(offset + chunkSize, end);
+        const result = reader.readAsArrayBuffer(file.slice(offset, sliceEnd));
 
-        const readChunk = () => {
-            const sliceEnd = Math.min(offset + chunkSize, end);
-            reader.readAsArrayBuffer(file.slice(offset, sliceEnd));
-            offset = sliceEnd;
-        };
-        readChunk();
-    });
+        hashChunks[hashI++] = hashEncoder!(await hasher!(result));
+        offset = sliceEnd;
+
+        if (offset < end) {
+            return readChunk();
+        } else {
+            performance.measure(`Hash ${file.name}`, {
+                start: timeStart,
+                detail: `${start}/${end}`
+            });
+            return hashChunks;
+        }
+    };
+    return await readChunk();
 }
 
 expose({ hashFile });

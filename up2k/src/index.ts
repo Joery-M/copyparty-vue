@@ -103,12 +103,12 @@ export class Up2K {
             }
             try {
                 if (fObj.size < 1) {
-                    nilFiles.set(fObj, fObj.name);
+                    nilFiles.set(fObj, fObj.webkitRelativePath ?? fObj.name);
                 } else {
-                    goodFiles.set(fObj, fObj.name);
+                    goodFiles.set(fObj, fObj.webkitRelativePath ?? fObj.name);
                 }
             } catch (ex) {
-                badFiles.set(fObj, fObj.name);
+                badFiles.set(fObj, fObj.webkitRelativePath ?? fObj.name);
             }
         }
         return { bad: badFiles, nil: nilFiles, good: goodFiles, dirs };
