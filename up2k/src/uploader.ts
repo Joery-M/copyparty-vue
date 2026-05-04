@@ -84,6 +84,11 @@ export class Uploader {
         }
     }
 
+    /**
+     * 2 main requirements of this function:
+     *  - Each section should be sent continuously, e.g. you cant leave out the middle of a file in a request
+     *  - Don't send a hash if the server doesn't need it
+     */
     private async doUpload(entry: IndexedFile<true>, handshake: HandshakeRes) {
         const stitchSize = Math.ceil(
             entry.file.size / (this.options.stitchedChunkSizeMiB * 1024 * 1024)
@@ -98,10 +103,17 @@ export class Uploader {
             }
             const startTime = performance.now();
 
-            const hashesToStitch = Math.max(Math.min(entry.hashes.length - i, stitchSize), 1);
-            const combinedHashes = entry.hashes
-                .slice(i, i + hashesToStitch)
-                .map((stitch) => (missingHashes.delete(stitch), stitch.slice(0, 9)));
+            let hashesToStitch = 0;
+            const combinedHashes: string[] = [];
+            for (let j = 0; j < Math.min(entry.hashes.length - i, stitchSize); j++) {
+                const toStitch = entry.hashes[i + j];
+                // If we find a section that would require the request to be broken up, leave it for the next loop
+                if (!missingHashes.has(toStitch)) break;
+
+                hashesToStitch++;
+                missingHashes.delete(toStitch);
+                combinedHashes.push(toStitch.slice(0, 9));
+            }
 
             const hashArg =
                 combinedHashes.length > 1 ? `${hash},9,${combinedHashes.slice(1).join('')}` : hash;
