@@ -1,36 +1,27 @@
-import { wrap, type Remote } from 'comlink';
 import EventEmitter from 'eventemitter3';
-import { shallowReactive } from 'vue';
 import type { IndexedFile } from '.';
-import type { HashWorkerPayload } from './hash.worker';
-import HashWorker from './hash.worker?worker';
+import type { HashWorkerMessage, HashWorkerPayload, WorkerMessageResponse } from './hash.worker';
 
 interface HasherEvents {
     workerIdle: [];
 }
 
-type ComlinkHashWorker = Remote<{
-    hashFile: (payload: HashWorkerPayload) => string[];
-}>;
-
 export class Hasher {
-    private static workers: ComlinkHashWorker[];
-    private static idleWorkers: ComlinkHashWorker[];
+    private static workers: HashWorkerWrapper[];
+    private static idleWorkers: HashWorkerWrapper[];
     static get activeWorkerCount() {
         return this.workers.length - this.idleWorkers.length;
     }
 
     events = new EventEmitter<HasherEvents>();
 
-    private wantsWorkerQueue: ((w: ComlinkHashWorker) => void)[] = [];
+    private wantsWorkerQueue: ((w: HashWorkerWrapper) => void)[] = [];
 
     constructor(concurrency: number) {
         if (!Hasher.workers) {
-            Hasher.workers = shallowReactive(
-                new Array(concurrency)
-                    .fill(undefined)
-                    .map(() => wrap(new HashWorker()) satisfies ComlinkHashWorker)
-            );
+            Hasher.workers = new Array(concurrency)
+                .fill(undefined)
+                .map(() => new HashWorkerWrapper());
             Hasher.idleWorkers = [...Hasher.workers];
         }
     }
@@ -44,7 +35,7 @@ export class Hasher {
         } else {
             sections = [[0, entry.file.size]];
         }
-        const results = sections.map(async ([start, end], workerIndex) => {
+        const results = sections.map(async ([start, end]) => {
             const worker = await this.waitForWorkerToBeReady();
 
             const chunkCount = Math.ceil((end - start) / chunkSize);
@@ -55,8 +46,7 @@ export class Hasher {
                     start,
                     end,
                     chunkSize,
-                    chunkCount,
-                    workerIndex
+                    chunkCount
                 })
                 .finally(() => this.workerDone(worker));
         });
@@ -67,12 +57,12 @@ export class Hasher {
         const idleWorker = Hasher.idleWorkers.shift();
         if (idleWorker) return idleWorker;
 
-        return new Promise<ComlinkHashWorker>((resolve) => {
+        return new Promise<HashWorkerWrapper>((resolve) => {
             this.wantsWorkerQueue.push((w) => resolve(w));
         });
     }
 
-    private workerDone(worker: ComlinkHashWorker) {
+    private workerDone(worker: HashWorkerWrapper) {
         const cb = this.wantsWorkerQueue.shift();
         if (cb) cb(worker);
         else Hasher.idleWorkers.push(worker);
@@ -119,5 +109,59 @@ export function getChunksize(filesize: number) {
             chunkSize += stepSize;
             stepSize *= mul;
         }
+    }
+}
+
+class HashWorkerWrapper {
+    worker = new Worker(new URL('./hash.worker', import.meta.url), { type: 'module' });
+    private lastTid = 0;
+
+    constructor() {
+        void this.init();
+    }
+
+    init() {
+        return new Promise<void>((resolve, reject) => {
+            const tid = ++this.lastTid;
+            const handler = (ev: MessageEvent<WorkerMessageResponse>) => {
+                if (ev.data.tid === tid) {
+                    this.worker.removeEventListener('message', handler);
+                    if (ev.data.error) {
+                        return reject(ev.data.error);
+                    } else {
+                        return resolve(ev.data.data);
+                    }
+                }
+            };
+            this.worker.addEventListener('message', handler);
+
+            this.worker.postMessage({
+                type: 'init',
+                tid
+            } satisfies HashWorkerMessage);
+        });
+    }
+
+    hashFile(p: HashWorkerPayload) {
+        return new Promise<string[]>((resolve, reject) => {
+            const tid = ++this.lastTid;
+            const handler = (ev: MessageEvent<WorkerMessageResponse<string[]>>) => {
+                if (ev.data.tid === tid) {
+                    this.worker.removeEventListener('message', handler);
+                    if (ev.data.error) {
+                        return reject(ev.data.error);
+                    } else {
+                        return resolve(ev.data.data);
+                    }
+                }
+            };
+            this.worker.addEventListener('message', handler);
+
+            this.worker.postMessage({
+                type: 'work',
+                tid,
+                ...p
+            } satisfies HashWorkerMessage);
+        });
     }
 }

@@ -101,14 +101,15 @@ export class Up2K {
                 if (!fileObj) continue;
                 fObj = fileObj;
             }
+            const name = fObj.webkitRelativePath || fObj.name;
             try {
                 if (fObj.size < 1) {
-                    nilFiles.set(fObj, fObj.webkitRelativePath ?? fObj.name);
+                    nilFiles.set(fObj, name);
                 } else {
-                    goodFiles.set(fObj, fObj.webkitRelativePath ?? fObj.name);
+                    goodFiles.set(fObj, name);
                 }
             } catch (ex) {
-                badFiles.set(fObj, fObj.webkitRelativePath ?? fObj.name);
+                badFiles.set(fObj, name);
             }
         }
         return { bad: badFiles, nil: nilFiles, good: goodFiles, dirs };
@@ -269,4 +270,3 @@ export class Up2K {
 export { Hasher } from './hasher';
 export { Up2KTaskPool } from './taskPool';
 export { Uploader } from './uploader';
-

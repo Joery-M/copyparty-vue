@@ -1,14 +1,29 @@
-import { expose } from 'comlink';
-// import { createSHA512 } from 'hash-wasm';
-
 export interface HashWorkerPayload {
     file: File;
     start: number;
     end: number;
     chunkSize: number;
     chunkCount: number;
-    workerIndex: number;
 }
+
+export type WorkerMessage<T extends string, O extends object = {}> = {
+    type: T;
+    /** Task ID */
+    tid: number;
+} & O;
+export type WorkerMessageResponse<D = undefined> = {
+    /** Task ID */
+    tid: number;
+    error?: Error;
+} & (D extends undefined
+    ? {
+          data?: D;
+      }
+    : {
+          data: D;
+      });
+
+export type HashWorkerMessage = WorkerMessage<'work', HashWorkerPayload> | WorkerMessage<'init'>;
 
 type Hasher = (d: ArrayBuffer) => Promise<Uint8Array>;
 
@@ -20,7 +35,6 @@ async function getHasher(): Promise<Hasher> {
     try {
         // Try native digest
         const test = await crypto.subtle.digest('SHA-512', testData);
-        console.log(test);
         if (new Uint8Array(test)[51] === 69) {
             return (hasher = (d) =>
                 crypto.subtle.digest('SHA-512', d).then((d) => new Uint8Array(d)));
@@ -63,8 +77,7 @@ async function hashFile({
     start,
     end,
     chunkCount,
-    chunkSize,
-    workerIndex: workerI
+    chunkSize
 }: HashWorkerPayload): Promise<string[]> {
     if (!(file instanceof File)) throw new Error(`Expected blob, got ${file}`);
     const timeStart = performance.now();
@@ -98,8 +111,6 @@ async function hashFile({
     };
     return await readChunk();
 }
-
-expose({ hashFile });
 
 function buf2b64(src: Uint8Array, nbytes = src.byteLength) {
     var base64 = '',
@@ -139,3 +150,33 @@ function buf2b64(src: Uint8Array, nbytes = src.byteLength) {
 
     return base64;
 }
+
+self.onmessage = async (ev: MessageEvent<HashWorkerMessage>) => {
+    try {
+        if (ev.data.type === 'init') {
+            try {
+                await getHasher();
+                getHashEncoder();
+                self.postMessage({
+                    tid: ev.data.tid
+                } satisfies WorkerMessageResponse);
+            } catch (error) {
+                self.postMessage({
+                    tid: ev.data.tid,
+                    error: Error('Error initializing', { cause: error })
+                } satisfies WorkerMessageResponse);
+            }
+        } else if (ev.data.type === 'work') {
+            const data = await hashFile(ev.data);
+            self.postMessage({
+                tid: ev.data.tid,
+                data
+            } satisfies WorkerMessageResponse<string[]>);
+        }
+    } catch (error) {
+        self.postMessage({
+            tid: ev.data.tid,
+            error: Error('Error handling message', { cause: error })
+        } satisfies WorkerMessageResponse);
+    }
+};
