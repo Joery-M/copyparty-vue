@@ -7,6 +7,7 @@ import TreeView from "../components/TreeView.vue";
 
 import { getApiUrl } from "@/lib/api";
 import { Up2K } from "up2k";
+import { useRouteState } from '@/stores/useRouteState';
 
 const fileListType = useLocalStorage<"list" | "grid">("list-type", "list");
 
@@ -24,8 +25,9 @@ fileDialog.onChange(async (fileList) => {
         doIt(fileList);
     }
 });
+const routeState = useRouteState();
 const queryCache = useQueryCache();
-const up2k = new Up2K({ baseUrl: new URL(getApiUrl([])) });
+const up2k = new Up2K({ baseUrl: new URL(getApiUrl(routeState.dir)) });
 
 async function doIt(f: File[] | DataTransferItemList | FileList) {
     const start = performance.now();

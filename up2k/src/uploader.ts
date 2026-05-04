@@ -1,12 +1,26 @@
+import defu from 'defu';
 import { basename, dirname } from 'pathe';
 import { resolveURL, withLeadingSlash } from 'ufo';
 import type { IndexedFile } from '.';
+import type { PartialExcept } from './utils';
 
 interface UploaderOptions {
     baseUrl: URL;
+    /**
+     * Size of chunks you want to send to the server.
+     *
+     * @example The hasher might hash files in chunks of 64KiB, but during
+     * uploads those hashes can be stitched together to create groups of 16MiB
+     *
+     * @default 64
+     */
+    stitchedChunkSizeMiB: number;
 }
 
-interface UploadHandshakeResponse {
+type HandshakeAnyRes = HandshakeRes | HandshakeResDeferred;
+
+interface HandshakeRes {
+    type: 'handshake';
     name: string;
     /**
      * Absolute path of file
@@ -28,8 +42,15 @@ interface UploadHandshakeResponse {
     dwrk: string;
     wark: string;
 }
+interface HandshakeResDeferred {
+    type: 'deferred';
+    /**
+     * The path where the upload got deferred to
+     */
+    path: string;
+}
 
-interface UploadHandshakeRequest {
+interface HandshakeReq {
     name: string;
     /**
      * Absolute path where to put file
@@ -49,37 +70,50 @@ interface UploadHandshakeRequest {
 }
 
 export class Uploader {
-    constructor(private options: UploaderOptions) {}
+    private options: UploaderOptions;
+    constructor(options: PartialExcept<UploaderOptions, 'baseUrl'>) {
+        this.options = defu(options, { stitchedChunkSizeMiB: 64 });
+    }
 
     async uploadFile(entry: IndexedFile<true>) {
-        // Do it twice to check for failed chunks
-        const handshake = await this.requestUploadHandshake(entry);
-        console.log(handshake);
-        await this.handleHandshakeResponse(entry, handshake);
-        if (handshake.hash.length > 0) {
-            const handshake2 = await this.requestUploadHandshake(entry);
-            console.log(handshake2);
-            await this.handleHandshakeResponse(entry, handshake2);
+        const handshake = await this.doHandshake(entry);
+        if (handshake.type === 'deferred') {
+            console.log('Upload got deferred to:', handshake.path);
+        } else if (handshake.hash.length > 0) {
+            await this.doUpload(entry, handshake);
         }
     }
 
-    private async handleHandshakeResponse(
-        entry: IndexedFile<true>,
-        handshake: UploadHandshakeResponse
-    ) {
-        // If you have a file that has a lot of repeated data
-        const sent = new Set<string>();
-        for (let i = 0; i < entry.hashes.length; i++) {
+    private async doUpload(entry: IndexedFile<true>, handshake: HandshakeRes) {
+        const stitchSize = Math.ceil(
+            entry.file.size / (this.options.stitchedChunkSizeMiB * 1024 * 1024)
+        );
+
+        const missingHashes = new Set(handshake.hash);
+        for (let i = 0; i < entry.hashes.length; ) {
             const hash = entry.hashes[i];
-            if (!handshake.hash.includes(hash) || sent.has(hash)) continue;
+            if (!missingHashes.has(hash)) {
+                i++;
+                continue;
+            }
             const startTime = performance.now();
-            sent.add(entry.hashes[i]);
-            await this.uploadChunk(entry, i, handshake.wark);
+
+            const hashesToStitch = Math.max(Math.min(entry.hashes.length - i, stitchSize), 1);
+            const combinedHashes = entry.hashes
+                .slice(i, i + hashesToStitch)
+                .map((stitch) => (missingHashes.delete(stitch), stitch.slice(0, 9)));
+
+            const hashArg =
+                combinedHashes.length > 1 ? `${hash},9,${combinedHashes.slice(1).join('')}` : hash;
+
+            await this.uploadChunk(entry, i, i + hashesToStitch, hashArg, handshake.wark);
             performance.mark(`Upload ${entry.name}`, { startTime });
+
+            i += hashesToStitch;
         }
     }
 
-    private async requestUploadHandshake(entry: IndexedFile<true>) {
+    private async doHandshake(entry: IndexedFile<true>) {
         const fileName = basename(entry.name);
         const dir = dirname(withLeadingSlash(entry.name));
         return fetch(resolveURL(this.options.baseUrl.href, dir), {
@@ -93,19 +127,36 @@ export class Uploader {
                 lmod: entry.file.lastModified / 1000,
                 size: entry.file.size,
                 life: 0
-            } satisfies UploadHandshakeRequest)
-        }).then((r) => r.json() as Promise<UploadHandshakeResponse>);
+            } satisfies HandshakeReq)
+        }).then(async (res): Promise<HandshakeAnyRes> => {
+            if (res.status === 422) {
+                const content = (await res.text()).split('\n');
+                if (content[0].startsWith('<pre>partial upload exists at a different location;')) {
+                    return { type: 'deferred', path: content[1] };
+                } else {
+                    throw new Error('Unknown handshake response', { cause: res });
+                }
+            } else {
+                return res.json().then((r) => ({ type: 'handshake', ...r }));
+            }
+        });
     }
 
-    private async uploadChunk(entry: IndexedFile<true>, index: number, wark: string) {
-        const start = entry.chunkSize * index;
-        const end = start + entry.chunkSize;
+    private async uploadChunk(
+        entry: IndexedFile<true>,
+        startI: number,
+        endI: number,
+        hashes: string,
+        wark: string
+    ) {
+        const start = entry.chunkSize * startI;
+        const end = entry.chunkSize * endI;
 
         const dir = dirname(withLeadingSlash(entry.name));
         return fetch(resolveURL(this.options.baseUrl.href, dir), {
             method: 'POST',
             headers: {
-                'X-Up2k-Hash': entry.hashes[index],
+                'X-Up2k-Hash': hashes,
                 'X-Up2k-Wark': wark,
                 'Content-Type': 'application/octet-stream'
             },
