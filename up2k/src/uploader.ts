@@ -1,6 +1,6 @@
 import defu from 'defu';
 import { basename, dirname } from 'pathe';
-import { resolveURL, withLeadingSlash } from 'ufo';
+import { withoutLeadingSlash } from 'ufo';
 import type { IndexedFile } from '.';
 import type { PartialExcept } from './utils';
 
@@ -127,8 +127,8 @@ export class Uploader {
 
     private async doHandshake(entry: IndexedFile<true>) {
         const fileName = basename(entry.name);
-        const dir = dirname(withLeadingSlash(entry.name));
-        return fetch(resolveURL(this.options.baseUrl.href, dir), {
+        const dir = withoutLeadingSlash(dirname(entry.name));
+        return fetch(new URL(dir, this.options.baseUrl), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -164,8 +164,8 @@ export class Uploader {
         const start = entry.chunkSize * startI;
         const end = entry.chunkSize * endI;
 
-        const dir = dirname(withLeadingSlash(entry.name));
-        return fetch(resolveURL(this.options.baseUrl.href, dir), {
+        const dir = withoutLeadingSlash(dirname(entry.name));
+        return fetch(new URL(dir, this.options.baseUrl), {
             method: 'POST',
             headers: {
                 'X-Up2k-Hash': hashes,

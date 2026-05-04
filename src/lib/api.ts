@@ -15,7 +15,7 @@ const baseUrl = stringifyParsedURL(
 
 export function getApiUrl(strings: string[], params?: QueryObject): string {
     const parts = Array.isArray(strings) ? strings : [strings];
-    const resolved = resolveURL(baseUrl, ...parts);
+    const resolved = resolveURL(baseUrl, ...parts.map(encodeURIComponent));
     if (params) {
         return withQuery(resolved, params);
     } else {

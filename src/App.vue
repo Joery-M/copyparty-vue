@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import { PiniaColadaDevtools } from "@pinia/colada-devtools";
-import { useDark } from "@vueuse/core";
-import { RouterView } from "vue-router";
+import { useDark } from '@vueuse/core';
+import { defineAsyncComponent } from 'vue';
+import { RouterView } from 'vue-router';
+
+const PiniaColadaDevtools =
+    __DEV__ &&
+    defineAsyncComponent({
+        loader: () => import('@pinia/colada-devtools').then((c) => c.PiniaColadaDevtools)
+    });
 
 useDark();
 </script>
 
 <template>
     <RouterView />
-    <PiniaColadaDevtools />
+    <component v-if="PiniaColadaDevtools" :is="PiniaColadaDevtools" />
 </template>
