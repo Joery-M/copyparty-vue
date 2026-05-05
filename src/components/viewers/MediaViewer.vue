@@ -7,44 +7,29 @@ import type { File } from '@/lib/interop';
 import { Fullscreen, PaintBucket, RotateCcw, RotateCw, ZoomIn, ZoomOut } from 'lucide-vue-next';
 import DialogFooter from '../ui/dialog/DialogFooter.vue';
 
+import { useSettings } from '@/stores/useSettings';
 import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
-import {
-    until,
-    useElementSize,
-    useFullscreen,
-    useKeyModifier,
-    useLocalStorage
-} from '@vueuse/core';
+import { until, useElementSize, useFullscreen, useKeyModifier } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{ file: File }>();
 
 const mediaUrl = getApiUrl(props.file.fullPath);
 
-enum BackgroundType {
-    Transparent = 'transparent',
-    Black = 'black',
-    White = 'white',
-    Grid = 'grid'
-}
-const backgroundType = useLocalStorage<BackgroundType>(
-    'preview-background-type',
-    BackgroundType.Transparent
-);
-const renderPixelated = useLocalStorage('preview-render-pixelated', false);
+const settings = useSettings();
 
 const backgroundClass = computed(() => {
     if (isLoading.value) return {};
     if (fullscreenElement.isFullscreen.value) return { 'bg-black': true };
 
-    switch (backgroundType.value) {
-        case BackgroundType.Black:
+    switch (settings.preview.bgType) {
+        case 'black':
             return { 'bg-black': true };
-        case BackgroundType.White:
+        case 'white':
             return { 'bg-white': true };
-        case BackgroundType.Transparent:
+        case 'transparent':
             return { 'bg-transparent': true };
         default:
             return {};
@@ -166,7 +151,7 @@ const computedStyle = computed(() => ({
         ref="container"
     >
         <div
-            v-if="backgroundType === BackgroundType.Grid"
+            v-if="settings.preview.bgType === 'grid'"
             class="background-grid"
             :class="{ 'transition-all': isDoneZooming }"
             :style="computedStyle"
@@ -181,7 +166,7 @@ const computedStyle = computed(() => ({
             :style="{
                 ...computedStyle,
                 cursor: isHoldingShift ? 'zoom-out' : 'zoom-in',
-                imageRendering: renderPixelated ? 'pixelated' : 'smooth'
+                imageRendering: settings.preview.pixelated ? 'pixelated' : 'smooth'
             }"
             :class="{ ...backgroundClass, 'transition-all': isDoneZooming }"
             :src="mediaUrl"
@@ -222,11 +207,11 @@ const computedStyle = computed(() => ({
                         file.classification === FileClassification.RasterImage ||
                         file.classification === FileClassification.VectorImage
                     "
-                    @click="renderPixelated = !renderPixelated"
+                    @click="settings.preview.pixelated = !settings.preview.pixelated"
                     variant="accent"
                     size="icon-lg"
                     aria-label="Background"
-                    v-html="renderPixelated ? ImagePixelated : ImageSmooth"
+                    v-html="settings.preview.pixelated ? ImagePixelated : ImageSmooth"
                 >
                 </Button>
             </ButtonGroup>
@@ -289,13 +274,13 @@ const computedStyle = computed(() => ({
     </DialogFooter>
 
     <!-- Background color select -->
-    <Select v-model="backgroundType" v-model:open="backgroundTypeSelectOpen">
+    <Select v-model="settings.preview.bgType" v-model:open="backgroundTypeSelectOpen">
         <SelectContent position="popper" :reference="backgroundTypeButton?.$el">
             <SelectGroup>
-                <SelectItem :value="BackgroundType.Transparent"> Transparent </SelectItem>
-                <SelectItem :value="BackgroundType.Black"> Black </SelectItem>
-                <SelectItem :value="BackgroundType.White"> White </SelectItem>
-                <SelectItem :value="BackgroundType.Grid"> Grid </SelectItem>
+                <SelectItem value="transparent"> Transparent </SelectItem>
+                <SelectItem value="black"> Black </SelectItem>
+                <SelectItem value="white"> White </SelectItem>
+                <SelectItem value="grid"> Grid </SelectItem>
             </SelectGroup>
         </SelectContent>
     </Select>

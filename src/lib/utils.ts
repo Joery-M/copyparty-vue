@@ -1,10 +1,6 @@
-import { useRouteQuery } from '@vueuse/router';
 import type { ClassValue } from 'clsx';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
-import { FileClassification } from './classifyExt';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -14,36 +10,24 @@ export function arrayStartsWith(whole: any[], part: any[]) {
     return part.length === 0 || !part.some((v, i) => whole[i] !== v);
 }
 
-export interface RouteState {
-    dir: string[];
-    file: string | null;
-    forceEditorType?: FileClassification;
-}
+export function formatFileSize(b: number, unit: 'IEC' | 'SI' = 'IEC', useBits = false) {
+    const bytes = useBits ? b * 8 : b;
+    const k = unit === 'IEC' ? 1024 : 1000;
+    const sizes = useBits
+        ? unit === 'IEC'
+            ? ['b', 'Kib', 'Mib', 'Gib', 'Tib', 'Pib', 'Eib']
+            : ['b', 'kb', 'Mb', 'Gb', 'Tb', 'Pb', 'Eb']
+        : unit === 'IEC'
+          ? ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
+          : ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB'];
 
-export function useRouteState() {
-    const route = useRoute();
-    const forceEditorType = useRouteQuery('editor', null, {
-        transform(v: string | string[] | null | undefined): FileClassification | undefined {
-            if (v == null) return undefined;
-            const elem = Array.isArray(v) ? v[0] : v;
-            const num = parseInt(elem);
-            return Number.isNaN(num) ? undefined : num in FileClassification ? num : undefined;
-        }
+    // `bytes && Math.log(bytes)` == If bytes is 0, don't try to run Math.log on it and return 0
+    const i = Math.floor(bytes && Math.log(bytes) / Math.log(k));
+
+    const num = (bytes / Math.pow(k, i)).toLocaleString(undefined, {
+        maximumFractionDigits: 2,
+        maximumSignificantDigits: 3,
+        useGrouping: true
     });
-
-    return computed<RouteState>(() => {
-        const path = route.params.path ?? [];
-        const dir = (typeof path === 'string' ? [] : path).filter((v) => !!v);
-        const file = route.hash.startsWith('#') ? route.hash.slice(1) : null;
-
-        return { dir, file, forceEditorType: forceEditorType.value };
-    });
+    return `${num} ${sizes[i]}`;
 }
-
-export const byteSizeFormatter = Intl.NumberFormat(undefined, {
-    notation: 'compact',
-    style: 'unit',
-    unit: 'byte',
-    unitDisplay: 'narrow',
-    maximumFractionDigits: 1
-});

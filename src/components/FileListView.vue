@@ -2,8 +2,9 @@
 import { API, getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
-import { byteSizeFormatter } from '@/lib/utils';
+import { formatFileSize } from '@/lib/utils';
 import { useRouteState } from '@/stores/useRouteState';
+import { useSettings } from '@/stores/useSettings';
 import { useQuery } from '@pinia/colada';
 import { computed, h } from 'vue';
 import { RouterLink } from 'vue-router';
@@ -13,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
 
 const routeState = useRouteState();
+const settings = useSettings();
 
 const listDirQuery = useQuery({
     key: () => ['ls', ...routeState.dir],
@@ -71,7 +73,12 @@ const columns: ColumnDef<AnyDirectoryEntry>[] = [
     {
         accessorKey: 'size',
         header: () => 'Size',
-        cell: ({ getValue }) => byteSizeFormatter.format(getValue<number>())
+        cell: ({ getValue }) =>
+            formatFileSize(
+                getValue<number>(),
+                settings.format.fileSizes.type,
+                settings.format.fileSizes.bits
+            )
     }
 ];
 
