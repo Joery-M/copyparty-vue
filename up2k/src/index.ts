@@ -158,7 +158,6 @@ export class Up2K {
                 // call first hook, pass list of remaining hooks to call
                 return { good, bad, nil };
 
-            console.log('retry pf, ' + state.pf.size);
             return sleep(50).then(() => this.readDirs(collected, state));
         }
 

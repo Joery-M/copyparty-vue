@@ -58,15 +58,6 @@ export class Up2KTaskPool {
             this.queuedUploadPool.size > 0
         ) {
             performance.mark('Pool tick');
-            console.log({
-                done: this.donePool.size,
-                failed: this.failedPool.size,
-                total: this.options.files.length,
-                queuedFiles: this.queuedFiles.size,
-                uploadPool: this.uploadPool.size,
-                activeWorkers: Hasher.activeWorkerCount,
-                pendingUploadPool: this.queuedUploadPool.size
-            });
             while (
                 this.queuedUploadPool.size > 0 &&
                 this.uploadPool.size < this.options.uploadConcurrency
@@ -121,14 +112,5 @@ export class Up2KTaskPool {
         }
 
         await Promise.all(activeTasks);
-        console.log({
-            done: this.donePool.size,
-            failed: this.failedPool.size,
-            total: this.options.files.length,
-            queuedFiles: this.queuedFiles.size,
-            uploadPool: this.uploadPool.size,
-            activeWorkers: Hasher.activeWorkerCount,
-            pendingUploadPool: this.queuedUploadPool.size
-        });
     }
 }

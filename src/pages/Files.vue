@@ -4,6 +4,7 @@ import FileViewer from '@/components/viewers/FileViewer.vue';
 import { useDropZone, useEventListener, useLocalStorage } from '@vueuse/core';
 import TreeView from '../components/TreeView.vue';
 
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useUploader } from '@/stores/useUploader';
@@ -37,5 +38,8 @@ useEventListener(document, 'paste', (ev) => {
             </div>
         </TreeView>
     </div>
+
+    <!-- Overlays -->
     <FileViewer />
+    <ConfirmDialog />
 </template>

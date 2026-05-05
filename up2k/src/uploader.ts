@@ -81,6 +81,14 @@ export class Uploader {
             console.log('Upload got deferred to:', handshake.path);
         } else if (handshake.hash.length > 0) {
             await this.doUpload(entry, handshake);
+
+            // Now do a second handshake to confirm all chunks have been uploaded
+            // github.com/9001/copyparty/blob/da6e2ddca96dffc4dbe53bda25d2034428fad3d0/docs/devnotes.md#:~:text=client does another handshake with the hashlist
+
+            const secondHandshake = await this.doHandshake(entry, handshake.name);
+            if (secondHandshake.type === 'handshake' && secondHandshake.hash.length > 0) {
+                await this.doUpload(entry, secondHandshake);
+            }
         }
     }
 
@@ -125,9 +133,9 @@ export class Uploader {
         }
     }
 
-    private async doHandshake(entry: IndexedFile<true>) {
+    private async doHandshake(entry: IndexedFile<true>, nameOverride?: string) {
         const fileName = basename(entry.name);
-        const dir = withoutLeadingSlash(dirname(entry.name));
+        const dir = withoutLeadingSlash(dirname(nameOverride ?? entry.name));
         return fetch(new URL(dir, this.options.baseUrl), {
             method: 'POST',
             headers: {
