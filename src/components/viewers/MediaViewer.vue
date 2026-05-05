@@ -76,6 +76,9 @@ const largestMediaAxis = computed(() => Math.max(mediaSize.value[0], mediaSize.v
 const largestContainerAxis = computed(() =>
     Math.max(containerSize.width.value, containerSize.height.value)
 );
+const smallestContainerAxis = computed(() =>
+    Math.min(containerSize.width.value, containerSize.height.value)
+);
 const largestZoomedMediaAxis = computed(() =>
     Math.max(zoomedMediaSize.value[0], zoomedMediaSize.value[1])
 );
@@ -119,11 +122,11 @@ function zoomToFit() {
 async function loaded() {
     isLoading.value = false;
     await Promise.all([
-        until(largestContainerAxis).not.toBe(0),
+        until(smallestContainerAxis).not.toBe(0),
         until(largestZoomedMediaAxis).not.toBe(0)
     ]);
     // If it's larger than the container on load, resize it
-    if (largestZoomedMediaAxis.value > largestContainerAxis.value) zoomToFit();
+    if (largestZoomedMediaAxis.value > smallestContainerAxis.value) zoomToFit();
     // Not the best, but it prevents jumping at the start
     requestIdleCallback(() => {
         isDoneZooming.value = true;
