@@ -112,6 +112,7 @@ const renderedHtml = computedAsync(async () => {
     .markdown-body {
         width: 100%;
         max-width: 100ch;
+        padding-bottom: 10ch;
     }
 }
 </style>

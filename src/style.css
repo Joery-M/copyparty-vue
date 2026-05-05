@@ -124,3 +124,11 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.547 0.021 43.1);
 }
+
+/* Override vaul-vue user-select */
+@media (hover: hover) and (pointer: fine) {
+    [data-vaul-drawer] {
+        -webkit-user-select: auto !important;
+        user-select: auto !important;
+    }
+}
