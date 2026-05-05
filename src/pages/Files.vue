@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import FileListView from "@/components/FileListView.vue";
-import FileViewer from "@/components/viewers/FileViewer.vue";
-import { useQueryCache } from "@pinia/colada";
-import { useDropZone, useFileDialog, useLocalStorage } from "@vueuse/core";
-import TreeView from "../components/TreeView.vue";
+import FileListView from '@/components/FileListView.vue';
+import FileViewer from '@/components/viewers/FileViewer.vue';
+import { useQueryCache } from '@pinia/colada';
+import { useDropZone, useFileDialog, useLocalStorage } from '@vueuse/core';
+import TreeView from '../components/TreeView.vue';
 
-import { getApiUrl } from "@/lib/api";
-import { Up2K } from "up2k";
+import { getApiUrl } from '@/lib/api';
+import { Up2K } from 'up2k';
 import { useRouteState } from '@/stores/useRouteState';
 
-const fileListType = useLocalStorage<"list" | "grid">("list-type", "list");
+const fileListType = useLocalStorage<'list' | 'grid'>('list-type', 'list');
 
 useDropZone(document.body, {
     async onDrop(files, event) {
@@ -17,7 +17,7 @@ useDropZone(document.body, {
         if (f) {
             doIt(f);
         }
-    },
+    }
 });
 const fileDialog = useFileDialog({ reset: true, directory: true });
 fileDialog.onChange(async (fileList) => {
@@ -35,9 +35,9 @@ async function doIt(f: File[] | DataTransferItemList | FileList) {
     console.log(allFiles);
     // TODO: Warn about bad, nill and junk files
     await up2k.uploadFiles(allFiles.good);
-    console.log("Done", performance.now() - start);
+    console.log('Done', performance.now() - start);
 
-    queryCache.invalidateQueries({ key: ["ls"] });
+    queryCache.invalidateQueries({ key: ['ls'] });
 }
 </script>
 
