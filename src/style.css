@@ -132,3 +132,7 @@
         user-select: auto !important;
     }
 }
+
+#app {
+    @apply flex flex-col min-h-svh;
+}

@@ -1,6 +1,4 @@
 import { API } from '@/lib/api';
-import { defineQuery, type DefineQueryOptions } from '@pinia/colada';
-import { toRef, type MaybeRefOrGetter } from 'vue';
 import { classifyExtension, FileClassification } from './classifyExt';
 
 export type AnyDirectoryEntry = Directory | File;
@@ -40,14 +38,3 @@ export class File extends BaseDirectoryEntry {
         if (input.ext != null && input.ext !== '---') this.extension = input.ext;
     }
 }
-
-export const getTreeOptions = (p: MaybeRefOrGetter<string[]>) => {
-    const pathArray = toRef(p);
-    return defineQuery(() => {
-        return {
-            key: ['tree', ...pathArray.value],
-            query: ({ signal }) => API.getFileTree(pathArray.value, signal),
-            staleTime: 30_000
-        } satisfies DefineQueryOptions;
-    });
-};

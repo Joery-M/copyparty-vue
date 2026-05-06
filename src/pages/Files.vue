@@ -30,7 +30,7 @@ useEventListener(document, 'paste', (ev) => {
 <template>
     <Toolbar />
 
-    <div class="flex flex-col h-svh">
+    <div class="flex flex-col flex-1">
         <Separator class="my-4" />
         <TreeView class="inline-flex flex-1">
             <div class="my-12 mx-6">

@@ -1,4 +1,4 @@
-import type { _JSONPrimitive } from '@pinia/colada';
+import { defineQueryOptions, type _JSONPrimitive } from '@pinia/colada';
 import { useBrowserLocation, useTimeoutFn } from '@vueuse/core';
 import { parseURL, resolveURL, stringifyParsedURL, withQuery, type QueryObject } from 'ufo';
 import { readonly, ref, toRef, watch, type MaybeRefOrGetter } from 'vue';
@@ -33,6 +33,12 @@ export namespace API {
             .then((r) => r.json())
             .then((r: FileTreeResponse) => r.a.map(decodeURIComponent));
     }
+
+    export const getFileTreeQuery = defineQueryOptions((path: string[]) => ({
+        key: ['tree', ...path],
+        query: ({ signal }) => getFileTree(path, signal),
+        staleTime: 30_000
+    }));
 
     export interface ListDirectoryEntry {
         load?: string;
@@ -76,17 +82,92 @@ export namespace API {
         fnugg: string;
     }
 
+    export type Permissions =
+        | 'read'
+        | 'write'
+        | 'move'
+        | 'delete'
+        | 'dot'
+        | 'get'
+        | 'upget'
+        | 'html'
+        | 'admin';
+
     export function getListDirectory(path: string[], signal: AbortSignal) {
         return fetch(getApiUrl(path, { ls: '' }), { signal })
             .then((r) => r.json())
-            .then((raw: ListDirectoryResponse) => ({
+            .then((res: ListDirectoryResponse) => ({
                 entries: [
-                    raw.dirs.map((entry) => new DirectoryEntry(path, entry)),
-                    raw.files.map((entry) => new FileEntry(path, entry))
+                    res.dirs.map((entry) => new DirectoryEntry(path, entry)),
+                    res.files.map((entry) => new FileEntry(path, entry))
                 ].flat() as AnyDirectoryEntry[],
-                raw
+                perms: res.perms as Permissions[],
+                readmes: res.readmes
             }));
     }
+
+    export const getListDirectoryQuery = defineQueryOptions((dir: string[]) => ({
+        key: ['ls', ...dir],
+        query: ({ signal }) => getListDirectory(dir, signal)
+    }));
+
+    export function getHelloPageData(signal: AbortSignal) {
+        return fetch(getApiUrl([], { h: '', ls: 't' }), { signal })
+            .then((r) => r.text())
+            .then((res) => {
+                const lines = res.split('\n');
+
+                let username: string | null = null;
+                const readable: string[] = [];
+                const writable: string[] = [];
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (line.trim().length == 0) continue;
+
+                    if (i == 0) {
+                        if (line.startsWith('howdy stranger')) {
+                            username = null;
+                        } else if (line.startsWith('welcome back')) {
+                            username = line.split(' ')[2] ?? null;
+                        }
+                    } else if (line.startsWith('status:')) {
+                        // TODO: Find a good situation where this can be examined
+                        continue;
+                    } else if (line.startsWith('incoming files:')) {
+                        // TODO: Figure out the format
+                        continue;
+                    } else if (line.startsWith('active downloads:')) {
+                        // TODO: Figure out the format
+                        continue;
+                    } else if (line.startsWith('you can browse:')) {
+                        // Looks weird, but this loops over the next lines until we're out of the list
+                        for (; i < lines.length; i++) {
+                            const line = lines[i + 1];
+                            if (!line.startsWith('  ')) break;
+                            readable.push(line.trim());
+                        }
+                    } else if (line.startsWith('you can upload to:')) {
+                        for (; i < lines.length; i++) {
+                            const line = lines[i + 1];
+                            if (!line.startsWith('  ')) break;
+                            writable.push(line.trim());
+                        }
+                    }
+                }
+                return {
+                    username,
+                    readable,
+                    writable
+                };
+            });
+    }
+    export const getHelloPageDataQuery = defineQueryOptions({
+        key: ['hello'],
+        query: ({ signal }) => getHelloPageData(signal),
+        refetchOnWindowFocus: false,
+        staleTime: 30_000
+    });
 }
 
 /**

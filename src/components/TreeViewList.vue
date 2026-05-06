@@ -3,8 +3,7 @@ import { useQuery } from '@pinia/colada';
 import { whenever } from '@vueuse/core';
 import { ref } from 'vue';
 
-import { useLoadingState } from '@/lib/api';
-import { getTreeOptions } from '@/lib/interop';
+import { API, useLoadingState } from '@/lib/api';
 import { arrayStartsWith } from '@/lib/utils';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shadcn/collapsible';
@@ -44,10 +43,7 @@ whenever(
     }
 );
 
-const treeQuery = useQuery({
-    ...getTreeOptions(() => props.base)(),
-    enabled: isOpen
-});
+const treeQuery = useQuery(() => ({ ...API.getFileTreeQuery(props.base), enabled: isOpen.value }));
 const isLoading = useLoadingState(treeQuery.isLoading, 200);
 </script>
 

@@ -16,12 +16,9 @@ import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanst
 const routeState = useRouteState();
 const settings = useSettings();
 
-const listDirQuery = useQuery({
-    key: () => ['ls', ...routeState.dir],
-    query: ({ signal }) => API.getListDirectory(routeState.dir, signal)
-});
+const listDirQuery = useQuery(() => API.getListDirectoryQuery(routeState.dir));
 
-const readmes = computed(() => (listDirQuery.data.value?.raw.readmes ?? []).filter((v) => !!v));
+const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
 
 function getEntryRenderFunction(entry: AnyDirectoryEntry) {
     if (entry instanceof Directory || entry.classification === FileClassification.Directory) {
