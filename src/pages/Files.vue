@@ -9,6 +9,8 @@ import Toolbar from '@/components/Toolbar.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useUploader } from '@/stores/useUploader';
 import { Separator } from '@shadcn/separator';
+import { ref } from 'vue';
+import { useAuth } from '@/stores/useAuth';
 
 const fileListType = useLocalStorage<'list' | 'grid'>('list-type', 'list');
 
@@ -25,6 +27,10 @@ useEventListener(document, 'paste', (ev) => {
     const f = ev.clipboardData?.items;
     if (f && f.length > 0) uploader.upload(ev.clipboardData.items, routeState.dir);
 });
+
+const auth = useAuth();
+const username = ref('');
+const password = ref('');
 </script>
 
 <template>
@@ -34,6 +40,9 @@ useEventListener(document, 'paste', (ev) => {
         <Separator class="my-4" />
         <TreeView class="inline-flex flex-1">
             <div class="my-12 mx-6">
+                <input v-model="username" />
+                <input v-model="password" />
+                <button type="button" @click="auth.login(password, username)">Login</button>
                 <FileListView v-if="fileListType === 'list'" />
             </div>
         </TreeView>

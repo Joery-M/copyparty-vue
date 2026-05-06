@@ -41,7 +41,8 @@ fileDialog.onChange((fileList) => {
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-        <Button size="icon-lg" variant="outline">
+        <Button size="lg" variant="outline">
+            {{ auth.username }}
             <User2 />
         </Button>
     </div>
