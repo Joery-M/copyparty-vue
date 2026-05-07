@@ -1,0 +1,142 @@
+<script setup lang="ts">
+import { API } from '@/lib/api';
+import { useAuth, type LoginDialogPayload } from '@/stores/useAuth';
+import { useQueryCache } from '@pinia/colada';
+import { Alert, AlertTitle } from '@shadcn/alert';
+import { Button } from '@shadcn/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from '@shadcn/dialog';
+import { FieldError } from '@shadcn/field';
+import { FormControl, FormField, FormItem, FormLabel } from '@shadcn/form';
+import { Input } from '@shadcn/input';
+import { toTypedSchema } from '@vee-validate/valibot';
+import { Lock } from 'lucide-vue-next';
+import * as v from 'valibot';
+import { useForm } from 'vee-validate';
+import { computed, ref, shallowRef } from 'vue';
+
+const authStore = useAuth();
+const loginDialog = authStore.loginDialog;
+const queryCache = useQueryCache();
+
+const data = shallowRef<LoginDialogPayload>();
+
+loginDialog.onReveal((p) => (data.value = p));
+
+const validationSchema = computed(() =>
+    toTypedSchema(
+        authStore.usernameRequired
+            ? v.object({
+                  username: v.pipe(v.string(), v.minLength(1)),
+                  password: v.pipe(v.string(), v.minLength(1))
+              })
+            : v.object({
+                  username: v.optional(v.string()),
+                  password: v.pipe(v.string(), v.minLength(1))
+              })
+    )
+);
+
+const form = useForm({
+    initialValues: {
+        username: undefined,
+        password: ''
+    },
+    validationSchema
+});
+
+const failedLogin = ref(false);
+
+const onSubmit = form.handleSubmit(async (values) => {
+    failedLogin.value = false;
+    const success = await API.login(values.password, values.username);
+    if (success) {
+        loginDialog.confirm();
+        queryCache.invalidateQueries({ key: ['ls'] }, true);
+        queryCache.invalidateQueries({ key: ['tree'] }, true);
+        queryCache.invalidateQueries({ key: ['hello'] }, true);
+    } else {
+        failedLogin.value = true;
+        // If we were logged in, now we aren't
+        if (authStore.username) {
+            queryCache.invalidateQueries({ key: ['ls'] }, true);
+            queryCache.invalidateQueries({ key: ['tree'] }, true);
+            queryCache.invalidateQueries({ key: ['hello'] }, true);
+        }
+    }
+});
+</script>
+
+<template>
+    <Dialog
+        :open="loginDialog.isRevealed && !!data"
+        @update:open="(ev) => ev || loginDialog.cancel()"
+    >
+        <DialogContent
+            @pointerDownOutside="(ev) => data?.canCancel || ev.preventDefault()"
+            @escapeKeyDown="(ev) => data?.canCancel || ev.preventDefault()"
+            v-if="data"
+        >
+            <DialogHeader>
+                <DialogTitle> Log in </DialogTitle>
+                <DialogDescription> Log into your copyparty account to continue </DialogDescription>
+            </DialogHeader>
+            <Alert v-if="data.path" variant="destructive">
+                <Lock />
+                <AlertTitle> Was unable to access {{ '/' + data.path.join('/') }} </AlertTitle>
+            </Alert>
+
+            <form
+                @submit="onSubmit"
+                @reset="data?.canCancel && loginDialog.cancel()"
+                class="grid gap-3"
+            >
+                <FormField
+                    v-if="authStore.usernameRequired"
+                    v-slot="{ componentField, errors }"
+                    name="username"
+                >
+                    <FormItem>
+                        <FormLabel> Username </FormLabel>
+                        <FormControl>
+                            <Input
+                                :disabled="form.isSubmitting.value"
+                                type="text"
+                                minlength="1"
+                                v-bind="componentField"
+                                :model-value="''"
+                            />
+                        </FormControl>
+                        <FieldError v-if="errors.length" :errors="['Username is required']" />
+                    </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField, errors }" name="password">
+                    <FormItem>
+                        <FormLabel> Password </FormLabel>
+                        <FormControl>
+                            <Input
+                                :disabled="form.isSubmitting.value"
+                                type="password"
+                                minlength="1"
+                                v-bind="componentField"
+                                :model-value="''"
+                            />
+                        </FormControl>
+                        <FieldError v-if="errors.length" :errors="['Password is required']" />
+                    </FormItem>
+                </FormField>
+                <FieldError v-if="failedLogin" :errors="['Invalid login']" />
+                <DialogFooter>
+                    <Button v-if="data.canCancel" variant="outline" type="reset">Cancel</Button>
+                    <Button :disabled="form.isSubmitting.value" type="submit">Continue</Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+    </Dialog>
+</template>

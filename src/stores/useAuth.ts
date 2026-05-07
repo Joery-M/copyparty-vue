@@ -1,13 +1,27 @@
-import { API, getApiUrl } from '@/lib/api';
+import { API } from '@/lib/api';
 import { useQuery, useQueryCache } from '@pinia/colada';
+import { useConfirmDialog } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
+
+export type LoginReason = 'forbidden' | '';
+
+export interface LoginDialogPayload {
+    /**
+     * The path that was attempted to be accessed
+     */
+    path?: string[];
+    canCancel?: boolean;
+}
 
 export const useAuth = defineStore('auth', () => {
     const queryCache = useQueryCache();
     const helloPageData = useQuery(API.getHelloPageDataQuery);
 
+    const dialog = useConfirmDialog<LoginDialogPayload>();
+
     return {
+        usernameRequired: computed(() => helloPageData.data.value?.usernames),
         username: computed(() => helloPageData.data.value?.username),
         readable: computed(() => helloPageData.data.value?.readable),
         writable: computed(() => helloPageData.data.value?.writable),
@@ -16,20 +30,12 @@ export const useAuth = defineStore('auth', () => {
             const res = await queryCache.refresh(query);
             return res.data?.perms ?? [];
         },
-        async login(password: string, username?: string) {
-            const form = new FormData();
-            form.set('act', 'login');
-            if (username) form.set('uname', username);
-            form.set('cppwd', password);
-            form.set('uhash', '');
-
-            await fetch(getApiUrl([]), { method: 'POST', body: form })
-                .then((r) => r.text())
-                .then((res) => res.includes('<h1>hi '))
-                .catch(() => false);
-            queryCache.invalidateQueries({ key: ['ls'] }, true);
-            queryCache.invalidateQueries({ key: ['tree'] }, true);
-            queryCache.invalidateQueries({ key: ['hello'] }, true);
-        }
+        loginDialog: dialog,
+        logout: () =>
+            API.login('x').finally(() => {
+                queryCache.invalidateQueries({ key: ['ls'] }, true);
+                queryCache.invalidateQueries({ key: ['tree'] }, true);
+                queryCache.invalidateQueries({ key: ['hello'] }, true);
+            })
     };
 });

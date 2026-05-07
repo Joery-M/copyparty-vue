@@ -19,6 +19,8 @@
     "@shikijs/themes": "^4.0.2",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/vue-table": "^8.21.3",
+    "@vee-validate/valibot": "^4.15.1",
+    "@vee-validate/zod": "^4.15.1",
     "@vueuse/core": "^14.2.1",
     "@vueuse/router": "^14.2.1",
     "class-variance-authority": "^0.7.1",
@@ -37,9 +39,12 @@
     "tailwindcss": "^4.2.2",
     "ufo": "^1.6.3",
     "up2k": "workspace:^",
+    "valibot": "^1.4.0",
     "vaul-vue": "^0.4.1",
+    "vee-validate": "^4.15.1",
     "vue": "^3.5.32",
-    "vue-router": "^5.0.4"
+    "vue-router": "^5.0.4",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@pinia/colada-devtools": "^1.0.0",

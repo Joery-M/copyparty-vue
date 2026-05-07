@@ -161,12 +161,39 @@ export namespace API {
                 };
             });
     }
+    export function getIsUsernameRequired(signal: AbortSignal) {
+        return fetch(getApiUrl([], { h: '' }), { signal })
+            .then((r) => r.text())
+            .then((res) => res.includes('name="uname"'));
+    }
     export const getHelloPageDataQuery = defineQueryOptions({
         key: ['hello'],
-        query: ({ signal }) => getHelloPageData(signal),
+        query: async ({ signal }) => {
+            const res = await Promise.all([
+                getHelloPageData(signal),
+                getIsUsernameRequired(signal)
+            ]);
+            return {
+                ...res[0],
+                usernames: res[1]
+            };
+        },
         refetchOnWindowFocus: false,
         staleTime: 30_000
     });
+
+    export function login(password: string, username?: string) {
+        const form = new FormData();
+        form.set('act', 'login');
+        form.set('uname', username || '');
+        form.set('cppwd', password);
+        form.set('uhash', '');
+
+        return fetch(getApiUrl([]), { method: 'POST', body: form })
+            .then((r) => r.text())
+            .then((res) => res.includes('<h1>hi '))
+            .catch(() => false);
+    }
 }
 
 /**

@@ -34,17 +34,36 @@ fileDialog.onChange((fileList) => {
                     <ArrowUp />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent class="mx-5">
+            <DropdownMenuContent align="end">
                 <DropdownMenuItem @click="fileDialog.open()"> File </DropdownMenuItem>
                 <DropdownMenuItem @click="fileDialog.open({ directory: true })">
                     Folder
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-        <Button size="lg" variant="outline">
-            {{ auth.username }}
+
+        <!-- If not logged in, make this button only show the login dialog -->
+        <Button
+            v-if="!auth.username"
+            size="lg"
+            variant="outline"
+            @click="auth.loginDialog.reveal({ canCancel: true })"
+        >
+            Log in
             <User2 />
         </Button>
+        <DropdownMenu v-else>
+            <DropdownMenuTrigger>
+                <Button size="lg" variant="outline">
+                    {{ auth.username ?? 'Log in' }}
+                    <User2 />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem @click="fileDialog.open()"> File </DropdownMenuItem>
+                <DropdownMenuItem @click="auth.logout()"> Log out </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     </div>
 </template>
 
