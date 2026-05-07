@@ -115,11 +115,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </AlertDescription>
             </Alert>
 
-            <form
-                @submit="onSubmit"
-                @reset="data?.canCancel && loginDialog.cancel()"
-                class="grid gap-3"
-            >
+            <form @submit="onSubmit" @reset="data?.canCancel && loginDialog.cancel()">
                 <FormField
                     v-if="authStore.usernameRequired"
                     v-slot="{ componentField, errors }"
@@ -163,3 +159,11 @@ const onSubmit = form.handleSubmit(async (values) => {
         </DialogContent>
     </Dialog>
 </template>
+
+<style scoped>
+@reference "@/style.css";
+
+form {
+    @apply grid gap-3;
+}
+</style>

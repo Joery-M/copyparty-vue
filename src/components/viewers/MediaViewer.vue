@@ -12,7 +12,7 @@ import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
 import { until, useElementSize, useFullscreen, useKeyModifier } from '@vueuse/core';
-import { computed, ref, useTemplateRef } from 'vue';
+import { computed, onUnmounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{ file: File }>();
 
@@ -49,13 +49,13 @@ const containerSize = useElementSize(containerElem);
 const mediaElem = useTemplateRef('media');
 const fullscreenElement = useFullscreen(mediaElem);
 const mediaSize = computed<[number, number]>(() => {
-    if (!mediaElem.value || isLoading.value) return [0, 0];
+    if (!mediaElem.value || isLoading.value) return [100, 100];
     if (mediaElem.value instanceof HTMLImageElement) {
         return [mediaElem.value.naturalWidth, mediaElem.value.naturalHeight];
     } else if (mediaElem.value instanceof HTMLVideoElement) {
         return [mediaElem.value.videoWidth, mediaElem.value.videoHeight];
     } else {
-        return [0, 0];
+        return [100, 100];
     }
 });
 
@@ -120,11 +120,14 @@ function zoomToFit() {
 }
 
 async function loaded() {
+    if (!isLoading.value) return
+    console.log('A');
     isLoading.value = false;
     await Promise.all([
         until(smallestContainerAxis).not.toBe(0),
         until(largestZoomedMediaAxis).not.toBe(0)
     ]);
+    console.log('B');
     // If it's larger than the container on load, resize it
     if (largestZoomedMediaAxis.value > smallestContainerAxis.value) zoomToFit();
     // Not the best, but it prevents jumping at the start
@@ -185,6 +188,7 @@ const computedStyle = computed(() => ({
             :style="computedStyle"
             :src="mediaUrl"
             :alt="file.name"
+            @loadedmetadata="loaded()"
             @loadeddata="loaded()"
             controls
             autoplay

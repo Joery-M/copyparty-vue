@@ -25,7 +25,7 @@ fileDialog.onChange((fileList) => {
 </script>
 
 <template>
-    <div id="bar">
+    <div class="toolbar">
         <div class="spacer" />
         <DropdownMenu>
             <DropdownMenuTrigger>
@@ -60,20 +60,22 @@ fileDialog.onChange((fileList) => {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem @click="fileDialog.open()"> File </DropdownMenuItem>
+                <DropdownMenuItem @click="auth.loginDialog.reveal({ canCancel: true })">
+                    Switch user
+                </DropdownMenuItem>
                 <DropdownMenuItem @click="auth.logout()"> Log out </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     </div>
 </template>
 
-<style lang="css" scoped>
+<style scoped>
 @reference "@/style.css";
 
-#bar {
+.toolbar {
     @apply flex px-5 h-15 w-full items-center gap-2.5;
     .spacer {
-        flex: 1;
+        @apply flex-1;
     }
 }
 </style>
