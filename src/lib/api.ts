@@ -7,9 +7,8 @@ import { Directory as DirectoryEntry, File as FileEntry, type AnyDirectoryEntry 
 const baseUrl = stringifyParsedURL(
     parseURL(
         __DEV__ || import.meta.env.VITE_FORCE_HOST_OVERRIDE == 'true'
-            ? import.meta.env.VITE_COPYPARTY_HOST || useBrowserLocation().value.origin
-            : useBrowserLocation().value.origin,
-        'http'
+            ? import.meta.env.VITE_API_HOST || useBrowserLocation().value.origin
+            : useBrowserLocation().value.origin
     )
 );
 
