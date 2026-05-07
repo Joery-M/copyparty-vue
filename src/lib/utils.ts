@@ -10,6 +10,10 @@ export function arrayStartsWith(whole: any[], part: any[]) {
     return part.length === 0 || !part.some((v, i) => whole[i] !== v);
 }
 
+export function pathToParts(path: string) {
+    return path.split(/[\/\\]+/g).filter((v) => !!v);
+}
+
 export function formatFileSize(b: number, unit: 'IEC' | 'SI' = 'IEC', useBits = false) {
     const bytes = useBits ? b * 8 : b;
     const k = unit === 'IEC' ? 1024 : 1000;

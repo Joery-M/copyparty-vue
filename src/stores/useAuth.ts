@@ -1,16 +1,17 @@
 import { API } from '@/lib/api';
 import { useQuery, useQueryCache } from '@pinia/colada';
-import { useConfirmDialog } from '@vueuse/core';
+import { useConfirmDialog, whenever } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
 
-export type LoginReason = 'forbidden' | '';
+export type LoginReason = 'unauthorized' | 'not found';
 
 export interface LoginDialogPayload {
     /**
      * The path that was attempted to be accessed
      */
     path?: string[];
+    reason?: LoginReason;
     canCancel?: boolean;
 }
 
@@ -20,11 +21,22 @@ export const useAuth = defineStore('auth', () => {
 
     const dialog = useConfirmDialog<LoginDialogPayload>();
 
+    whenever(
+        () => helloPageData.data.value,
+        ({ readable, writable }) => {
+            if (readable.length === 0 || writable.length === 0) {
+                // If we have access to nothing, just show the login dialog
+                dialog.reveal({ canCancel: false });
+            }
+        },
+        { once: true }
+    );
+
     return {
         usernameRequired: computed(() => helloPageData.data.value?.usernames),
         username: computed(() => helloPageData.data.value?.username),
-        readable: computed(() => helloPageData.data.value?.readable),
-        writable: computed(() => helloPageData.data.value?.writable),
+        readable: computed(() => helloPageData.data.value?.readable ?? []),
+        writable: computed(() => helloPageData.data.value?.writable ?? []),
         async getPermissions(dir: string[]) {
             const query = queryCache.ensure(API.getListDirectoryQuery(dir));
             const res = await queryCache.refresh(query);

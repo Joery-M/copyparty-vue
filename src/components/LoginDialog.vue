@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { API } from '@/lib/api';
+import { pathToParts } from '@/lib/utils';
 import { useAuth, type LoginDialogPayload } from '@/stores/useAuth';
 import { useQueryCache } from '@pinia/colada';
-import { Alert, AlertTitle } from '@shadcn/alert';
+import { Alert, AlertDescription, AlertTitle } from '@shadcn/alert';
 import { Button } from '@shadcn/button';
 import {
     Dialog,
@@ -20,6 +21,7 @@ import { Lock } from 'lucide-vue-next';
 import * as v from 'valibot';
 import { useForm } from 'vee-validate';
 import { computed, ref, shallowRef } from 'vue';
+import { RouterLink } from 'vue-router';
 
 const authStore = useAuth();
 const loginDialog = authStore.loginDialog;
@@ -79,6 +81,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         @update:open="(ev) => ev || loginDialog.cancel()"
     >
         <DialogContent
+            :show-close-button="data?.canCancel"
             @pointerDownOutside="(ev) => data?.canCancel || ev.preventDefault()"
             @escapeKeyDown="(ev) => data?.canCancel || ev.preventDefault()"
             v-if="data"
@@ -89,7 +92,27 @@ const onSubmit = form.handleSubmit(async (values) => {
             </DialogHeader>
             <Alert v-if="data.path" variant="destructive">
                 <Lock />
-                <AlertTitle> Was unable to access {{ '/' + data.path.join('/') }} </AlertTitle>
+                <AlertTitle>
+                    You are unable to access <code>/{{ data.path.join('/') }}/</code>
+                </AlertTitle>
+                <AlertDescription v-if="authStore.readable.length > 0">
+                    You can access the following directories:
+                    <ul>
+                        <template v-for="dir in authStore.readable" :key="dir">
+                            <RouterLink
+                                :to="{
+                                    name: 'viewer',
+                                    params: { path: pathToParts(dir).concat('') }
+                                }"
+                                @click="loginDialog.cancel()"
+                            >
+                                <li>
+                                    - <code>{{ dir }}</code>
+                                </li>
+                            </RouterLink>
+                        </template>
+                    </ul>
+                </AlertDescription>
             </Alert>
 
             <form

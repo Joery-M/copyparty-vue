@@ -10,13 +10,33 @@ import { computed, h } from 'vue';
 import { RouterLink } from 'vue-router';
 import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
+import { useAuth } from '@/stores/useAuth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
+import { whenever } from '@vueuse/core';
 
+const authStore = useAuth();
 const routeState = useRouteState();
 const settings = useSettings();
 
 const listDirQuery = useQuery(() => API.getListDirectoryQuery(routeState.dir));
+whenever(listDirQuery.error, (err) => {
+    if (err instanceof API.ApiError) {
+        if (err.cause.code === 403) {
+            authStore.loginDialog.reveal({
+                path: routeState.dir,
+                reason: 'unauthorized',
+                canCancel: false
+            });
+        } else if (err.cause.code === 401) {
+            authStore.loginDialog.reveal({
+                path: routeState.dir,
+                reason: 'not found',
+                canCancel: false
+            });
+        }
+    }
+});
 
 const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
 

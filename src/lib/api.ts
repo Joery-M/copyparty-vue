@@ -23,12 +23,27 @@ export function getApiUrl(strings: string[], params?: QueryObject): string {
 }
 
 export namespace API {
+    export class ApiError extends Error {
+        constructor(public cause: { code: number; res?: Response; cause?: Error }) {
+            super('An API error occurred');
+        }
+    }
+
+    function extractError(res: Response) {
+        if (res.status >= 400) {
+            throw new ApiError({ code: res.status, res });
+        } else {
+            return res;
+        }
+    }
+
     interface FileTreeResponse {
         a: string[];
     }
 
     export function getFileTree(path: string[], signal: AbortSignal) {
         return fetch(getApiUrl(path, { tree: '.' }), { signal })
+            .then((r) => extractError(r))
             .then((r) => r.json())
             .then((r: FileTreeResponse) => r.a.map(decodeURIComponent));
     }
@@ -94,6 +109,7 @@ export namespace API {
 
     export function getListDirectory(path: string[], signal: AbortSignal) {
         return fetch(getApiUrl(path, { ls: '' }), { signal })
+            .then((r) => extractError(r))
             .then((r) => r.json())
             .then((res: ListDirectoryResponse) => ({
                 entries: [
