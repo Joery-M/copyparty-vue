@@ -7,6 +7,7 @@ import { computedAsync, whenever } from '@vueuse/core';
 import { computed, defineComponent, h, shallowRef } from 'vue';
 import DrawerViewer from './DrawerViewer.vue';
 
+import { useI18n } from 'vue-i18n';
 import DialogViewer from './DialogViewer.vue';
 
 const routeState = useRouteState();
@@ -52,18 +53,19 @@ whenever(
     { immediate: true }
 );
 
+const i18n = useI18n();
 const title = computed(() => {
     if (lastFile.value?.name) {
         return lastFile.value.name;
     } else {
-        return 'File viewer';
+        return i18n.t('viewer.default_title');
     }
 });
 const description = computed(() => {
     if (lastFile.value?.name) {
-        return `File viewer for '${lastFile.value.name}'`;
+        return i18n.t('viewer.description', [lastFile.value.name]);
     } else {
-        return 'Empty file viewer';
+        return i18n.t('viewer.default_description');
     }
 });
 </script>

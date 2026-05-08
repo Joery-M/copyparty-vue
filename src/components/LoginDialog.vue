@@ -87,16 +87,16 @@ const onSubmit = form.handleSubmit(async (values) => {
             v-if="data"
         >
             <DialogHeader>
-                <DialogTitle> Log in </DialogTitle>
-                <DialogDescription> Log into your copyparty account to continue </DialogDescription>
+                <DialogTitle> {{ $t('dialogs.login.title') }} </DialogTitle>
+                <DialogDescription> {{ $t('dialogs.login.description') }} </DialogDescription>
             </DialogHeader>
             <Alert v-if="data.path" variant="destructive">
                 <Lock />
                 <AlertTitle>
-                    You are unable to access <code>/{{ data.path.join('/') }}/</code>
+                    {{ $t('error.access_error') }} <code>/{{ data.path.join('/') }}/</code>
                 </AlertTitle>
                 <AlertDescription v-if="authStore.readable.length > 0">
-                    You can access the following directories:
+                    {{ $t('accessible_volumes', authStore.readable.length) }}
                     <ul>
                         <template v-for="dir in authStore.readable" :key="dir">
                             <RouterLink
@@ -122,38 +122,46 @@ const onSubmit = form.handleSubmit(async (values) => {
                     name="username"
                 >
                     <FormItem>
-                        <FormLabel> Username </FormLabel>
+                        <FormLabel> {{ $t('dialogs.login.username') }} </FormLabel>
                         <FormControl>
                             <Input
                                 :disabled="form.isSubmitting.value"
                                 type="text"
                                 minlength="1"
                                 v-bind="componentField"
-                                :model-value="''"
                             />
                         </FormControl>
-                        <FieldError v-if="errors.length" :errors="['Username is required']" />
+                        <FieldError
+                            v-if="errors.length"
+                            :errors="[$t('validation.required', [$t('dialogs.login.username')])]"
+                        />
                     </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField, errors }" name="password">
                     <FormItem>
-                        <FormLabel> Password </FormLabel>
+                        <FormLabel> {{ $t('dialogs.login.password') }} </FormLabel>
                         <FormControl>
                             <Input
                                 :disabled="form.isSubmitting.value"
                                 type="password"
                                 minlength="1"
                                 v-bind="componentField"
-                                :model-value="''"
                             />
                         </FormControl>
-                        <FieldError v-if="errors.length" :errors="['Password is required']" />
+                        <FieldError
+                            v-if="errors.length"
+                            :errors="[$t('validation.required', [$t('dialogs.login.password')])]"
+                        />
                     </FormItem>
                 </FormField>
-                <FieldError v-if="failedLogin" :errors="['Invalid login']" />
+                <FieldError v-if="failedLogin" :errors="[$t('error.invalid_login')]" />
                 <DialogFooter>
-                    <Button v-if="data.canCancel" variant="outline" type="reset">Cancel</Button>
-                    <Button :disabled="form.isSubmitting.value" type="submit">Continue</Button>
+                    <Button v-if="data.canCancel" variant="outline" type="reset">
+                        {{ $t('cancel') }}
+                    </Button>
+                    <Button :disabled="form.isSubmitting.value" type="submit">
+                        {{ $t('continue') }}
+                    </Button>
                 </DialogFooter>
             </form>
         </DialogContent>

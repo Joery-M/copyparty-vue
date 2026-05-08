@@ -43,18 +43,17 @@ effect(() => {
 </script>
 
 <template>
-    <div
-        class="absolute top-0 left-0 transition-all h-0.5 bg-ring"
-        :style="{ width: loadProgress * 100 + '%', opacity: showProgress ? 1 : 0 }"
-    />
-    <textarea v-model="sourceText" class="outline-accent outline px-4" />
+    <div :style="{ width: loadProgress * 100 + '%', opacity: showProgress ? 1 : 0 }" />
+    <textarea v-model="sourceText" />
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
+@reference "@/style.css";
+
+div {
+    @apply absolute top-0 left-0 transition-all h-0.5 bg-ring;
+}
 textarea {
-    width: 100%;
-    height: 100%;
-    resize: none;
-    font-size: var(--text-base);
+    @apply size-full resize-none text-base outline-accent outline px-4;
 }
 </style>

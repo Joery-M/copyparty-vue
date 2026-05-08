@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useDark } from '@vueuse/core';
+import { TooltipProvider } from 'reka-ui';
 import { defineAsyncComponent } from 'vue';
 import { RouterView } from 'vue-router';
 
@@ -13,6 +14,8 @@ useDark();
 </script>
 
 <template>
-    <RouterView />
+    <TooltipProvider>
+        <RouterView />
+    </TooltipProvider>
     <component v-if="PiniaColadaDevtools" :is="PiniaColadaDevtools" />
 </template>

@@ -20,6 +20,4 @@ export function formatFileSize(b: number, unit: 'IEC' | 'SI' = 'IEC', useBits = 
     return `${num} ${sizes[i]}`;
 }
 
-export function formatTime(seconds:number) {
-    
-}
+export function formatTime(seconds: number) {}

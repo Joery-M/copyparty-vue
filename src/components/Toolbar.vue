@@ -30,14 +30,16 @@ fileDialog.onChange((fileList) => {
         <DropdownMenu>
             <DropdownMenuTrigger>
                 <Button size="lg">
-                    Upload
+                    {{ $t('upload') }}
                     <ArrowUp />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem @click="fileDialog.open()"> File </DropdownMenuItem>
+                <DropdownMenuItem @click="fileDialog.open()">
+                    {{ $t('file') }}
+                </DropdownMenuItem>
                 <DropdownMenuItem @click="fileDialog.open({ directory: true })">
-                    Folder
+                    {{ $t('folder') }}
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
@@ -49,21 +51,23 @@ fileDialog.onChange((fileList) => {
             variant="outline"
             @click="auth.loginDialog.reveal({ canCancel: true })"
         >
-            Log in
+            {{ $t('user.login') }}
             <User2 />
         </Button>
         <DropdownMenu v-else>
             <DropdownMenuTrigger>
                 <Button size="lg" variant="outline">
-                    {{ auth.username ?? 'Log in' }}
+                    {{ auth.username ?? $t('user.login') }}
                     <User2 />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem @click="auth.loginDialog.reveal({ canCancel: true })">
-                    Switch user
+                    {{ $t('user.switch') }}
                 </DropdownMenuItem>
-                <DropdownMenuItem @click="auth.logout()"> Log out </DropdownMenuItem>
+                <DropdownMenuItem @click="auth.logout()">
+                    {{ $t('user.logout') }}
+                </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     </div>

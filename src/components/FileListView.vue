@@ -82,12 +82,12 @@ function getEntryRenderFunction(entry: AnyDirectoryEntry) {
 
 const i18n = useI18n();
 
-function getTagRenderFunction(tag:string, value: _JSONPrimitive) {
+function getTagRenderFunction(tag: string, value: _JSONPrimitive) {
     switch (tag) {
-        case ".dur":
-            i18n.d(value)
+        case '.dur':
+            i18n.d(value);
             break;
-    
+
         default:
             break;
     }

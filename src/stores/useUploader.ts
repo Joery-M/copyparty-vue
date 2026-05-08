@@ -28,25 +28,24 @@ export const useUploader = defineStore('uploader', () => {
             const acceptedFiles: [File, string][] = [...allFiles.good];
             if (allFiles.bad.size > 0) {
                 const continueAfterBad = await dialog.reveal({
-                    title: 'Problem reading files',
-                    description:
-                        "There was a problem reading the following files, they won't be uploaded:",
+                    title: 'dialogs.bad_files.title',
+                    description: 'dialogs.bad_files.description',
                     files: allFiles.bad
                 });
                 if (!continueAfterBad.data) return;
             }
             if (allFiles.junk.size > 0) {
                 const uploadJunk = await dialog.reveal({
-                    title: 'Junk files found',
-                    description: 'Are you sure you want to upload these files?',
+                    title: 'dialogs.junk_files.title',
+                    description: 'dialogs.junk_files.description',
                     files: allFiles.junk
                 });
                 if (uploadJunk.data) acceptedFiles.push(...allFiles.junk);
             }
             if (allFiles.bad.size === 0 && allFiles.junk.size === 0) {
                 const canContinue = await dialog.reveal({
-                    title: 'Confirm files to upload',
-                    description: 'Are you sure you want to upload these files?',
+                    title: 'dialogs.confirm.title',
+                    description: 'dialogs.confirm.description',
                     files: allFiles.good
                 });
                 if (!canContinue.data) return;

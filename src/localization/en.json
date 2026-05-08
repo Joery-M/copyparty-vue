@@ -14,5 +14,61 @@
       ".fps": "FPS"
     }
   },
-  "filename": "File name"
+  "filename": "File name",
+  "user": {
+    "login": "Log in",
+    "switch": "Switch user",
+    "logout": "Log out"
+  },
+  "upload": "Upload",
+  "file": "File",
+  "folder": "Folder",
+  "error": {
+    "access_error": "You are unable to access",
+    "invalid_login": "Invalid login"
+  },
+  "accessible_volumes": "You can access the following volume: | You can access the following volumes:",
+  "validation": {
+    "required": "{0} is required"
+  },
+  "cancel": "Cancel",
+  "continue": "Continue",
+  "dialogs": {
+    "login": {
+      "title": "Log in",
+      "description": "Log into your copyparty account to continue",
+      "username": "Username",
+      "password": "Password"
+    },
+    "bad_files": {
+      "title": "Problem reading files",
+      "description": "There was a problem reading the following files, they won't be uploaded:"
+    },
+    "junk_files": {
+      "title": "Junk files found",
+      "description": "You probably didn't intend for these files to be uploaded:"
+    },
+    "confirm": {
+      "title": "Confirm files to upload",
+      "description": "Are you sure you want to upload these files?"
+    }
+  },
+  "and_more": "And {n} more",
+  "viewer": {
+    "default_title": "File viewer",
+    "default_description": "Empty file viewer",
+    "description": "File viewer for {0}",
+    "media": {
+      "zoom": {
+        "out": "Zoom out",
+        "in": "Zoom in",
+        "fit": "Zoom to fit",
+        "reset": "Reset zoom"
+      },
+      "background": "Background",
+      "smoothing": "Pixel smoothing",
+      "rotate_ccw": "Rotate counter-clockwise",
+      "rotate_cw": "Rotate clockwise"
+    }
+  }
 }

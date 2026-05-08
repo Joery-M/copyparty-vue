@@ -27,23 +27,39 @@ dialog.onReveal((p) => (data.value = p));
         <DialogContent v-if="data">
             <DialogHeader>
                 <DialogTitle>
-                    {{ data.title }}
+                    {{ $t(data.title) }}
                 </DialogTitle>
-                <DialogDescription class="max-h-48 overflow-y-auto">
-                    {{ data.description }}
+                <DialogDescription class="max-h-96 overflow-y-auto">
+                    {{ $t(data.description) }}
 
                     <ul v-if="data.files">
                         <li v-for="file in files.top" :key="file">
                             {{ file }}
                         </li>
-                        <li v-if="files.rest > 0">And {{ files.rest }} more</li>
+                        <li v-if="files.rest > 0">
+                            <i>{{ $t('and_more', files.rest) }}</i>
+                        </li>
                     </ul>
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-                <Button @click="dialog.cancel(false)" variant="outline"> Cancel </Button>
-                <Button @click="dialog.confirm(true)" type="submit"> Continue </Button>
+                <Button @click="dialog.cancel(false)" variant="outline">
+                    {{ $t('cancel') }}
+                </Button>
+                <Button @click="dialog.confirm(true)" type="submit"> {{ $t('continue') }} </Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
 </template>
+
+<style scoped>
+@reference '@/style.css';
+
+ul {
+    @apply p-[revert] pl-4;
+    li {
+        list-style-type: '- ';
+        padding: revert;
+    }
+}
+</style>
