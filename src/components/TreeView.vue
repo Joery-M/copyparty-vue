@@ -26,7 +26,7 @@ const isOpen = ref(true);
                 <TreeViewList dir="/" :route-path="routePath.dir" />
             </SidebarContent>
         </Sidebar>
-        <SidebarInset>
+        <SidebarInset class="min-w-0">
             <slot />
         </SidebarInset>
     </SidebarProvider>

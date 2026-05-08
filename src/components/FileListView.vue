@@ -2,11 +2,12 @@
 import { API, getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
-import { formatFileSize } from '@/lib/utils';
+import { formatFileSize } from '@/lib/format';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useQuery, type _JSONPrimitive } from '@pinia/colada';
 import { computed, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
@@ -79,11 +80,24 @@ function getEntryRenderFunction(entry: AnyDirectoryEntry) {
     }
 }
 
+const i18n = useI18n();
+
+function getTagRenderFunction(tag:string, value: _JSONPrimitive) {
+    switch (tag) {
+        case ".dur":
+            i18n.d(value)
+            break;
+    
+        default:
+            break;
+    }
+}
+
 const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
     const tags = (listDirQuery.data.value?.tags ?? []).map((tag) => {
         return {
             accessorKey: 'tags',
-            header: tag,
+            header: i18n.t(`filelist.tags["${tag}"]`, tag),
             cell: ({ getValue }) => getValue<Map<string, _JSONPrimitive>>().get(tag)
         } satisfies ColumnDef<AnyDirectoryEntry>;
     });
@@ -92,11 +106,6 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
             accessorKey: 'name',
             header: () => 'File name',
             cell: ({ row: { original } }) => getEntryRenderFunction(original)
-        },
-        {
-            accessorKey: 'classification',
-            header: () => 'File name',
-            cell: ({ getValue }) => FileClassification[getValue<FileClassification>()]
         },
         {
             accessorKey: 'size',
@@ -124,7 +133,7 @@ const table = computed(() =>
 </script>
 
 <template>
-    <div class="border rounded-md">
+    <div id="wrapper">
         <Table v-if="isLoading" class="loader-table">
             <TableHeader>
                 <TableRow>
@@ -182,5 +191,13 @@ const table = computed(() =>
     [data-i='#{$i}'] {
         animation-delay: $i * 200ms;
     }
+}
+</style>
+
+<style scoped>
+@reference "@/style.css";
+
+#wrapper {
+    @apply my-12 ml-6 mr-5 border rounded-md;
 }
 </style>

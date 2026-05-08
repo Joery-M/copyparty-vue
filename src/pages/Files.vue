@@ -34,9 +34,7 @@ useEventListener(document, 'paste', (ev) => {
     <div class="flex flex-col flex-1">
         <Separator class="my-4" />
         <TreeView class="inline-flex flex-1">
-            <div class="my-12 mx-6">
-                <FileListView v-if="fileListType === 'list'" />
-            </div>
+            <FileListView v-if="fileListType === 'list'" />
         </TreeView>
     </div>
 

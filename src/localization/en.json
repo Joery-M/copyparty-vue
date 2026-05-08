@@ -1,0 +1,18 @@
+{
+  "filelist": {
+    "tags": {
+      "sz": "Size",
+      ".files": "Files",
+      ".dur": "Duration",
+      ".q": "Bitrate",
+      ".vq": "Video bitrate",
+      ".aq": "Audio bitrate",
+      "vc": "Video codec",
+      "ac": "Audio codec",
+      "fmt": "Format",
+      "res": "Resolution",
+      ".fps": "FPS"
+    }
+  },
+  "filename": "File name"
+}
