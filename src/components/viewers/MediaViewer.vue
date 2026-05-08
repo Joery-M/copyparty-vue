@@ -12,7 +12,7 @@ import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
 import { until, useElementSize, useFullscreen, useKeyModifier } from '@vueuse/core';
-import { computed, onUnmounted, ref, useTemplateRef } from 'vue';
+import { computed, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{ file: File }>();
 
@@ -120,14 +120,12 @@ function zoomToFit() {
 }
 
 async function loaded() {
-    if (!isLoading.value) return
-    console.log('A');
+    if (!isLoading.value) return;
     isLoading.value = false;
     await Promise.all([
         until(smallestContainerAxis).not.toBe(0),
         until(largestZoomedMediaAxis).not.toBe(0)
     ]);
-    console.log('B');
     // If it's larger than the container on load, resize it
     if (largestZoomedMediaAxis.value > smallestContainerAxis.value) zoomToFit();
     // Not the best, but it prevents jumping at the start
