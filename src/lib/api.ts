@@ -117,7 +117,8 @@ export namespace API {
                     res.files.map((entry) => new FileEntry(path, entry))
                 ].flat() as AnyDirectoryEntry[],
                 perms: res.perms as Permissions[],
-                readmes: res.readmes
+                readmes: res.readmes,
+                tags: res.taglist
             }));
     }
 

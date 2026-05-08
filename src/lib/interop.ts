@@ -7,6 +7,7 @@ class BaseDirectoryEntry {
     name: string;
     size: number | null = null;
     created: Date | null = null;
+    tags;
 
     get fullPath() {
         return this.cwd.concat(this.name);
@@ -20,6 +21,7 @@ class BaseDirectoryEntry {
         this.name = decodeURIComponent(input.href.replace(/\/?$/, ''));
         if (input.sz != null) this.size = input.sz;
         if (input.ts != null) this.created = new Date(input.ts);
+        this.tags = new Map(Object.entries(input.tags ?? {}));
     }
 }
 

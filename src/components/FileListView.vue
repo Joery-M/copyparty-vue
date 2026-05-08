@@ -5,7 +5,7 @@ import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { formatFileSize } from '@/lib/utils';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
-import { useQuery } from '@pinia/colada';
+import { useQuery, type _JSONPrimitive } from '@pinia/colada';
 import { computed, h } from 'vue';
 import { RouterLink } from 'vue-router';
 import MarkdownViewer from './viewers/MarkdownViewer.vue';
@@ -79,36 +79,48 @@ function getEntryRenderFunction(entry: AnyDirectoryEntry) {
     }
 }
 
-const columns: ColumnDef<AnyDirectoryEntry>[] = [
-    {
-        accessorKey: 'name',
-        header: () => 'File name',
-        cell: ({ row: { original } }) => getEntryRenderFunction(original)
-    },
-    {
-        accessorKey: 'classification',
-        header: () => 'File name',
-        cell: ({ getValue }) => FileClassification[getValue<FileClassification>()]
-    },
-    {
-        accessorKey: 'size',
-        header: () => 'Size',
-        cell: ({ getValue }) =>
-            formatFileSize(
-                getValue<number>(),
-                settings.format.fileSizes.type,
-                settings.format.fileSizes.bits
-            )
-    }
-];
-
-const table = useVueTable({
-    get data() {
-        return listDirQuery.data.value?.entries ?? [];
-    },
-    columns,
-    getCoreRowModel: getCoreRowModel()
+const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
+    const tags = (listDirQuery.data.value?.tags ?? []).map((tag) => {
+        return {
+            accessorKey: 'tags',
+            header: tag,
+            cell: ({ getValue }) => getValue<Map<string, _JSONPrimitive>>().get(tag)
+        } satisfies ColumnDef<AnyDirectoryEntry>;
+    });
+    return [
+        {
+            accessorKey: 'name',
+            header: () => 'File name',
+            cell: ({ row: { original } }) => getEntryRenderFunction(original)
+        },
+        {
+            accessorKey: 'classification',
+            header: () => 'File name',
+            cell: ({ getValue }) => FileClassification[getValue<FileClassification>()]
+        },
+        {
+            accessorKey: 'size',
+            header: () => 'Size',
+            cell: ({ getValue }) =>
+                formatFileSize(
+                    getValue<number>(),
+                    settings.format.fileSizes.type,
+                    settings.format.fileSizes.bits
+                )
+        },
+        ...tags
+    ];
 });
+
+const table = computed(() =>
+    useVueTable({
+        get data() {
+            return listDirQuery.data.value?.entries ?? [];
+        },
+        columns: columns.value,
+        getCoreRowModel: getCoreRowModel()
+    })
+);
 </script>
 
 <template>
