@@ -215,9 +215,9 @@ export namespace API {
 /**
  * Turn a boolean ref into a ref that turns true after a delay, but turns false immediately
  */
-export function useLoadingState(loading: MaybeRefOrGetter<boolean>, time = 1000) {
+export function useLoadingState(loading: MaybeRefOrGetter<boolean>, time = 200) {
     const state = toRef(loading);
-    const output = ref(state.value);
+    const output = ref(false);
     const timer = useTimeoutFn(() => (output.value = true), time, {
         immediate: false
     });

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { API, getApiUrl } from '@/lib/api';
+import { API, getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { formatFileSize } from '@/lib/utils';
@@ -11,6 +11,7 @@ import { RouterLink } from 'vue-router';
 import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
 import { useAuth } from '@/stores/useAuth';
+import { Skeleton } from '@shadcn/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
 import { whenever } from '@vueuse/core';
@@ -37,6 +38,8 @@ whenever(listDirQuery.error, (err) => {
         }
     }
 });
+
+const isLoading = useLoadingState(listDirQuery.isPending);
 
 const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
 
@@ -110,7 +113,23 @@ const table = useVueTable({
 
 <template>
     <div class="border rounded-md">
-        <Table>
+        <Table v-if="isLoading" class="loader-table">
+            <TableHeader>
+                <TableRow>
+                    <TableHead v-for="i in 4">
+                        <Skeleton :data-i="i" class="h-2"></Skeleton>
+                    </TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                <TableRow v-for="i in 8">
+                    <TableCell colspan="4">
+                        <Skeleton :data-i="i + 4" class="h-2"></Skeleton>
+                    </TableCell>
+                </TableRow>
+            </TableBody>
+        </Table>
+        <Table v-else>
             <TableHeader>
                 <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
                     <TableHead v-for="header in headerGroup.headers" :key="header.id">
@@ -145,3 +164,11 @@ const table = useVueTable({
         <MarkdownViewer :input="readme"></MarkdownViewer>
     </template>
 </template>
+
+<style lang="scss" scoped>
+@for $i from 1 through 12 {
+    [data-i='#{$i}'] {
+        animation-delay: $i * 200ms;
+    }
+}
+</style>

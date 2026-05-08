@@ -44,7 +44,10 @@ whenever(
 );
 
 const treeQuery = useQuery(() => ({ ...API.getFileTreeQuery(props.base), enabled: isOpen.value }));
-const isLoading = useLoadingState(treeQuery.isLoading, 200);
+const isLoading = useLoadingState(
+    // Is true when loading for first time and if enabled
+    () => treeQuery.isPending.value && treeQuery.isLoading.value
+);
 </script>
 
 <template>
