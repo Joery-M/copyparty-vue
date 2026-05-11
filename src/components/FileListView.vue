@@ -1,21 +1,33 @@
 <script lang="ts" setup>
 import { API, getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
+import { formatFileSize, formatTime } from '@/lib/format';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
-import { formatFileSize } from '@/lib/format';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useQuery, type _JSONPrimitive } from '@pinia/colada';
-import { computed, h } from 'vue';
+import { computed, h, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
 import { useAuth } from '@/stores/useAuth';
+import { Button } from '@shadcn/button';
 import { Skeleton } from '@shadcn/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
-import { FlexRender, getCoreRowModel, useVueTable, type ColumnDef } from '@tanstack/vue-table';
+import { valueUpdater } from '@shadcn/table/utils';
+import {
+    FlexRender,
+    getCoreRowModel,
+    getSortedRowModel,
+    useVueTable,
+    type Column,
+    type ColumnDef,
+    type SortingState
+} from '@tanstack/vue-table';
 import { whenever } from '@vueuse/core';
+import { SortAsc, SortDesc } from 'lucide-vue-next';
+import Tooltip from './Tooltip.vue';
 
 const authStore = useAuth();
 const routeState = useRouteState();
@@ -82,44 +94,116 @@ function getEntryRenderFunction(entry: AnyDirectoryEntry) {
 
 const i18n = useI18n();
 
-function getTagRenderFunction(tag: string, value: _JSONPrimitive) {
+function wrapWithTooltip(text: any, raw: any) {
+    return h(Tooltip, { content: String(raw) }, () => h('span', text));
+}
+
+function getTagRenderFunction(tag: string, value?: _JSONPrimitive) {
     switch (tag) {
         case '.dur':
-            i18n.d(value);
-            break;
+            if (typeof value === 'number' && !Number.isNaN(Number(value)))
+                return wrapWithTooltip(formatTime(Number(value)), value);
+            else return value;
+        case 'tdate':
+            if (typeof value === 'string')
+                return wrapWithTooltip(new Date(value).toLocaleString(), value);
+            else return value;
+        case '.q':
+        case '.aq':
+        case '.vq': {
+            const sizeFormat = settings.format.fileSizes;
+            if (typeof value === 'number' && !Number.isNaN(Number(value)))
+                return wrapWithTooltip(
+                    formatFileSize(value * 1000, sizeFormat.type, sizeFormat.bits, true),
+                    value
+                );
+            else return value;
+        }
 
         default:
-            break;
+            return value;
     }
 }
 
+const tags = computed(() => listDirQuery.data.value?.tags ?? []);
+
 const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
-    const tags = (listDirQuery.data.value?.tags ?? []).map((tag) => {
-        return {
-            accessorKey: 'tags',
-            header: i18n.t(`filelist.tags["${tag}"]`, tag),
-            cell: ({ getValue }) => getValue<Map<string, _JSONPrimitive>>().get(tag)
-        } satisfies ColumnDef<AnyDirectoryEntry>;
-    });
+    const sizeFormat = settings.format.fileSizes;
+
+    const getSortableHeader = (text: string, column: Column<AnyDirectoryEntry>) =>
+        h(
+            Button,
+            {
+                variant: 'ghost',
+                onClick: () => {
+                    const curSort = column.getIsSorted();
+                    if (!curSort) {
+                        column.toggleSorting(true);
+                    } else if (curSort === 'desc') {
+                        column.toggleSorting(false);
+                    }
+                }
+            },
+            () => [
+                text,
+                column.getIsSorted()
+                    ? h(column.getIsSorted() === 'asc' ? SortAsc : SortDesc, {
+                          class: 'size-4'
+                      })
+                    : undefined
+            ]
+        );
+
     return [
         {
+            id: 'href',
             accessorKey: 'name',
-            header: () => 'File name',
+            header: ({ column }) => getSortableHeader(i18n.t('filename'), column),
             cell: ({ row: { original } }) => getEntryRenderFunction(original)
         },
         {
+            id: 'sz',
             accessorKey: 'size',
-            header: () => 'Size',
-            cell: ({ getValue }) =>
-                formatFileSize(
-                    getValue<number>(),
-                    settings.format.fileSizes.type,
-                    settings.format.fileSizes.bits
-                )
+            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.sz'), column),
+            cell: ({ getValue }) => {
+                const value = getValue<number>();
+                return wrapWithTooltip(
+                    formatFileSize(value, sizeFormat.type, sizeFormat.bits),
+                    value
+                );
+            }
         },
-        ...tags
+        {
+            id: 'ts',
+            accessorKey: 'created',
+            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.ts'), column),
+            cell: ({ getValue }) => {
+                const value = getValue<Date>();
+                return wrapWithTooltip(value.toLocaleString(), value);
+            }
+        },
+        ...tags.value.map((tag) => {
+            return {
+                id: tag,
+                accessorFn: (v) => v.tags.get(tag),
+                header: ({ column }) =>
+                    getSortableHeader(
+                        i18n.t(`filelist.tags["${tag}"]`, tag, { missingWarn: false }),
+                        column
+                    ),
+                cell: ({ getValue }) => getTagRenderFunction(tag, getValue<_JSONPrimitive>())
+            } satisfies ColumnDef<AnyDirectoryEntry>;
+        })
     ];
 });
+
+const sorting = ref<SortingState>([]);
+
+whenever(
+    () => listDirQuery.data.value?.sort,
+    (v) => (sorting.value = [{ id: v, desc: true }]),
+    { once: true, immediate: true }
+);
 
 const table = computed(() =>
     useVueTable({
@@ -127,7 +211,14 @@ const table = computed(() =>
             return listDirQuery.data.value?.entries ?? [];
         },
         columns: columns.value,
-        getCoreRowModel: getCoreRowModel()
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        onSortingChange: (updaterOrValue) => valueUpdater(updaterOrValue, sorting),
+        state: {
+            get sorting() {
+                return sorting.value;
+            }
+        }
     })
 );
 </script>
@@ -143,7 +234,7 @@ const table = computed(() =>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <TableRow v-for="i in 8">
+                <TableRow v-for="i in 12">
                     <TableCell colspan="4">
                         <Skeleton :data-i="i + 4" class="h-2"></Skeleton>
                     </TableCell>
@@ -187,7 +278,8 @@ const table = computed(() =>
 </template>
 
 <style lang="scss" scoped>
-@for $i from 1 through 12 {
+// Delay the skeleton animations and stagger them
+@for $i from 1 through 16 {
     [data-i='#{$i}'] {
         animation-delay: $i * 200ms;
     }
@@ -199,5 +291,21 @@ const table = computed(() =>
 
 #wrapper {
     @apply my-12 ml-6 mr-5 border rounded-md;
+}
+[data-slot='table-container'] {
+    @apply pb-2;
+}
+
+th {
+    @apply text-center not-last:border-r px-0;
+    > button {
+        @apply size-full px-2 rounded-none;
+    }
+    > [data-slot='skeleton'] {
+        @apply mx-2;
+    }
+}
+td {
+    @apply px-2 py-2 not-last:border-r;
 }
 </style>

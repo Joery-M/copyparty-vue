@@ -118,7 +118,8 @@ export namespace API {
                 ].flat() as AnyDirectoryEntry[],
                 perms: res.perms as Permissions[],
                 readmes: res.readmes,
-                tags: res.taglist
+                tags: res.taglist,
+                sort: res.cfg.dsort
             }));
     }
 

@@ -2,6 +2,9 @@
   "filelist": {
     "tags": {
       "sz": "Size",
+      "tdate": "Date taken",
+      "ts": "Date",
+      "title": "Title",
       ".files": "Files",
       ".dur": "Duration",
       ".q": "Bitrate",
