@@ -22,7 +22,7 @@ export function formatFileSize(
         maximumSignificantDigits: 3,
         useGrouping: true
     });
-    return `${num} ${sizes[i]}` + perSec ? '/s' : '';
+    return `${num} ${sizes[i]}` + (perSec ? '/s' : '');
 }
 
 export function formatTime(seconds: number) {

@@ -6,19 +6,37 @@ import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useQuery, type _JSONPrimitive } from '@pinia/colada';
-import { computed, h, ref } from 'vue';
+import { computed, effect, h, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
 import { useAuth } from '@/stores/useAuth';
 import { Button } from '@shadcn/button';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationNext,
+    PaginationPrevious
+} from '@shadcn/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shadcn/select';
 import { Skeleton } from '@shadcn/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow
+} from '@shadcn/table';
 import { valueUpdater } from '@shadcn/table/utils';
 import {
     FlexRender,
     getCoreRowModel,
+    getPaginationRowModel,
     getSortedRowModel,
     useVueTable,
     type Column,
@@ -26,14 +44,16 @@ import {
     type SortingState
 } from '@tanstack/vue-table';
 import { whenever } from '@vueuse/core';
-import { SortAsc, SortDesc } from 'lucide-vue-next';
+import { MoreHorizontal, SortAsc, SortDesc } from 'lucide-vue-next';
 import Tooltip from './Tooltip.vue';
 
 const authStore = useAuth();
 const routeState = useRouteState();
 const settings = useSettings();
 
-const listDirQuery = useQuery(() => API.getListDirectoryQuery(routeState.dir));
+const listDirQuery = useQuery(
+    () => (console.log(routeState.dir), API.getListDirectoryQuery(routeState.dir))
+);
 whenever(listDirQuery.error, (err) => {
     if (err instanceof API.ApiError) {
         if (err.cause.code === 403) {
@@ -110,15 +130,10 @@ function getTagRenderFunction(tag: string, value?: _JSONPrimitive) {
             else return value;
         case '.q':
         case '.aq':
-        case '.vq': {
-            const sizeFormat = settings.format.fileSizes;
+        case '.vq':
             if (typeof value === 'number' && !Number.isNaN(Number(value)))
-                return wrapWithTooltip(
-                    formatFileSize(value * 1000, sizeFormat.type, sizeFormat.bits, true),
-                    value
-                );
+                return wrapWithTooltip(formatFileSize(value * 1000, 'SI', false, true), value);
             else return value;
-        }
 
         default:
             return value;
@@ -141,6 +156,8 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
                         column.toggleSorting(true);
                     } else if (curSort === 'desc') {
                         column.toggleSorting(false);
+                    } else {
+                        resetSorting();
                     }
                 }
             },
@@ -155,6 +172,10 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
         );
 
     return [
+        {
+            id: 'prefix',
+            cell: () => h(Button, { size: 'icon', variant: 'ghost' }, () => h(MoreHorizontal))
+        },
         {
             id: 'href',
             accessorKey: 'name',
@@ -199,31 +220,50 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
 
 const sorting = ref<SortingState>([]);
 
+function resetSorting() {
+    if (listDirQuery.data.value?.sort) {
+        sorting.value = [{ id: listDirQuery.data.value.sort, desc: true }];
+    } else {
+        sorting.value = [];
+    }
+}
+
 whenever(
     () => listDirQuery.data.value?.sort,
-    (v) => (sorting.value = [{ id: v, desc: true }]),
+    () => resetSorting(),
     { once: true, immediate: true }
 );
 
-const table = computed(() =>
-    useVueTable({
-        get data() {
-            return listDirQuery.data.value?.entries ?? [];
-        },
-        columns: columns.value,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        onSortingChange: (updaterOrValue) => valueUpdater(updaterOrValue, sorting),
-        state: {
-            get sorting() {
-                return sorting.value;
+const data = computed(() => (console.log('data'), listDirQuery.data.value?.entries ?? []));
+const table = computed(
+    () => (
+        console.log('Table'),
+        useVueTable({
+            data: data.value,
+            columns: columns.value,
+            getCoreRowModel: getCoreRowModel(),
+            getSortedRowModel: getSortedRowModel(),
+            onSortingChange: (updaterOrValue) => valueUpdater(updaterOrValue, sorting),
+            getPaginationRowModel: getPaginationRowModel(),
+            state: {
+                get sorting() {
+                    return sorting.value;
+                }
             }
-        }
-    })
+        })
+    )
 );
+
+const pageSizes = [50, 100, 250, 500];
+const pageSize = ref(50);
+const pageIndex = ref(1);
+
+effect(() => table.value.setPageIndex(pageIndex.value - 1));
+effect(() => table.value.setPageSize(pageSize.value));
 </script>
 
 <template>
+    {{ listDirQuery.state.value }}
     <div id="wrapper">
         <Table v-if="isLoading" class="loader-table">
             <TableHeader>
@@ -267,6 +307,46 @@ const table = computed(() =>
                     </TableCell>
                 </TableRow>
             </TableBody>
+            <TableFooter v-if="data.length > 50">
+                <TableCell :colspan="columns.length">
+                    <div class="flex not-lg:justify-evenly">
+                        <Select v-model:model-value="pageSize">
+                            <SelectTrigger class="w-full max-w-20">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem v-for="size in pageSizes" :value="size">
+                                    {{ size }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <div class="w-full lg:hidden"></div>
+                        <Pagination
+                            v-slot="{ page }"
+                            v-model:page="pageIndex"
+                            :items-per-page="pageSize"
+                            :total="data.length"
+                            show-edges
+                        >
+                            <PaginationContent v-slot="{ items }">
+                                <PaginationPrevious />
+                                <template v-for="(item, index) in items" :key="index">
+                                    <PaginationItem
+                                        v-if="item.type === 'page'"
+                                        :value="item.value"
+                                        :is-active="item.value === page"
+                                    >
+                                        {{ item.value }}
+                                    </PaginationItem>
+                                    <PaginationEllipsis v-else />
+                                </template>
+                                <PaginationNext />
+                            </PaginationContent>
+                        </Pagination>
+                        <div class="w-full max-w-20 not-lg:hidden"></div>
+                    </div>
+                </TableCell>
+            </TableFooter>
         </Table>
     </div>
 
@@ -292,9 +372,6 @@ const table = computed(() =>
 #wrapper {
     @apply my-12 ml-6 mr-5 border rounded-md;
 }
-[data-slot='table-container'] {
-    @apply pb-2;
-}
 
 th {
     @apply text-center not-last:border-r px-0;
@@ -306,6 +383,13 @@ th {
     }
 }
 td {
-    @apply px-2 py-2 not-last:border-r;
+    @apply px-2 align-middle not-last:border-r;
+
+    &:has(button) {
+        @apply p-0;
+        > button {
+            @apply m-0 rounded-none size-8;
+        }
+    }
 }
 </style>
