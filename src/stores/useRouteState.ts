@@ -2,7 +2,7 @@ import { FileClassification } from '@/lib/classifyExt';
 import { useRouteQuery } from '@vueuse/router';
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { type RouteParamsGeneric, useRoute } from 'vue-router';
 
 export const useRouteState = defineStore('route-state', () => {
     const route = useRoute();
@@ -16,16 +16,18 @@ export const useRouteState = defineStore('route-state', () => {
     });
 
     return {
-        dir: computed(() => {
-            if (typeof route.params.path === 'string') {
-                return [route.params.path].filter((v) => !!v);
-            } else if (Array.isArray(route.params.path)) {
-                return route.params.path.filter((v) => !!v);
-            } else {
-                return [];
-            }
-        }),
+        dir: computed(() => getDirFromRouteParams(route.params)),
         file: computed(() => (route.hash.startsWith('#') ? route.hash.slice(1) : null)),
         forceEditorType
     };
 });
+
+export function getDirFromRouteParams(params: RouteParamsGeneric) {
+    if (typeof params.path === 'string') {
+        return [params.path].filter((v) => !!v);
+    } else if (Array.isArray(params.path)) {
+        return params.path.filter((v) => !!v);
+    } else {
+        return [];
+    }
+}

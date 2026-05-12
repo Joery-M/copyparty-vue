@@ -107,7 +107,7 @@ export namespace API {
         | 'html'
         | 'admin';
 
-    export function getListDirectory(path: string[], signal: AbortSignal) {
+    export function getListDirectory(path: string[], signal?: AbortSignal) {
         return fetch(getApiUrl(path, { ls: '' }), { signal })
             .then((r) => extractError(r))
             .then((r) => r.json())

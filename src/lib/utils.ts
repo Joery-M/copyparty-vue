@@ -1,6 +1,8 @@
+import { isEqual } from '@ver0/deep-equal';
 import type { ClassValue } from 'clsx';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { computed, type ComputedGetter, type ComputedRef, type DebuggerOptions } from 'vue';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -44,4 +46,17 @@ export async function fetchWithProgress(
         status: req.status,
         statusText: req.statusText
     });
+}
+
+/**
+ * Computed that deeply checks if the previous value and current value are equal
+ */
+export function dedupedComputed<T>(
+    getter: ComputedGetter<T>,
+    debugOptions?: DebuggerOptions
+): ComputedRef<T> {
+    return computed((last?: T) => {
+        const v = getter(last);
+        return isEqual(v, last) ? (last ?? v) : v;
+    }, debugOptions);
 }

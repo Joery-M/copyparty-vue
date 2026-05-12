@@ -1,4 +1,5 @@
 import { PiniaColada } from '@pinia/colada';
+import { DataLoaderPlugin } from 'vue-router/experimental';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import { createApp } from 'vue';
@@ -16,4 +17,10 @@ const i18n = createI18n({
     messages
 });
 
-createApp(App).use(i18n).use(pinia).use(PiniaColada).use(router).mount('#app');
+createApp(App)
+    .use(i18n)
+    .use(pinia)
+    .use(PiniaColada)
+    .use(DataLoaderPlugin, { router })
+    .use(router)
+    .mount('#app');

@@ -1,15 +1,25 @@
+<script lang="ts">
+import { API } from '@/lib/api';
+import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
+
+export const useListDirQuery = defineColadaLoader({
+    key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
+    query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal)
+});
+</script>
+
 <script lang="ts" setup>
-import { API, getApiUrl, useLoadingState } from '@/lib/api';
+import { getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { formatFileSize, formatTime } from '@/lib/format';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
-import { useRouteState } from '@/stores/useRouteState';
+import { dedupedComputed } from '@/lib/utils';
+import { getDirFromRouteParams, useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
-import { useQuery, type _JSONPrimitive } from '@pinia/colada';
-import { computed, effect, h, ref } from 'vue';
+import { type _JSONPrimitive } from '@pinia/colada';
+import { computed, defineAsyncComponent, h, ref, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
-import MarkdownViewer from './viewers/MarkdownViewer.vue';
 
 import { useAuth } from '@/stores/useAuth';
 import { Button } from '@shadcn/button';
@@ -43,7 +53,7 @@ import {
     type ColumnDef,
     type SortingState
 } from '@tanstack/vue-table';
-import { whenever } from '@vueuse/core';
+import { watchImmediate, whenever } from '@vueuse/core';
 import { MoreHorizontal, SortAsc, SortDesc } from 'lucide-vue-next';
 import Tooltip from './Tooltip.vue';
 
@@ -51,9 +61,8 @@ const authStore = useAuth();
 const routeState = useRouteState();
 const settings = useSettings();
 
-const listDirQuery = useQuery(
-    () => (console.log(routeState.dir), API.getListDirectoryQuery(routeState.dir))
-);
+const listDirQuery = useListDirQuery();
+
 whenever(listDirQuery.error, (err) => {
     if (err instanceof API.ApiError) {
         if (err.cause.code === 403) {
@@ -75,6 +84,7 @@ whenever(listDirQuery.error, (err) => {
 const isLoading = useLoadingState(listDirQuery.isPending);
 
 const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
+const MarkdownViewer = defineAsyncComponent(() => import('./viewers/MarkdownViewer.vue'));
 
 function getEntryRenderFunction(entry: AnyDirectoryEntry) {
     if (entry instanceof Directory || entry.classification === FileClassification.Directory) {
@@ -140,7 +150,7 @@ function getTagRenderFunction(tag: string, value?: _JSONPrimitive) {
     }
 }
 
-const tags = computed(() => listDirQuery.data.value?.tags ?? []);
+const tags = dedupedComputed(() => listDirQuery.data.value?.tags ?? []);
 
 const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
     const sizeFormat = settings.format.fileSizes;
@@ -234,38 +244,30 @@ whenever(
     { once: true, immediate: true }
 );
 
-const data = computed(() => (console.log('data'), listDirQuery.data.value?.entries ?? []));
-const table = computed(
-    () => (
-        console.log('Table'),
-        useVueTable({
-            data: data.value,
-            columns: columns.value,
-            getCoreRowModel: getCoreRowModel(),
-            getSortedRowModel: getSortedRowModel(),
-            onSortingChange: (updaterOrValue) => valueUpdater(updaterOrValue, sorting),
-            getPaginationRowModel: getPaginationRowModel(),
-            state: {
-                get sorting() {
-                    return sorting.value;
-                }
-            }
-        })
-    )
+const data = dedupedComputed(() => listDirQuery.data.value?.entries ?? null);
+const table = computed(() =>
+    useVueTable({
+        data: computed(() => data.value ?? []),
+        columns: columns.value,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        onSortingChange: (u) => valueUpdater(u, sorting),
+        getPaginationRowModel: getPaginationRowModel()
+    })
 );
 
 const pageSizes = [50, 100, 250, 500];
 const pageSize = ref(50);
 const pageIndex = ref(1);
 
-effect(() => table.value.setPageIndex(pageIndex.value - 1));
-effect(() => table.value.setPageSize(pageSize.value));
+watchEffect(() => table.value.setPageIndex(pageIndex.value - 1));
+watchImmediate(pageSize, (size) => table.value.setPageSize(size));
+watchEffect(() => table.value.setSorting(sorting.value));
 </script>
 
 <template>
-    {{ listDirQuery.state.value }}
     <div id="wrapper">
-        <Table v-if="isLoading" class="loader-table">
+        <Table v-if="isLoading || !table" class="loader-table">
             <TableHeader>
                 <TableRow>
                     <TableHead v-for="i in 4">
@@ -307,8 +309,8 @@ effect(() => table.value.setPageSize(pageSize.value));
                     </TableCell>
                 </TableRow>
             </TableBody>
-            <TableFooter v-if="data.length > 50">
-                <TableCell :colspan="columns.length">
+            <TableFooter v-if="data != null && data.length > 50">
+                <TableCell :colspan="table.getVisibleFlatColumns().length">
                     <div class="flex not-lg:justify-evenly">
                         <Select v-model:model-value="pageSize">
                             <SelectTrigger class="w-full max-w-20">
@@ -385,7 +387,7 @@ th {
 td {
     @apply px-2 align-middle not-last:border-r;
 
-    &:has(button) {
+    &:has(> button) {
         @apply p-0;
         > button {
             @apply m-0 rounded-none size-8;

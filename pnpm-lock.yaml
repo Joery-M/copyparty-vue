@@ -32,6 +32,9 @@ importers:
       '@vee-validate/valibot':
         specifier: ^4.15.1
         version: 4.15.1(valibot@1.4.0(typescript@6.0.3))(vue@3.5.34(typescript@6.0.3))
+      '@ver0/deep-equal':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@vueuse/core':
         specifier: ^14.3.0
         version: 14.3.0(vue@3.5.34(typescript@6.0.3))
@@ -1280,6 +1283,10 @@ packages:
     resolution: {integrity: sha512-4yXs8jg2UCv6ekGpH/+vsO4a9jPZXbBR6+Tge9HnmKBZReBgqhsRjkH8OuuIIWxT+Mo/bC5120FdWaWLGAVDOw==}
     peerDependencies:
       valibot: ^1.0.0-beta.7
+
+  '@ver0/deep-equal@2.0.1':
+    resolution: {integrity: sha512-JVSbDwzKASqorJum+ATnnZNIkni4K4G3aeJDsTgEhHcm0CiCwAVaLbhFByeNAir1HExEWjHxhIXVR+d8ZzeJGw==}
+    engines: {node: '>=20'}
 
   '@vitejs/plugin-vue@6.0.6':
     resolution: {integrity: sha512-u9HHgfrq3AjXlysn0eINFnWQOJQLO9WN6VprZ8FXl7A2bYisv3Hui9Ij+7QZ41F/WYWarHjwBbXtD7dKg3uxbg==}
@@ -4516,6 +4523,8 @@ snapshots:
       vee-validate: 4.15.1(vue@3.5.34(typescript@6.0.3))
     transitivePeerDependencies:
       - vue
+
+  '@ver0/deep-equal@2.0.1': {}
 
   '@vitejs/plugin-vue@6.0.6(vite@8.0.12(@types/node@25.6.0)(jiti@2.6.1)(sass-embedded@1.99.0)(sass@1.99.0)(stylus@0.57.0)(yaml@2.8.3))(vue@3.5.34(typescript@6.0.3))':
     dependencies:
