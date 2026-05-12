@@ -198,102 +198,100 @@ const computedStyle = computed(() => ({
         style="--spacing: 0.3rem"
     >
         <ButtonGroup>
-            <ButtonGroup>
-                <Tooltip :content="$t('viewer.media.background')">
-                    <Button
-                        @click="backgroundTypeSelectOpen = true"
-                        variant="accent"
-                        ref="backgroundTypeButton"
-                        size="icon-lg"
-                        :aria-label="$t('viewer.media.background')"
-                    >
-                        <PaintBucket />
-                    </Button>
-                </Tooltip>
-                <Tooltip
-                    v-if="
-                        file.classification === FileClassification.RasterImage ||
-                        file.classification === FileClassification.VectorImage
-                    "
-                    :content="$t('viewer.media.smoothing')"
+            <Tooltip :content="$t('viewer.media.background')">
+                <Button
+                    @click="backgroundTypeSelectOpen = true"
+                    variant="accent"
+                    ref="backgroundTypeButton"
+                    size="icon-lg"
+                    :aria-label="$t('viewer.media.background')"
                 >
-                    <Button
-                        @click="settings.preview.pixelated = !settings.preview.pixelated"
-                        variant="accent"
-                        size="icon-lg"
-                        :aria-label="$t('viewer.media.smoothing')"
-                        v-html="settings.preview.pixelated ? ImagePixelated : ImageSmooth"
-                    >
-                    </Button>
-                </Tooltip>
-            </ButtonGroup>
-            <ButtonGroup>
-                <Tooltip :content="$t('viewer.media.zoom.in')">
-                    <Button
-                        @click="zoom(zoomInFactor)"
-                        variant="accent"
-                        size="icon-lg"
-                        :aria-label="$t('viewer.media.zoom.in')"
-                        :disabled="largestZoomedMediaAxis > largestContainerAxis * 8"
-                    >
-                        <ZoomIn />
-                    </Button>
-                </Tooltip>
-                <Tooltip :content="$t('viewer.media.zoom.reset')">
-                    <Button
-                        @click="zoomedMediaSize = mediaSize"
-                        variant="accent"
-                        size="lg"
-                        class="text-base"
-                        :aria-label="$t('viewer.media.zoom.reset')"
-                    >
-                        {{ $n(zoomFactor, { style: 'percent' }) }}
-                    </Button>
-                </Tooltip>
-                <Tooltip :content="$t('viewer.media.zoom.fit')">
-                    <Button
-                        @click="zoomToFit()"
-                        variant="accent"
-                        size="icon-lg"
-                        :aria-label="$t('viewer.media.zoom.fit')"
-                    >
-                        <Fullscreen />
-                    </Button>
-                </Tooltip>
-                <Tooltip :content="$t('viewer.media.zoom.out')">
-                    <Button
-                        @click="zoom(zoomOutFactor)"
-                        :disabled="smallestMediaAxis < 5"
-                        variant="accent"
-                        size="icon-lg"
-                        :aria-label="$t('viewer.media.zoom.out')"
-                    >
-                        <ZoomOut />
-                    </Button>
-                </Tooltip>
-            </ButtonGroup>
-            <ButtonGroup>
-                <Tooltip :content="$t('viewer.media.rotate_ccw')">
-                    <Button
-                        @click="rotation--"
-                        variant="accent"
-                        size="icon-lg"
-                        :aria-label="$t('viewer.media.rotate_ccw')"
-                    >
-                        <RotateCcw />
-                    </Button>
-                </Tooltip>
-                <Tooltip :content="$t('viewer.media.rotate_cw')">
-                    <Button
-                        @click="rotation++"
-                        variant="accent"
-                        size="icon-lg"
-                        :aria-label="$t('viewer.media.rotate_cw')"
-                    >
-                        <RotateCw />
-                    </Button>
-                </Tooltip>
-            </ButtonGroup>
+                    <PaintBucket />
+                </Button>
+            </Tooltip>
+            <Tooltip
+                v-if="
+                    file.classification === FileClassification.RasterImage ||
+                    file.classification === FileClassification.VectorImage
+                "
+                :content="$t('viewer.media.smoothing')"
+            >
+                <Button
+                    @click="settings.preview.pixelated = !settings.preview.pixelated"
+                    variant="accent"
+                    size="icon-lg"
+                    :aria-label="$t('viewer.media.smoothing')"
+                    v-html="settings.preview.pixelated ? ImagePixelated : ImageSmooth"
+                >
+                </Button>
+            </Tooltip>
+        </ButtonGroup>
+        <ButtonGroup>
+            <Tooltip :content="$t('viewer.media.zoom.in')">
+                <Button
+                    @click="zoom(zoomInFactor)"
+                    variant="accent"
+                    size="icon-lg"
+                    :aria-label="$t('viewer.media.zoom.in')"
+                    :disabled="largestZoomedMediaAxis > largestContainerAxis * 8"
+                >
+                    <ZoomIn />
+                </Button>
+            </Tooltip>
+            <Tooltip :content="$t('viewer.media.zoom.reset')">
+                <Button
+                    @click="zoomedMediaSize = mediaSize"
+                    variant="accent"
+                    size="lg"
+                    class="text-base"
+                    :aria-label="$t('viewer.media.zoom.reset')"
+                >
+                    {{ $n(zoomFactor, { style: 'percent' }) }}
+                </Button>
+            </Tooltip>
+            <Tooltip :content="$t('viewer.media.zoom.fit')">
+                <Button
+                    @click="zoomToFit()"
+                    variant="accent"
+                    size="icon-lg"
+                    :aria-label="$t('viewer.media.zoom.fit')"
+                >
+                    <Fullscreen />
+                </Button>
+            </Tooltip>
+            <Tooltip :content="$t('viewer.media.zoom.out')">
+                <Button
+                    @click="zoom(zoomOutFactor)"
+                    :disabled="smallestMediaAxis < 5"
+                    variant="accent"
+                    size="icon-lg"
+                    :aria-label="$t('viewer.media.zoom.out')"
+                >
+                    <ZoomOut />
+                </Button>
+            </Tooltip>
+        </ButtonGroup>
+        <ButtonGroup>
+            <Tooltip :content="$t('viewer.media.rotate_ccw')">
+                <Button
+                    @click="rotation--"
+                    variant="accent"
+                    size="icon-lg"
+                    :aria-label="$t('viewer.media.rotate_ccw')"
+                >
+                    <RotateCcw />
+                </Button>
+            </Tooltip>
+            <Tooltip :content="$t('viewer.media.rotate_cw')">
+                <Button
+                    @click="rotation++"
+                    variant="accent"
+                    size="icon-lg"
+                    :aria-label="$t('viewer.media.rotate_cw')"
+                >
+                    <RotateCw />
+                </Button>
+            </Tooltip>
         </ButtonGroup>
     </DialogFooter>
 

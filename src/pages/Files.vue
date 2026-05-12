@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import FileListView from '@/components/FileListView.vue';
-import FileViewer from '@/components/viewers/FileViewer.vue';
-import { useDropZone, useEventListener, useLocalStorage } from '@vueuse/core';
-import TreeView from '../components/TreeView.vue';
-
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import FileListView from '@/components/FileList/FileListView.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import Toolbar from '@/components/Toolbar.vue';
+import FileViewer from '@/components/viewers/FileViewer.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useUploader } from '@/stores/useUploader';
 import { Separator } from '@shadcn/separator';
+import { useDropZone, useEventListener, useLocalStorage } from '@vueuse/core';
+import TreeView from '../components/TreeView.vue';
 
 const fileListType = useLocalStorage<'list' | 'grid'>('list-type', 'list');
 

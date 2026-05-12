@@ -1,4 +1,5 @@
 <script lang="ts">
+import LoadingTable from '@/components/FileList/LoadingTable.vue';
 import { API } from '@/lib/api';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
@@ -9,19 +10,16 @@ export const useListDirQuery = defineColadaLoader({
 </script>
 
 <script lang="ts" setup>
+import Tooltip from '@/components/Tooltip.vue';
 import { getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { formatFileSize, formatTime } from '@/lib/format';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { dedupedComputed } from '@/lib/utils';
+import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams, useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { type _JSONPrimitive } from '@pinia/colada';
-import { computed, defineAsyncComponent, h, ref, watchEffect } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { RouterLink } from 'vue-router';
-
-import { useAuth } from '@/stores/useAuth';
 import { Button } from '@shadcn/button';
 import {
     Pagination,
@@ -32,7 +30,6 @@ import {
     PaginationPrevious
 } from '@shadcn/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shadcn/select';
-import { Skeleton } from '@shadcn/skeleton';
 import {
     Table,
     TableBody,
@@ -55,7 +52,9 @@ import {
 } from '@tanstack/vue-table';
 import { watchImmediate, whenever } from '@vueuse/core';
 import { MoreHorizontal, SortAsc, SortDesc } from 'lucide-vue-next';
-import Tooltip from './Tooltip.vue';
+import { computed, defineAsyncComponent, h, ref, watchEffect } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { RouterLink } from 'vue-router';
 
 const authStore = useAuth();
 const routeState = useRouteState();
@@ -84,7 +83,7 @@ whenever(listDirQuery.error, (err) => {
 const isLoading = useLoadingState(listDirQuery.isPending);
 
 const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
-const MarkdownViewer = defineAsyncComponent(() => import('./viewers/MarkdownViewer.vue'));
+const MarkdownViewer = defineAsyncComponent(() => import('../viewers/MarkdownViewer.vue'));
 
 function getEntryRenderFunction(entry: AnyDirectoryEntry) {
     if (entry instanceof Directory || entry.classification === FileClassification.Directory) {
@@ -184,6 +183,7 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
     return [
         {
             id: 'prefix',
+            size: 0,
             cell: () => h(Button, { size: 'icon', variant: 'ghost' }, () => h(MoreHorizontal))
         },
         {
@@ -267,22 +267,7 @@ watchEffect(() => table.value.setSorting(sorting.value));
 
 <template>
     <div id="wrapper">
-        <Table v-if="isLoading || !table" class="loader-table">
-            <TableHeader>
-                <TableRow>
-                    <TableHead v-for="i in 4">
-                        <Skeleton :data-i="i" class="h-2"></Skeleton>
-                    </TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                <TableRow v-for="i in 12">
-                    <TableCell colspan="4">
-                        <Skeleton :data-i="i + 4" class="h-2"></Skeleton>
-                    </TableCell>
-                </TableRow>
-            </TableBody>
-        </Table>
+        <LoadingTable v-if="isLoading || !table" />
         <Table v-else>
             <TableHeader>
                 <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
@@ -358,15 +343,6 @@ watchEffect(() => table.value.setSorting(sorting.value));
         <MarkdownViewer :input="readme"></MarkdownViewer>
     </template>
 </template>
-
-<style lang="scss" scoped>
-// Delay the skeleton animations and stagger them
-@for $i from 1 through 16 {
-    [data-i='#{$i}'] {
-        animation-delay: $i * 200ms;
-    }
-}
-</style>
 
 <style scoped>
 @reference "@/style.css";
