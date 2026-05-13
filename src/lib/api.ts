@@ -29,7 +29,7 @@ export namespace API {
         }
     }
 
-    function extractError(res: Response) {
+    export function extractError(res: Response) {
         if (res.status >= 400) {
             throw new ApiError({ code: res.status, res });
         } else {

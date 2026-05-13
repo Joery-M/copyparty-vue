@@ -58,7 +58,7 @@ const isLoading = useLoadingState(
                     @click="$router.push({ name: 'viewer', params: { path: base.concat('') } })"
                     class="pl-0"
                 >
-                    <CollapsibleTrigger>
+                    <CollapsibleTrigger @click.stop>
                         <ChevronRight
                             :class="{ ['rotate-90']: isOpen }"
                             class="transition-transform m-2"

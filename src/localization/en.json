@@ -74,5 +74,20 @@
       "rotate_ccw": "Rotate counter-clockwise",
       "rotate_cw": "Rotate clockwise"
     }
+  },
+  "actions": {
+    "view": "View",
+    "open_new_tab": "Open in new tab",
+    "download": "Download",
+    "archive_options": "Archive options",
+    "archive": {
+      "pax": "Download as .pax",
+      "tar": "Download as .tar",
+      "tgz": "Download as .tgz",
+      "txz": "Download as .txz",
+      "zip_crc": "Download as .zip (with CRC)",
+      "zip_dos": "Download as .zip (for DOS)",
+      "zip": "Download as .zip"
+    }
   }
 }

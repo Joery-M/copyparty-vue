@@ -21,7 +21,16 @@ import { getDirFromRouteParams, useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { type _JSONPrimitive } from '@pinia/colada';
 import { Button } from '@shadcn/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
+import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow
+} from '@shadcn/table';
 import { valueUpdater } from '@shadcn/table/utils';
 import {
     FlexRender,
@@ -34,10 +43,12 @@ import {
     type SortingState
 } from '@tanstack/vue-table';
 import { watchImmediate, whenever } from '@vueuse/core';
-import { MoreHorizontal, SortAsc, SortDesc } from 'lucide-vue-next';
+import { SortAsc, SortDesc } from 'lucide-vue-next';
 import { computed, defineAsyncComponent, h, ref, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
+import FileContextMenu from './FileContextMenu.vue';
+import FileListRowOptions from './FileListRowOptions.vue';
 import Paginator from './Paginator.vue';
 
 const authStore = useAuth();
@@ -108,7 +119,7 @@ function getEntryRenderFunction(entry: AnyDirectoryEntry) {
 const i18n = useI18n();
 
 function wrapWithTooltip(text: any, raw: any) {
-    return h(Tooltip, { content: String(raw) }, () => h('span', text));
+    return h(Tooltip, { content: String(raw), useViewportTest: true }, () => h('span', text));
 }
 
 function getTagRenderFunction(tag: string, value?: _JSONPrimitive) {
@@ -173,7 +184,7 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
             id: 'prefix',
             size: 32,
             maxSize: 21,
-            cell: () => h(Button, { size: 'icon', variant: 'ghost' }, () => h(MoreHorizontal))
+            cell: () => h(FileListRowOptions)
         },
         {
             id: 'href',
@@ -247,7 +258,7 @@ const pageSize = ref(50);
 const pageIndex = ref(1);
 
 watchEffect(() => table.value.setPageIndex(pageIndex.value - 1));
-watchImmediate(pageSize, (size) => table.value.setPageSize(size));
+watchImmediate([pageSize, table], ([size, table]) => table.setPageSize(size));
 watchEffect(() => table.value.setSorting(sorting.value));
 </script>
 
@@ -271,27 +282,29 @@ watchEffect(() => table.value.setSorting(sorting.value));
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <TableRow
-                    v-for="row in table.getRowModel().rows"
-                    :key="row.id"
-                    :data-state="row.getIsSelected() ? 'selected' : undefined"
-                >
-                    <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                        <FlexRender
-                            :render="cell.column.columnDef.cell"
-                            :props="cell.getContext()"
-                        />
-                    </TableCell>
-                </TableRow>
+                <ContextMenu v-for="row in table.getRowModel().rows" :key="row.id" as-child>
+                    <ContextMenuTrigger as-child>
+                        <TableRow :data-state="row.getIsSelected() ? 'selected' : undefined">
+                            <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
+                                <FlexRender
+                                    :render="cell.column.columnDef.cell"
+                                    :props="cell.getContext()"
+                                />
+                            </TableCell>
+                        </TableRow>
+                    </ContextMenuTrigger>
+                    <FileContextMenu :file="row.original" :dir="routeState.dir" />
+                </ContextMenu>
             </TableBody>
+        </Table>
+        <div class="paginator" v-if="data != null && data.length > 50">
             <Paginator
                 v-model:page-index="pageIndex"
                 v-model:page-size="pageSize"
                 :page-sizes
-                :colspan="table.getVisibleLeafColumns().length"
-                :data
+                :total="data.length"
             />
-        </Table>
+        </div>
     </div>
 
     <br />
@@ -316,6 +329,10 @@ th {
     > [data-slot='skeleton'] {
         @apply mx-2;
     }
+}
+
+.paginator {
+    @apply bg-muted/50 border-t font-medium [&>tr]:last:border-b-0 sticky left-0 w-full p-2;
 }
 td {
     @apply px-2 align-middle not-last:border-r;

@@ -3,15 +3,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@shadcn/tooltip';
 import { useElementVisibility } from '@vueuse/core';
 import { useTemplateRef } from 'vue';
 
-defineProps<{ content: string }>();
+defineProps<{ content: string; useViewportTest?: boolean }>();
 
 const tester = useTemplateRef('tester');
 const isVisible = useElementVisibility(tester);
 </script>
 
 <template>
-    <div id="pos-tester" ref="tester"></div>
-    <Tooltip v-if="isVisible">
+    <div v-if="useViewportTest" id="pos-tester" ref="tester"></div>
+    <Tooltip v-if="!useViewportTest || isVisible">
         <TooltipTrigger as-child>
             <slot />
         </TooltipTrigger>
