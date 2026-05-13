@@ -1,3 +1,8 @@
+<script setup lang="ts">
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
+import { Skeleton } from '@shadcn/skeleton';
+</script>
+
 <template>
     <Table class="loader-table">
         <TableHeader>

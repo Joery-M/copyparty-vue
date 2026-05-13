@@ -1,5 +1,4 @@
 <script lang="ts">
-import LoadingTable from '@/components/fileList/LoadingTable.vue';
 import { API } from '@/lib/api';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
@@ -10,6 +9,7 @@ export const useListDirQuery = defineColadaLoader({
 </script>
 
 <script lang="ts" setup>
+import LoadingTable from '@/components/fileList/LoadingTable.vue';
 import Tooltip from '@/components/Tooltip.vue';
 import { getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
@@ -21,24 +21,7 @@ import { getDirFromRouteParams, useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { type _JSONPrimitive } from '@pinia/colada';
 import { Button } from '@shadcn/button';
-import {
-    Pagination,
-    PaginationContent,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationNext,
-    PaginationPrevious
-} from '@shadcn/pagination';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shadcn/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow
-} from '@shadcn/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { valueUpdater } from '@shadcn/table/utils';
 import {
     FlexRender,
@@ -55,6 +38,7 @@ import { MoreHorizontal, SortAsc, SortDesc } from 'lucide-vue-next';
 import { computed, defineAsyncComponent, h, ref, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
+import Paginator from './Paginator.vue';
 
 const authStore = useAuth();
 const routeState = useRouteState();
@@ -183,12 +167,14 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
     return [
         {
             id: 'prefix',
-            size: 0,
+            size: 32,
+            maxSize: 21,
             cell: () => h(Button, { size: 'icon', variant: 'ghost' }, () => h(MoreHorizontal))
         },
         {
             id: 'href',
             accessorKey: 'name',
+            minSize: 300,
             header: ({ column }) => getSortableHeader(i18n.t('filename'), column),
             cell: ({ row: { original } }) => getEntryRenderFunction(original)
         },
@@ -268,10 +254,14 @@ watchEffect(() => table.value.setSorting(sorting.value));
 <template>
     <div id="wrapper">
         <LoadingTable v-if="isLoading || !table" />
-        <Table v-else>
+        <Table v-else :style="{ width: table.getTotalSize() + 'px' }">
             <TableHeader>
                 <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-                    <TableHead v-for="header in headerGroup.headers" :key="header.id">
+                    <TableHead
+                        v-for="header in headerGroup.headers"
+                        :key="header.id"
+                        :style="{ width: `${header.getSize()}px` }"
+                    >
                         <FlexRender
                             v-if="!header.isPlaceholder"
                             :render="header.column.columnDef.header"
@@ -294,46 +284,13 @@ watchEffect(() => table.value.setSorting(sorting.value));
                     </TableCell>
                 </TableRow>
             </TableBody>
-            <TableFooter v-if="data != null && data.length > 50">
-                <TableCell :colspan="table.getVisibleFlatColumns().length">
-                    <div class="flex not-lg:justify-evenly">
-                        <Select v-model:model-value="pageSize">
-                            <SelectTrigger class="w-full max-w-20">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem v-for="size in pageSizes" :value="size">
-                                    {{ size }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <div class="w-full lg:hidden"></div>
-                        <Pagination
-                            v-slot="{ page }"
-                            v-model:page="pageIndex"
-                            :items-per-page="pageSize"
-                            :total="data.length"
-                            show-edges
-                        >
-                            <PaginationContent v-slot="{ items }">
-                                <PaginationPrevious />
-                                <template v-for="(item, index) in items" :key="index">
-                                    <PaginationItem
-                                        v-if="item.type === 'page'"
-                                        :value="item.value"
-                                        :is-active="item.value === page"
-                                    >
-                                        {{ item.value }}
-                                    </PaginationItem>
-                                    <PaginationEllipsis v-else />
-                                </template>
-                                <PaginationNext />
-                            </PaginationContent>
-                        </Pagination>
-                        <div class="w-full max-w-20 not-lg:hidden"></div>
-                    </div>
-                </TableCell>
-            </TableFooter>
+            <Paginator
+                v-model:page-index="pageIndex"
+                v-model:page-size="pageSize"
+                :page-sizes
+                :colspan="table.getVisibleLeafColumns().length"
+                :data
+            />
         </Table>
     </div>
 
