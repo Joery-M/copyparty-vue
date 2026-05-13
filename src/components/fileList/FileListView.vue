@@ -1,5 +1,5 @@
 <script lang="ts">
-import LoadingTable from '@/components/FileList/LoadingTable.vue';
+import LoadingTable from '@/components/fileList/LoadingTable.vue';
 import { API } from '@/lib/api';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 

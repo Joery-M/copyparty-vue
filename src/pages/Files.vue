@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import FileListView from '@/components/FileList/FileListView.vue';
+import FileListView from '@/components/fileList/FileListView.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
