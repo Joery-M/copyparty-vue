@@ -134,6 +134,10 @@ function getTagRenderFunction(tag: string, value?: _JSONPrimitive) {
 }
 
 const tags = dedupedComputed(() => listDirQuery.data.value?.tags ?? []);
+const tagHeaders = computed(() => {
+    const tags = i18n.tm('filelist.tags');
+    return Object.fromEntries(Object.entries(tags).map(([k, v]) => [k, i18n.rt(v)]));
+});
 
 const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
     const sizeFormat = settings.format.fileSizes;
@@ -203,11 +207,7 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
             return {
                 id: tag,
                 accessorFn: (v) => v.tags.get(tag),
-                header: ({ column }) =>
-                    getSortableHeader(
-                        i18n.t(`filelist.tags["${tag}"]`, tag, { missingWarn: false }),
-                        column
-                    ),
+                header: ({ column }) => getSortableHeader(tagHeaders.value[tag] ?? tag, column),
                 cell: ({ getValue }) => getTagRenderFunction(tag, getValue<_JSONPrimitive>())
             } satisfies ColumnDef<AnyDirectoryEntry>;
         })
@@ -305,7 +305,7 @@ watchEffect(() => table.value.setSorting(sorting.value));
 @reference "@/style.css";
 
 #wrapper {
-    @apply my-12 ml-6 mr-5 border rounded-md;
+    @apply my-12 ml-6 mr-5 border rounded-md overflow-x-auto;
 }
 
 th {
