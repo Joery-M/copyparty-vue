@@ -12,8 +12,8 @@ import { useSettings } from '@/stores/useSettings';
 import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
-import { until, useElementSize, useFullscreen, useKeyModifier } from '@vueuse/core';
-import { computed, ref, useTemplateRef } from 'vue';
+import { useElementSize, useFullscreen, useKeyModifier } from '@vueuse/core';
+import { computed, ref, useTemplateRef, watchEffect } from 'vue';
 
 const props = defineProps<{ file: File }>();
 
@@ -41,7 +41,8 @@ const backgroundTypeButton = useTemplateRef('backgroundTypeButton');
 const backgroundTypeSelectOpen = ref(false);
 
 const isLoading = ref(true);
-const isDoneZooming = ref(false);
+const enableZoomToFit = ref(true);
+const enableTransition = ref(false);
 const isHoldingShift = useKeyModifier('Shift');
 
 const containerElem = useTemplateRef('container');
@@ -50,13 +51,14 @@ const containerSize = useElementSize(containerElem);
 const mediaElem = useTemplateRef('media');
 const fullscreenElement = useFullscreen(mediaElem);
 const mediaSize = computed<[number, number]>(() => {
-    if (!mediaElem.value || isLoading.value) return [100, 100];
+    if (!mediaElem.value || isLoading.value)
+        return [containerSize.width.value, containerSize.height.value];
     if (mediaElem.value instanceof HTMLImageElement) {
         return [mediaElem.value.naturalWidth, mediaElem.value.naturalHeight];
     } else if (mediaElem.value instanceof HTMLVideoElement) {
         return [mediaElem.value.videoWidth, mediaElem.value.videoHeight];
     } else {
-        return [100, 100];
+        return [containerSize.width.value, containerSize.height.value];
     }
 });
 
@@ -103,10 +105,15 @@ function calculateFitRatio(
     srcWidth: number,
     srcHeight: number,
     maxWidth: number,
-    maxHeight: number
+    maxHeight: number,
+    minWidth: number,
+    minHeight: number
 ): [number, number] {
-    var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
-    return [Math.floor(srcWidth * ratio), Math.floor(srcHeight * ratio)];
+    const ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
+    return [
+        Math.floor(Math.max(srcWidth, minWidth) * ratio),
+        Math.floor(Math.max(srcHeight, minHeight) * ratio)
+    ];
 }
 
 function zoomToFit() {
@@ -115,24 +122,11 @@ function zoomToFit() {
         mediaSize.value[isSideways ? 1 : 0],
         mediaSize.value[isSideways ? 0 : 1],
         containerSize.width.value,
-        containerSize.height.value
+        containerSize.height.value,
+        mediaSize.value[0],
+        mediaSize.value[1]
     );
     zoomedMediaSize.value = ratio;
-}
-
-async function loaded() {
-    if (!isLoading.value) return;
-    isLoading.value = false;
-    await Promise.all([
-        until(smallestContainerAxis).not.toBe(0),
-        until(largestZoomedMediaAxis).not.toBe(0)
-    ]);
-    // If it's larger than the container on load, resize it
-    if (largestZoomedMediaAxis.value > smallestContainerAxis.value) zoomToFit();
-    // Not the best, but it prevents jumping at the start
-    requestIdleCallback(() => {
-        isDoneZooming.value = true;
-    });
 }
 
 // These 2 numbers work and I don't really care why
@@ -148,169 +142,222 @@ const computedStyle = computed(() => ({
     width: mediaSize.value[0] * zoomFactor.value + 'px',
     height: mediaSize.value[1] * zoomFactor.value + 'px'
 }));
+
+watchEffect(() => {
+    if (
+        !enableZoomToFit.value ||
+        smallestContainerAxis.value == 0 ||
+        largestZoomedMediaAxis.value == 0
+    )
+        return;
+    zoomToFit();
+});
+
+function clickedZoom() {
+    enableTransition.value = true;
+    enableZoomToFit.value = false;
+}
+function clickedRotation() {
+    enableTransition.value = true;
+}
 </script>
 
 <template>
-    <div
-        class="container self-center justify-self-center h-0 min-w-full flex-1 m-10"
-        ref="container"
-    >
-        <div
-            v-if="settings.preview.bgType === 'grid'"
-            class="background-grid"
-            :class="{ 'transition-all': isDoneZooming }"
-            :style="computedStyle"
-        />
-        <img
-            ref="media"
-            v-if="
-                file.classification === FileClassification.RasterImage ||
-                file.classification === FileClassification.VectorImage
-            "
-            class="media"
-            :style="{
-                ...computedStyle,
-                cursor: isHoldingShift ? 'zoom-out' : 'zoom-in',
-                imageRendering: settings.preview.pixelated ? 'pixelated' : 'smooth'
-            }"
-            :class="{ ...backgroundClass, 'transition-all': isDoneZooming }"
-            :src="mediaUrl"
-            :alt="file.name"
-            @load="loaded()"
-            @click="zoom(isHoldingShift ? zoomOutFactor : zoomInFactor)"
-        />
-        <video
-            ref="media"
-            v-else-if="file.classification === FileClassification.Video"
-            class="media"
-            :class="{ ...backgroundClass, 'transition-all': isDoneZooming }"
-            :style="computedStyle"
-            :src="mediaUrl"
-            :alt="file.name"
-            @loadedmetadata="loaded()"
-            @loadeddata="loaded()"
-            controls
-            autoplay
-        />
-    </div>
-    <DialogFooter
-        class="sm:justify-center pointer-events-none! *:pointer-events-auto z-10"
-        style="--spacing: 0.3rem"
-    >
-        <ButtonGroup>
-            <Tooltip :content="$t('viewer.media.background')">
-                <Button
-                    @click="backgroundTypeSelectOpen = true"
-                    variant="accent"
-                    ref="backgroundTypeButton"
-                    size="icon-lg"
-                    :aria-label="$t('viewer.media.background')"
-                >
-                    <PaintBucket />
-                </Button>
-            </Tooltip>
-            <Tooltip
+    <div class="wrapper">
+        <div class="h-8"></div>
+        <div class="container" ref="container">
+            <div
+                v-if="settings.preview.bgType === 'grid' && !isLoading"
+                class="background-grid"
+                :class="{ 'transition-all': enableTransition }"
+                :style="computedStyle"
+            />
+            <img
+                ref="media"
                 v-if="
                     file.classification === FileClassification.RasterImage ||
                     file.classification === FileClassification.VectorImage
                 "
-                :content="$t('viewer.media.smoothing')"
-            >
-                <Button
-                    @click="settings.preview.pixelated = !settings.preview.pixelated"
-                    variant="accent"
-                    size="icon-lg"
-                    :aria-label="$t('viewer.media.smoothing')"
-                    v-html="settings.preview.pixelated ? ImagePixelated : ImageSmooth"
+                class="media"
+                :style="{
+                    ...computedStyle,
+                    cursor: isHoldingShift ? 'zoom-out' : 'zoom-in',
+                    imageRendering: settings.preview.pixelated ? 'pixelated' : 'smooth'
+                }"
+                :class="{ ...backgroundClass, 'transition-all': enableTransition }"
+                :src="mediaUrl"
+                :alt="file.name"
+                @transitionend="enableTransition = false"
+                @load="isLoading = false"
+                @click="zoom(isHoldingShift ? zoomOutFactor : zoomInFactor)"
+            />
+            <video
+                ref="media"
+                v-else-if="file.classification === FileClassification.Video"
+                class="media"
+                :class="{ ...backgroundClass, 'transition-all': enableTransition }"
+                :style="computedStyle"
+                :src="mediaUrl"
+                :alt="file.name"
+                @transitionend="enableTransition = false"
+                @loadedmetadata="isLoading = false"
+                @loadeddata="isLoading = false"
+                controls
+                autoplay
+            />
+        </div>
+        <DialogFooter
+            class="sm:justify-center pointer-events-none! *:pointer-events-auto z-10 h-8"
+            style="--spacing: 0.3rem"
+        >
+            <ButtonGroup>
+                <Tooltip :content="$t('viewer.media.background')">
+                    <Button
+                        @click="
+                            clickedZoom();
+                            backgroundTypeSelectOpen = true;
+                        "
+                        variant="accent"
+                        ref="backgroundTypeButton"
+                        size="icon-lg"
+                        :aria-label="$t('viewer.media.background')"
+                    >
+                        <PaintBucket />
+                    </Button>
+                </Tooltip>
+                <Tooltip
+                    v-if="
+                        file.classification === FileClassification.RasterImage ||
+                        file.classification === FileClassification.VectorImage
+                    "
+                    :content="$t('viewer.media.smoothing')"
                 >
-                </Button>
-            </Tooltip>
-        </ButtonGroup>
-        <ButtonGroup>
-            <Tooltip :content="$t('viewer.media.zoom.in')">
-                <Button
-                    @click="zoom(zoomInFactor)"
-                    variant="accent"
-                    size="icon-lg"
-                    :aria-label="$t('viewer.media.zoom.in')"
-                    :disabled="largestZoomedMediaAxis > largestContainerAxis * 8"
-                >
-                    <ZoomIn />
-                </Button>
-            </Tooltip>
-            <Tooltip :content="$t('viewer.media.zoom.reset')">
-                <Button
-                    @click="zoomedMediaSize = mediaSize"
-                    variant="accent"
-                    size="lg"
-                    class="text-base"
-                    :aria-label="$t('viewer.media.zoom.reset')"
-                >
-                    {{ $n(zoomFactor, { style: 'percent' }) }}
-                </Button>
-            </Tooltip>
-            <Tooltip :content="$t('viewer.media.zoom.fit')">
-                <Button
-                    @click="zoomToFit()"
-                    variant="accent"
-                    size="icon-lg"
-                    :aria-label="$t('viewer.media.zoom.fit')"
-                >
-                    <Fullscreen />
-                </Button>
-            </Tooltip>
-            <Tooltip :content="$t('viewer.media.zoom.out')">
-                <Button
-                    @click="zoom(zoomOutFactor)"
-                    :disabled="smallestMediaAxis < 5"
-                    variant="accent"
-                    size="icon-lg"
-                    :aria-label="$t('viewer.media.zoom.out')"
-                >
-                    <ZoomOut />
-                </Button>
-            </Tooltip>
-        </ButtonGroup>
-        <ButtonGroup>
-            <Tooltip :content="$t('viewer.media.rotate_ccw')">
-                <Button
-                    @click="rotation--"
-                    variant="accent"
-                    size="icon-lg"
-                    :aria-label="$t('viewer.media.rotate_ccw')"
-                >
-                    <RotateCcw />
-                </Button>
-            </Tooltip>
-            <Tooltip :content="$t('viewer.media.rotate_cw')">
-                <Button
-                    @click="rotation++"
-                    variant="accent"
-                    size="icon-lg"
-                    :aria-label="$t('viewer.media.rotate_cw')"
-                >
-                    <RotateCw />
-                </Button>
-            </Tooltip>
-        </ButtonGroup>
-    </DialogFooter>
-
-    <!-- Background color select -->
-    <Select v-model="settings.preview.bgType" v-model:open="backgroundTypeSelectOpen">
-        <SelectContent position="popper" :reference="backgroundTypeButton?.$el">
-            <SelectGroup>
-                <SelectItem value="transparent"> Transparent </SelectItem>
-                <SelectItem value="black"> Black </SelectItem>
-                <SelectItem value="white"> White </SelectItem>
-                <SelectItem value="grid"> Grid </SelectItem>
-            </SelectGroup>
-        </SelectContent>
-    </Select>
+                    <Button
+                        @click="
+                            clickedZoom();
+                            settings.preview.pixelated = !settings.preview.pixelated;
+                        "
+                        variant="accent"
+                        size="icon-lg"
+                        :aria-label="$t('viewer.media.smoothing')"
+                        v-html="settings.preview.pixelated ? ImagePixelated : ImageSmooth"
+                    >
+                    </Button>
+                </Tooltip>
+            </ButtonGroup>
+            <ButtonGroup>
+                <Tooltip :content="$t('viewer.media.zoom.in')">
+                    <Button
+                        @click="
+                            clickedZoom();
+                            zoom(zoomInFactor);
+                        "
+                        variant="accent"
+                        size="icon-lg"
+                        :aria-label="$t('viewer.media.zoom.in')"
+                        :disabled="largestZoomedMediaAxis > largestContainerAxis * 8"
+                    >
+                        <ZoomIn />
+                    </Button>
+                </Tooltip>
+                <Tooltip :content="$t('viewer.media.zoom.reset')">
+                    <Button
+                        @click="
+                            clickedZoom();
+                            zoomedMediaSize = mediaSize;
+                        "
+                        variant="accent"
+                        size="lg"
+                        class="text-base"
+                        :aria-label="$t('viewer.media.zoom.reset')"
+                    >
+                        {{
+                            enableZoomToFit
+                                ? $t('viewer.media.zoom.fit_perc')
+                                : $n(zoomFactor, { style: 'percent' })
+                        }}
+                    </Button>
+                </Tooltip>
+                <Tooltip :content="$t('viewer.media.zoom.fit')">
+                    <Button
+                        @click="
+                            enableTransition = true;
+                            enableZoomToFit = true;
+                        "
+                        variant="accent"
+                        size="icon-lg"
+                        :aria-label="$t('viewer.media.zoom.fit')"
+                    >
+                        <Fullscreen />
+                    </Button>
+                </Tooltip>
+                <Tooltip :content="$t('viewer.media.zoom.out')">
+                    <Button
+                        @click="
+                            clickedZoom();
+                            zoom(zoomOutFactor);
+                        "
+                        :disabled="smallestMediaAxis < 5"
+                        variant="accent"
+                        size="icon-lg"
+                        :aria-label="$t('viewer.media.zoom.out')"
+                    >
+                        <ZoomOut />
+                    </Button>
+                </Tooltip>
+            </ButtonGroup>
+            <ButtonGroup>
+                <Tooltip :content="$t('viewer.media.rotate_ccw')">
+                    <Button
+                        @click="
+                            clickedRotation();
+                            rotation--;
+                        "
+                        variant="accent"
+                        size="icon-lg"
+                        :aria-label="$t('viewer.media.rotate_ccw')"
+                    >
+                        <RotateCcw />
+                    </Button>
+                </Tooltip>
+                <Tooltip :content="$t('viewer.media.rotate_cw')">
+                    <Button
+                        @click="
+                            clickedRotation();
+                            rotation++;
+                        "
+                        variant="accent"
+                        size="icon-lg"
+                        :aria-label="$t('viewer.media.rotate_cw')"
+                    >
+                        <RotateCw />
+                    </Button>
+                </Tooltip>
+            </ButtonGroup>
+        </DialogFooter>
+        <!-- Background color select -->
+        <Select v-model="settings.preview.bgType" v-model:open="backgroundTypeSelectOpen">
+            <SelectContent position="popper" :reference="backgroundTypeButton?.$el">
+                <SelectGroup>
+                    <SelectItem value="transparent"> Transparent </SelectItem>
+                    <SelectItem value="black"> Black </SelectItem>
+                    <SelectItem value="white"> White </SelectItem>
+                    <SelectItem value="grid"> Grid </SelectItem>
+                </SelectGroup>
+            </SelectContent>
+        </Select>
+    </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
+@reference "@/style.css";
+
+.wrapper {
+    @apply flex flex-col size-full pointer-events-none gap-5;
+}
+
 .container {
-    position: relative;
+    @apply self-center justify-self-center h-0 min-w-full flex-1 relative;
 
     .background-grid {
         position: absolute;
@@ -319,7 +366,7 @@ const computedStyle = computed(() => ({
         image-rendering: crisp-edges;
     }
 
-    // Pass through to background and close dialog
+    /* Pass through to background and close dialog */
     pointer-events: none !important;
     .media {
         pointer-events: auto;

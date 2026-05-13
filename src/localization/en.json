@@ -65,6 +65,7 @@
       "zoom": {
         "out": "Zoom out",
         "in": "Zoom in",
+        "fit_perc": "Fit%",
         "fit": "Zoom to fit",
         "reset": "Reset zoom"
       },
