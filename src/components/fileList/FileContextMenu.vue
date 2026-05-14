@@ -12,6 +12,7 @@ import {
     ContextMenuSubTrigger
 } from '@shadcn/context-menu';
 import { Download, ExternalLink, Image } from 'lucide-vue-next';
+import { injectContextMenuRootContext } from 'reka-ui';
 import type { QueryObject } from 'ufo';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -85,6 +86,8 @@ const handlers = {
     },
     openNewTab: () => open(getApiUrl(props.file.fullPath), '_blank')
 };
+
+const rootContext = injectContextMenuRootContext();
 </script>
 
 <template>
@@ -95,7 +98,10 @@ const handlers = {
                     :disabled="!canDownload"
                     size="icon-lg"
                     variant="ghost"
-                    @click="handlers.download()"
+                    @click="
+                        handlers.download();
+                        rootContext.onOpenChange(false);
+                    "
                 >
                     <Download />
                 </Button>
@@ -105,13 +111,23 @@ const handlers = {
                     :disabled="!canView"
                     size="icon-lg"
                     variant="ghost"
-                    @click="handlers.view()"
+                    @click="
+                        handlers.view();
+                        rootContext.onOpenChange(false);
+                    "
                 >
                     <Image />
                 </Button>
             </Tooltip>
             <Tooltip :content="$t('actions.open_new_tab')">
-                <Button size="icon-lg" variant="ghost" @click="handlers.openNewTab()">
+                <Button
+                    size="icon-lg"
+                    variant="ghost"
+                    @click="
+                        handlers.openNewTab();
+                        rootContext.onOpenChange(false);
+                    "
+                >
                     <ExternalLink />
                 </Button>
             </Tooltip>

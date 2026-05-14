@@ -12,7 +12,7 @@ import { useSettings } from '@/stores/useSettings';
 import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
-import { useElementSize, useFullscreen, useKeyModifier } from '@vueuse/core';
+import { useElementSize, useFullscreen, useKeyModifier, useTimeoutFn } from '@vueuse/core';
 import { computed, ref, useTemplateRef, watchEffect } from 'vue';
 
 const props = defineProps<{ file: File }>();
@@ -87,11 +87,17 @@ const largestZoomedMediaAxis = computed(() =>
 );
 const zoomFactor = computed(() => largestZoomedMediaAxis.value / largestMediaAxis.value || 0);
 
+// If 99.99% of the image is outside the container, it might be time to stop zooming
+const zoomedMediaArea = computed(() => zoomedMediaSize.value[0] * zoomedMediaSize.value[1]);
+const containerArea = computed(() => containerSize.width.value * containerSize.height.value);
+const isTooLarge = computed(() => containerArea.value / zoomedMediaArea.value < 0.0001);
+
 function zoom(ratio: number) {
+    clickedZoom();
     if (ratio < 0) {
         if (smallestMediaAxis.value < 5) return;
-    } else if (ratio > 0 && largestContainerAxis.value > 0) {
-        if (largestZoomedMediaAxis.value > largestContainerAxis.value * 8) return;
+    } else if (ratio > 0 && largestContainerAxis.value > 0 && isTooLarge.value) {
+        return;
     }
 
     const r = 1 + ratio;
@@ -145,12 +151,11 @@ const computedStyle = computed(() => ({
 
 watchEffect(() => {
     if (
-        !enableZoomToFit.value ||
-        smallestContainerAxis.value == 0 ||
-        largestZoomedMediaAxis.value == 0
+        enableZoomToFit.value &&
+        smallestContainerAxis.value !== 0 &&
+        largestZoomedMediaAxis.value !== 0
     )
-        return;
-    zoomToFit();
+        zoomToFit();
 });
 
 function clickedZoom() {
@@ -160,6 +165,11 @@ function clickedZoom() {
 function clickedRotation() {
     enableTransition.value = true;
 }
+
+const disableTransition$ = useTimeoutFn(() => (enableTransition.value = false), 100, {
+    immediate: false
+});
+const disableTransition = disableTransition$.start;
 </script>
 
 <template>
@@ -187,7 +197,7 @@ function clickedRotation() {
                 :class="{ ...backgroundClass, 'transition-all': enableTransition }"
                 :src="mediaUrl"
                 :alt="file.name"
-                @transitionend="enableTransition = false"
+                @transitionend="disableTransition()"
                 @load="isLoading = false"
                 @click="zoom(isHoldingShift ? zoomOutFactor : zoomInFactor)"
             />
@@ -199,7 +209,7 @@ function clickedRotation() {
                 :style="computedStyle"
                 :src="mediaUrl"
                 :alt="file.name"
-                @transitionend="enableTransition = false"
+                @transitionend="disableTransition()"
                 @loadedmetadata="isLoading = false"
                 @loadeddata="isLoading = false"
                 controls
@@ -255,7 +265,7 @@ function clickedRotation() {
                         variant="accent"
                         size="icon-lg"
                         :aria-label="$t('viewer.media.zoom.in')"
-                        :disabled="largestZoomedMediaAxis > largestContainerAxis * 8"
+                        :disabled="isTooLarge"
                     >
                         <ZoomIn />
                     </Button>
