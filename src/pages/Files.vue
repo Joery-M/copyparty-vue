@@ -2,6 +2,7 @@
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import FileListView from '@/components/fileList/FileListView.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
+import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
 import { useRouteState } from '@/stores/useRouteState';
@@ -33,6 +34,7 @@ useEventListener(document, 'paste', (ev) => {
     <div class="flex flex-col flex-1">
         <Separator class="my-4" />
         <TreeView class="inline-flex flex-1">
+            <RouteBreadCrumb />
             <FileListView v-if="fileListType === 'list'" />
         </TreeView>
     </div>
