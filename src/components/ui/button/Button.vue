@@ -9,7 +9,8 @@ import { buttonVariants } from '.'
 interface Props extends PrimitiveProps {
   variant?: ButtonVariants['variant']
   size?: ButtonVariants['size']
-  class?: HTMLAttributes['class']
+  class?: HTMLAttributes['class'],
+  shortcut?: HTMLAttributes['aria-keyshortcuts']
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -25,6 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
     :as="as"
     :as-child="asChild"
     :class="cn(buttonVariants({ variant, size }), props.class)"
+    :aria-keyshortcuts="shortcut"
   >
     <slot />
   </Primitive>

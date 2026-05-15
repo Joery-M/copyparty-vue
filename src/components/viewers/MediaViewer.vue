@@ -4,7 +4,16 @@ import ImageSmooth from '@/assets/image-smooth.svg?raw';
 import { getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import type { File } from '@/lib/interop';
-import { Fullscreen, PaintBucket, RotateCcw, RotateCw, ZoomIn, ZoomOut } from 'lucide-vue-next';
+import {
+    Fullscreen,
+    Maximize,
+    Minimize,
+    PaintBucket,
+    RotateCcw,
+    RotateCw,
+    ZoomIn,
+    ZoomOut
+} from 'lucide-vue-next';
 import DialogFooter from '../ui/dialog/DialogFooter.vue';
 
 import Tooltip from '@/components/Tooltip.vue';
@@ -12,18 +21,27 @@ import { useSettings } from '@/stores/useSettings';
 import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
-import { useElementSize, useFullscreen, useKeyModifier, useTimeoutFn } from '@vueuse/core';
-import { computed, ref, useTemplateRef, watchEffect } from 'vue';
+import {
+    onKeyStroke,
+    refWithControl,
+    useElementSize,
+    useFullscreen,
+    useKeyModifier,
+    usePreferredReducedMotion,
+    useTimeoutFn
+} from '@vueuse/core';
+import { computed, nextTick, ref, useTemplateRef, watchEffect } from 'vue';
 
 const props = defineProps<{ file: File }>();
 
 const mediaUrl = getApiUrl(props.file.fullPath);
 
 const settings = useSettings();
+const preferrersReducedMotion = usePreferredReducedMotion();
 
 const backgroundClass = computed(() => {
     if (isLoading.value) return {};
-    if (fullscreenElement.isFullscreen.value) return { 'bg-black': true };
+    if (mediaFullscreenElement.isFullscreen.value) return { 'bg-black': true };
 
     switch (settings.preview.bgType) {
         case 'black':
@@ -42,14 +60,20 @@ const backgroundTypeSelectOpen = ref(false);
 
 const isLoading = ref(true);
 const enableZoomToFit = ref(true);
-const enableTransition = ref(false);
+const enableTransition = refWithControl(false, {
+    onBeforeChange(value) {
+        if (value && preferrersReducedMotion.value === 'reduce') return false;
+    }
+});
 const isHoldingShift = useKeyModifier('Shift');
+
+const wrapperElem = useTemplateRef('wrapper');
+const wrapperFullscreenElement = useFullscreen(wrapperElem);
 
 const containerElem = useTemplateRef('container');
 const containerSize = useElementSize(containerElem);
 
 const mediaElem = useTemplateRef('media');
-const fullscreenElement = useFullscreen(mediaElem);
 const mediaSize = computed<[number, number]>(() => {
     if (!mediaElem.value || isLoading.value)
         return [containerSize.width.value, containerSize.height.value];
@@ -61,6 +85,19 @@ const mediaSize = computed<[number, number]>(() => {
         return [containerSize.width.value, containerSize.height.value];
     }
 });
+
+const mediaFullscreenElement = useFullscreen(mediaElem);
+// whenever(mediaFullscreenElement.isFullscreen, async () => {
+//     // mediaFullscreenElement.exit();
+//     // await until(mediaFullscreenElement.isFullscreen).not.toBeTruthy();
+//     wrapperFullscreenElement.enter();
+// });
+async function tryWrapperFullscreen() {
+    await nextTick();
+    await nextTick();
+    await nextTick();
+    if (mediaFullscreenElement.isFullscreen.value) wrapperFullscreenElement.enter();
+}
 
 const containerMiddle = computed<[number, number]>(() => [
     containerSize.width.value / 2,
@@ -170,10 +207,48 @@ const disableTransition$ = useTimeoutFn(() => (enableTransition.value = false), 
     immediate: false
 });
 const disableTransition = disableTransition$.start;
+
+// Zoom in
+onKeyStroke(
+    (e) => e.key === '+' || e.code === 'Equal',
+    (e) => (e.preventDefault(), zoom(zoomInFactor))
+);
+// Zoom out
+onKeyStroke(
+    (e) => e.key === '-' || e.code === 'Minus',
+    (e) => (e.preventDefault(), zoom(zoomOutFactor))
+);
+// Rotate CW/CCW
+onKeyStroke(
+    ['r', 'R'],
+    (e) => ((enableTransition.value = true), (rotation.value += e.shiftKey ? -1 : 1))
+);
+onKeyStroke(['f'], () => wrapperFullscreenElement.toggle());
+onKeyStroke(['p'], () => (settings.preview.pixelated = !settings.preview.pixelated));
+onKeyStroke(['b'], () => (backgroundTypeSelectOpen.value = true));
+// Zoom to perc/fit
+onKeyStroke(
+    (e) => !Number.isNaN(parseInt(e.key)),
+    (e) => {
+        const num = parseInt(e.key);
+        enableTransition.value = true;
+        // If 0, zoom to fit
+        if (!num) {
+            enableZoomToFit.value = true;
+        } else {
+            enableZoomToFit.value = false;
+            zoomedMediaSize.value = [mediaSize.value[0] * num, mediaSize.value[1] * num];
+        }
+    }
+);
 </script>
 
 <template>
-    <div class="wrapper">
+    <div
+        class="wrapper"
+        ref="wrapper"
+        :class="{ isFullScreen: wrapperFullscreenElement.isFullscreen.value }"
+    >
         <div class="h-8"></div>
         <div class="container" ref="container">
             <div
@@ -214,6 +289,7 @@ const disableTransition = disableTransition$.start;
                 @loadeddata="isLoading = false"
                 controls
                 autoplay
+                @fullscreenchange="tryWrapperFullscreen"
             />
         </div>
         <DialogFooter
@@ -221,7 +297,7 @@ const disableTransition = disableTransition$.start;
             style="--spacing: 0.3rem"
         >
             <ButtonGroup>
-                <Tooltip :content="$t('viewer.media.background')">
+                <Tooltip :content="$t('viewer.media.background') + ' (B)'">
                     <Button
                         @click="
                             clickedZoom();
@@ -243,10 +319,7 @@ const disableTransition = disableTransition$.start;
                     :content="$t('viewer.media.smoothing')"
                 >
                     <Button
-                        @click="
-                            clickedZoom();
-                            settings.preview.pixelated = !settings.preview.pixelated;
-                        "
+                        @click="settings.preview.pixelated = !settings.preview.pixelated"
                         variant="accent"
                         size="icon-lg"
                         :aria-label="$t('viewer.media.smoothing')"
@@ -254,9 +327,30 @@ const disableTransition = disableTransition$.start;
                     >
                     </Button>
                 </Tooltip>
+                <Tooltip
+                    :content="
+                        wrapperFullscreenElement.isFullscreen.value
+                            ? $t('viewer.media.fullscreen_exit')
+                            : $t('viewer.media.fullscreen_enter')
+                    "
+                >
+                    <Button
+                        @click="wrapperFullscreenElement.toggle()"
+                        variant="accent"
+                        size="icon-lg"
+                        :aria-label="
+                            wrapperFullscreenElement.isFullscreen.value
+                                ? $t('viewer.media.fullscreen_exit')
+                                : $t('viewer.media.fullscreen_enter')
+                        "
+                    >
+                        <Minimize v-if="wrapperFullscreenElement.isFullscreen.value" />
+                        <Maximize v-else />
+                    </Button>
+                </Tooltip>
             </ButtonGroup>
             <ButtonGroup>
-                <Tooltip :content="$t('viewer.media.zoom.in')">
+                <Tooltip :content="$t('viewer.media.zoom.in') + ' (+)'">
                     <Button
                         @click="
                             clickedZoom();
@@ -264,13 +358,14 @@ const disableTransition = disableTransition$.start;
                         "
                         variant="accent"
                         size="icon-lg"
+                        shortcut="+"
                         :aria-label="$t('viewer.media.zoom.in')"
                         :disabled="isTooLarge"
                     >
                         <ZoomIn />
                     </Button>
                 </Tooltip>
-                <Tooltip :content="$t('viewer.media.zoom.reset')">
+                <Tooltip :content="$t('viewer.media.zoom.to', { perc: 100 }) + ' (1)'">
                     <Button
                         @click="
                             clickedZoom();
@@ -279,7 +374,8 @@ const disableTransition = disableTransition$.start;
                         variant="accent"
                         size="lg"
                         class="text-base"
-                        :aria-label="$t('viewer.media.zoom.reset')"
+                        shortcut="1"
+                        :aria-label="$t('viewer.media.zoom.to', { perc: 100 })"
                     >
                         {{
                             enableZoomToFit
@@ -288,7 +384,7 @@ const disableTransition = disableTransition$.start;
                         }}
                     </Button>
                 </Tooltip>
-                <Tooltip :content="$t('viewer.media.zoom.fit')">
+                <Tooltip :content="$t('viewer.media.zoom.fit') + ' (0)'">
                     <Button
                         @click="
                             enableTransition = true;
@@ -296,12 +392,13 @@ const disableTransition = disableTransition$.start;
                         "
                         variant="accent"
                         size="icon-lg"
+                        shortcut="0"
                         :aria-label="$t('viewer.media.zoom.fit')"
                     >
                         <Fullscreen />
                     </Button>
                 </Tooltip>
-                <Tooltip :content="$t('viewer.media.zoom.out')">
+                <Tooltip :content="$t('viewer.media.zoom.out') + ' (-)'">
                     <Button
                         @click="
                             clickedZoom();
@@ -310,6 +407,7 @@ const disableTransition = disableTransition$.start;
                         :disabled="smallestMediaAxis < 5"
                         variant="accent"
                         size="icon-lg"
+                        aria-keyshortcuts="-"
                         :aria-label="$t('viewer.media.zoom.out')"
                     >
                         <ZoomOut />
@@ -317,7 +415,7 @@ const disableTransition = disableTransition$.start;
                 </Tooltip>
             </ButtonGroup>
             <ButtonGroup>
-                <Tooltip :content="$t('viewer.media.rotate_ccw')">
+                <Tooltip :content="$t('viewer.media.rotate_ccw') + ' (Shift + R)'">
                     <Button
                         @click="
                             clickedRotation();
@@ -325,12 +423,13 @@ const disableTransition = disableTransition$.start;
                         "
                         variant="accent"
                         size="icon-lg"
+                        shortcut="Shift+R"
                         :aria-label="$t('viewer.media.rotate_ccw')"
                     >
                         <RotateCcw />
                     </Button>
                 </Tooltip>
-                <Tooltip :content="$t('viewer.media.rotate_cw')">
+                <Tooltip :content="$t('viewer.media.rotate_cw') + ' (R)'">
                     <Button
                         @click="
                             clickedRotation();
@@ -364,6 +463,10 @@ const disableTransition = disableTransition$.start;
 
 .wrapper {
     @apply flex flex-col size-full pointer-events-none gap-5;
+
+    &.isFullScreen {
+        @apply p-5 pointer-events-auto;
+    }
 }
 
 .container {

@@ -136,3 +136,9 @@
 #app {
     @apply flex flex-col min-h-svh;
 }
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        @apply duration-[0ms];
+    }
+}

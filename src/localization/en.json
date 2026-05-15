@@ -67,8 +67,10 @@
         "in": "Zoom in",
         "fit_perc": "Fit%",
         "fit": "Zoom to fit",
-        "reset": "Reset zoom"
+        "to": "Zoom to {perc}%"
       },
+      "fullscreen_enter": "Enter fullscreen",
+      "fullscreen_exit": "Exit fullscreen",
       "background": "Background",
       "smoothing": "Pixel smoothing",
       "rotate_ccw": "Rotate counter-clockwise",

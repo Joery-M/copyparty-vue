@@ -1,25 +1,30 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shadcn/tooltip';
-import { useElementVisibility } from '@vueuse/core';
-import { useTemplateRef } from 'vue';
+import { useElementVisibility, useEventListener } from '@vueuse/core';
+import { shallowRef, useTemplateRef } from 'vue';
 
 defineProps<{ content: string; useViewportTest?: boolean }>();
 
 const tester = useTemplateRef('tester');
 const isVisible = useElementVisibility(tester);
+
+const fullscreenElem = shallowRef<HTMLElement | undefined>();
+useEventListener(document, 'fullscreenchange', (ev) => {
+    fullscreenElem.value = ev.target instanceof HTMLElement ? ev.target : undefined;
+});
 </script>
 
 <template>
     <div v-if="useViewportTest" id="pos-tester" ref="tester"></div>
     <Tooltip v-if="!useViewportTest || isVisible">
         <TooltipTrigger as-child>
-            <slot />
+            <slot> &nbsp; </slot>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent :attach-to="fullscreenElem">
             <p>{{ content }}</p>
         </TooltipContent>
     </Tooltip>
-    <slot v-else />
+    <slot v-else> &nbsp; </slot>
 </template>
 
 <style scoped>
