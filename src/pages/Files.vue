@@ -33,7 +33,7 @@ useEventListener(document, 'paste', (ev) => {
 
     <div class="flex flex-col flex-1">
         <Separator class="my-4" />
-        <TreeView class="inline-flex flex-1">
+        <TreeView wrapper-class="inline-flex flex-1" class="p-6 flex flex-col gap-3">
             <RouteBreadCrumb />
             <FileListView v-if="fileListType === 'list'" />
         </TreeView>

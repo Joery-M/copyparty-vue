@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { cn } from '@/lib/utils';
 import { useRouteState } from '@/stores/useRouteState';
 import {
     Sidebar,
@@ -8,8 +9,13 @@ import {
     SidebarMenu,
     SidebarProvider
 } from '@shadcn/sidebar';
-import { ref } from 'vue';
+import { ref, type HTMLAttributes } from 'vue';
 import TreeViewList from './TreeViewList.vue';
+
+const props = defineProps<{
+    class?: HTMLAttributes['class'];
+    wrapperClass?: HTMLAttributes['class'];
+}>();
 
 const routePath = useRouteState();
 
@@ -17,7 +23,7 @@ const isOpen = ref(true);
 </script>
 
 <template>
-    <SidebarProvider v-model:open="isOpen">
+    <SidebarProvider v-model:open="isOpen" :class="wrapperClass">
         <Sidebar collapsible="offcanvas" variant="floating">
             <SidebarHeader>
                 <SidebarMenu> </SidebarMenu>
@@ -26,7 +32,7 @@ const isOpen = ref(true);
                 <TreeViewList dir="/" :route-path="routePath.dir" />
             </SidebarContent>
         </Sidebar>
-        <SidebarInset class="min-w-0">
+        <SidebarInset :class="cn('min-w-0', props.class)">
             <slot />
         </SidebarInset>
     </SidebarProvider>

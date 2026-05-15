@@ -20,46 +20,54 @@ import { RouterLink } from 'vue-router';
 const routeState = useRouteState();
 
 const last5 = computed(() => routeState.dir.map((v, i) => [v, i] as const).slice(-5));
-const other = computed(() => routeState.dir.slice(0, -5));
+const dropdownItems = computed(() =>
+    routeState.dir.slice(0, -1).map((_, i, dir) => dir.slice(0, i + 1))
+);
 </script>
 
 <template>
     <Breadcrumb>
         <BreadcrumbList>
-            <BreadcrumbItem>
-                <RouterLink
-                    :to="{
-                        name: 'viewer',
-                        params: { path: [] }
-                    }"
-                >
-                    /
-                </RouterLink>
-            </BreadcrumbItem>
-            <template v-if="other.length > 0">
-                <BreadcrumbSeparator />
+            <template v-if="dropdownItems.length > 5">
                 <BreadcrumbItem>
                     <DropdownMenu>
                         <DropdownMenuTrigger class="flex items-center gap-1">
                             <BreadcrumbEllipsis class="h-4 w-4" />
                             <span class="sr-only">Toggle menu</span>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                            <DropdownMenuItem v-for="(dir, i) in other">
+                        <DropdownMenuContent align="start" class="w-max min-w-40">
+                            <DropdownMenuItem>
                                 <RouterLink
                                     class="w-full"
-                                    :to="{
-                                        name: 'viewer',
-                                        params: { path: routeState.dir.slice(0, i + 1).concat('') }
-                                    }"
+                                    :to="{ name: 'viewer', params: { path: [] } }"
                                 >
-                                    {{ dir }}
+                                    /
+                                </RouterLink>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem v-for="dir in dropdownItems">
+                                <RouterLink
+                                    class="w-full"
+                                    :to="{ name: 'viewer', params: { path: dir.concat('') } }"
+                                >
+                                    {{ dir.at(-1) }}
                                 </RouterLink>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </BreadcrumbItem>
             </template>
+            <BreadcrumbItem v-else>
+                <RouterLink
+                    :to="{
+                        name: 'viewer',
+                        params: { path: [] }
+                    }"
+                    class="hover:underline hover:text-foreground"
+                >
+                    /
+                </RouterLink>
+            </BreadcrumbItem>
+
             <template v-for="[dir, i] in last5">
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
@@ -69,6 +77,7 @@ const other = computed(() => routeState.dir.slice(0, -5));
                             name: 'viewer',
                             params: { path: routeState.dir.slice(0, i + 1).concat('') }
                         }"
+                        class="hover:underline hover:text-foreground"
                     >
                         {{ dir }}
                     </RouterLink>

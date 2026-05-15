@@ -318,7 +318,7 @@ watchEffect(() => table.value.setSorting(sorting.value));
 @reference "@/style.css";
 
 #wrapper {
-    @apply my-12 ml-6 mr-5 border rounded-md overflow-x-auto;
+    @apply border rounded-md overflow-x-auto;
 }
 
 th {
