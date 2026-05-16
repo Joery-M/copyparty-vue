@@ -128,74 +128,59 @@ export namespace API {
         query: ({ signal }) => getListDirectory(dir, signal)
     }));
 
-    export function getHelloPageData(signal: AbortSignal) {
-        return fetch(getApiUrl([], { h: '', ls: 't' }), { signal })
-            .then((r) => r.text())
-            .then((res) => {
-                const lines = res.split('\n');
-
-                let username: string | null = null;
-                const readable: string[] = [];
-                const writable: string[] = [];
-
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    if (line.trim().length == 0) continue;
-
-                    if (i == 0) {
-                        if (line.startsWith('howdy stranger')) {
-                            username = null;
-                        } else if (line.startsWith('welcome back')) {
-                            username = line.split(' ')[2] ?? null;
-                        }
-                    } else if (line.startsWith('status:')) {
-                        // TODO: Find a good situation where this can be examined
-                        continue;
-                    } else if (line.startsWith('incoming files:')) {
-                        // TODO: Figure out the format
-                        continue;
-                    } else if (line.startsWith('active downloads:')) {
-                        // TODO: Figure out the format
-                        continue;
-                    } else if (line.startsWith('you can browse:')) {
-                        // Looks weird, but this loops over the next lines until we're out of the list
-                        for (; i < lines.length; i++) {
-                            const line = lines[i + 1];
-                            if (!line.startsWith('  ')) break;
-                            readable.push(line.trim());
-                        }
-                    } else if (line.startsWith('you can upload to:')) {
-                        for (; i < lines.length; i++) {
-                            const line = lines[i + 1];
-                            if (!line.startsWith('  ')) break;
-                            writable.push(line.trim());
-                        }
-                    }
-                }
-                return {
-                    username,
-                    readable,
-                    writable
-                };
-            });
+    interface CustomHelloPageResponse {
+        usernames: boolean;
+        uname: string | null;
+        status: {
+            volstate: Record<string, string> | null;
+            scanning: boolean | null;
+            hashq: number | null;
+            tagq: number | null;
+            mtpq: number | string | null;
+            /**
+             * True when server is too busy to get the uploads
+             */
+            ups: [number, number, number, number, string][] | true | null;
+            dbwu: number | null;
+            dbwt: number | null;
+        };
+        uploads: {
+            done: number;
+            speed: number;
+            eta: number | null;
+            /**
+             * Time since last chunk
+             */
+            idle: number;
+            path: string[];
+        }[];
+        downloads: {
+            done: number | null;
+            sent: number;
+            speed: number;
+            eta: number | null;
+            /**
+             * Time since last chunk
+             */
+            idle: number;
+            uname: string;
+            path: string[];
+            id: string;
+        }[];
+        readable: string[];
+        writable: string[];
     }
-    export function getIsUsernameRequired(signal: AbortSignal) {
-        return fetch(getApiUrl([], { h: '' }), { signal })
-            .then((r) => r.text())
-            .then((res) => res.includes('name="uname"'));
+
+    export function getHelloPageData(signal: AbortSignal) {
+        return fetch(getApiUrl([], { h: 'j' }), { signal })
+            .then((r) => r.json())
+            .then((res: CustomHelloPageResponse) => {
+                return res;
+            });
     }
     export const getHelloPageDataQuery = defineQueryOptions({
         key: ['hello'],
-        query: async ({ signal }) => {
-            const res = await Promise.all([
-                getHelloPageData(signal),
-                getIsUsernameRequired(signal)
-            ]);
-            return {
-                ...res[0],
-                usernames: res[1]
-            };
-        },
+        query: ({ signal }) => getHelloPageData(signal),
         refetchOnWindowFocus: false,
         staleTime: 30_000
     });

@@ -24,7 +24,7 @@ export const useAuth = defineStore('auth', () => {
     whenever(
         () => helloPageData.data.value,
         ({ readable, writable }) => {
-            if (readable.length === 0 || writable.length === 0) {
+            if (readable.length === 0 && writable.length === 0) {
                 // If we have access to nothing, just show the login dialog
                 dialog.reveal({ canCancel: false });
             }
@@ -34,7 +34,7 @@ export const useAuth = defineStore('auth', () => {
 
     return {
         usernameRequired: computed(() => helloPageData.data.value?.usernames),
-        username: computed(() => helloPageData.data.value?.username),
+        username: computed(() => helloPageData.data.value?.uname),
         readable: computed(() => helloPageData.data.value?.readable ?? []),
         writable: computed(() => helloPageData.data.value?.writable ?? []),
         async getPermissions(dir: string[]) {
