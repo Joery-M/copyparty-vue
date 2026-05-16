@@ -1,36 +1,19 @@
-<script lang="ts">
-import { API } from '@/lib/api';
-import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
-
-export const useListDirQuery = defineColadaLoader({
-    key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
-    query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal)
-});
-</script>
-
 <script lang="ts" setup>
 import LoadingTable from '@/components/fileList/LoadingTable.vue';
 import Tooltip from '@/components/Tooltip.vue';
-import { getApiUrl, useLoadingState } from '@/lib/api';
+import { API, getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { formatFileSize, formatTime } from '@/lib/format';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { dedupedComputed } from '@/lib/utils';
+import { useListDirQuery } from '@/pages/Files.vue';
 import { useAuth } from '@/stores/useAuth';
-import { getDirFromRouteParams, useRouteState } from '@/stores/useRouteState';
+import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { type _JSONPrimitive } from '@pinia/colada';
 import { Button } from '@shadcn/button';
 import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow
-} from '@shadcn/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { valueUpdater } from '@shadcn/table/utils';
 import {
     FlexRender,
@@ -44,7 +27,7 @@ import {
 } from '@tanstack/vue-table';
 import { watchImmediate, whenever } from '@vueuse/core';
 import { SortAsc, SortDesc } from 'lucide-vue-next';
-import { computed, defineAsyncComponent, h, ref, watchEffect } from 'vue';
+import { computed, h, ref, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import FileContextMenu from './FileContextMenu.vue';
@@ -76,9 +59,6 @@ whenever(listDirQuery.error, (err) => {
 });
 
 const isLoading = useLoadingState(listDirQuery.isPending);
-
-const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
-const MarkdownViewer = defineAsyncComponent(() => import('../viewers/MarkdownViewer.vue'));
 
 function getEntryRenderFunction(entry: AnyDirectoryEntry) {
     if (entry instanceof Directory || entry.classification === FileClassification.Directory) {
@@ -306,12 +286,6 @@ watchEffect(() => table.value.setSorting(sorting.value));
             />
         </div>
     </div>
-
-    <br />
-
-    <template v-for="readme in readmes">
-        <MarkdownViewer :input="readme"></MarkdownViewer>
-    </template>
 </template>
 
 <style scoped>

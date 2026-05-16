@@ -91,5 +91,9 @@
       "zip_dos": "Download as .zip (for DOS)",
       "zip": "Download as .zip"
     }
-  }
+  },
+  "list": "List",
+  "list_view": "List view",
+  "grid": "Grid",
+  "grid_view": "Grid view"
 }

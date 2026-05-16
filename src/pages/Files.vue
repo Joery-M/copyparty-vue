@@ -1,20 +1,40 @@
+<script lang="ts">
+import { API } from '@/lib/api';
+import { getDirFromRouteParams } from '@/stores/useRouteState';
+import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
+
+export const useListDirQuery = defineColadaLoader({
+    key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
+    query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal)
+});
+</script>
+
 <script setup lang="ts">
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import FileGridView from '@/components/fileList/FileGridView.vue';
 import FileListView from '@/components/fileList/FileListView.vue';
+import ViewSelector from '@/components/fileList/ViewSelector.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
 import { useRouteState } from '@/stores/useRouteState';
+import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
 import { Separator } from '@shadcn/separator';
-import { useDropZone, useEventListener, useLocalStorage } from '@vueuse/core';
+import { useDropZone, useEventListener } from '@vueuse/core';
+import { computed, defineAsyncComponent } from 'vue';
 import TreeView from '../components/TreeView.vue';
 
-const fileListType = useLocalStorage<'list' | 'grid'>('list-type', 'list');
-
+const settings = useSettings();
 const uploader = useUploader();
 const routeState = useRouteState();
+
+const listDirQuery = useListDirQuery();
+const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
+const MarkdownViewer = defineAsyncComponent(
+    () => import('@/components/viewers/MarkdownViewer.vue')
+);
 
 useDropZone(document.body, {
     onDrop(files, event) {
@@ -32,10 +52,16 @@ useEventListener(document, 'paste', (ev) => {
     <Toolbar />
 
     <div class="flex flex-col flex-1">
-        <Separator class="my-4" />
+        <Separator class="mb-2" />
         <TreeView wrapper-class="inline-flex flex-1" class="p-6 flex flex-col gap-3">
             <RouteBreadCrumb />
-            <FileListView v-if="fileListType === 'list'" />
+            <FileListView v-if="settings.fileView.type === 'list'" />
+            <FileGridView v-else-if="settings.fileView.type === 'grid'" />
+            <ViewSelector />
+            <Separator v-if="readmes.length" class="mb-10" />
+            <template v-for="readme in readmes">
+                <MarkdownViewer :input="readme"></MarkdownViewer>
+            </template>
         </TreeView>
     </div>
 

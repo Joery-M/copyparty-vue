@@ -60,3 +60,43 @@ export function dedupedComputed<T>(
         return isEqual(v, last) ? (last ?? v) : v;
     }, debugOptions);
 }
+
+const extColorCache = new Map<string, number>();
+export async function seededRandom(source: string) {
+    if (extColorCache.has(source)) return extColorCache.get(source)!;
+
+    const hash = await crypto.subtle.digest('sha-256', new TextEncoder().encode(source));
+    const v = new Uint8Array(hash)[0] / 256;
+    extColorCache.set(source, v);
+    return v;
+}
+
+export function HSVtoRGB(h: number, s: number, v: number) {
+    let r, g, b, i, f, p, q, t;
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0:
+            ((r = v), (g = t), (b = p));
+            break;
+        case 1:
+            ((r = q), (g = v), (b = p));
+            break;
+        case 2:
+            ((r = p), (g = v), (b = t));
+            break;
+        case 3:
+            ((r = p), (g = q), (b = v));
+            break;
+        case 4:
+            ((r = t), (g = p), (b = v));
+            break;
+        default:
+            ((r = v), (g = p), (b = q));
+            break;
+    }
+    return [r * 255, g * 255, b * 255] as [number, number, number];
+}

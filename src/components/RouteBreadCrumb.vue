@@ -33,7 +33,6 @@ const dropdownItems = computed(() =>
                     <DropdownMenu>
                         <DropdownMenuTrigger class="flex items-center gap-1">
                             <BreadcrumbEllipsis class="h-4 w-4" />
-                            <span class="sr-only">Toggle menu</span>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" class="w-max min-w-40">
                             <DropdownMenuItem>

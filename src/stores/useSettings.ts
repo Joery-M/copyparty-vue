@@ -16,6 +16,9 @@ export const useSettings = defineStore(
             preview: {
                 bgType: 'transparent' as PreviewBackgroundType,
                 pixelated: false
+            },
+            fileView: {
+                type: 'list' as 'list' | 'grid'
             }
         }),
     { persist: { key: 'cpp-settings' } }
