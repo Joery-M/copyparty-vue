@@ -29,7 +29,6 @@
     "lucide-vue-next": "^1.0.0",
     "markdown-exit": "1.0.0-beta.9",
     "markdown-it-task-lists": "^2.1.1",
-    "ohash": "^2.0.11",
     "pathe": "^2.0.3",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",

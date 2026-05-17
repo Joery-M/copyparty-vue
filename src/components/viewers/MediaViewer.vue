@@ -101,10 +101,12 @@ const mediaSize = computed<[number, number]>(() => {
 });
 
 const isOverlappingControls = refDebounced(
-    computed(() => mediaBounds.top.value <= controlsBounds.bottom.value)
+    computed(() => mediaBounds.top.value <= controlsBounds.bottom.value),
+    50
 );
 const isOverlappingVideoControls = refDebounced(
-    computed(() => mediaBounds.bottom.value >= videoControlsBounds.top.value)
+    computed(() => mediaBounds.bottom.value >= videoControlsBounds.top.value),
+    50
 );
 
 const isIdle = useIdle(1500, {

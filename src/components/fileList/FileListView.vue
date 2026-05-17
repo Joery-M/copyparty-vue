@@ -29,7 +29,7 @@ import { watchImmediate, whenever } from '@vueuse/core';
 import { SortAsc, SortDesc } from 'lucide-vue-next';
 import { computed, h, ref, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { RouterLink } from 'vue-router';
+import { onBeforeRouteUpdate, RouterLink } from 'vue-router';
 import FileContextMenu from './FileContextMenu.vue';
 import FileListRowOptions from './FileListRowOptions.vue';
 import Paginator from './Paginator.vue';
@@ -211,20 +211,23 @@ function resetSorting() {
     if (listDirQuery.data.value?.sort) {
         sorting.value = [{ id: listDirQuery.data.value.sort, desc: true }];
     } else {
-        sorting.value = [];
+        sorting.value = [{ id: 'name', desc: true }];
     }
 }
 
 whenever(
     () => listDirQuery.data.value?.sort,
     () => resetSorting(),
-    { once: true, immediate: true }
+    { immediate: true }
 );
 
 const data = dedupedComputed(() => listDirQuery.data.value?.entries ?? null);
 const table = computed(() =>
     useVueTable({
         data: computed(() => data.value ?? []),
+        state: {
+            sorting: sorting.value
+        },
         columns: columns.value,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
@@ -234,12 +237,18 @@ const table = computed(() =>
 );
 
 const pageSizes = [50, 100, 250, 500];
-const pageSize = ref(50);
 const pageIndex = ref(1);
 
+// Reset if we go to a different route since we might not have multiple pages there
+onBeforeRouteUpdate(() => {
+    pageIndex.value = 1;
+});
+
 watchEffect(() => table.value.setPageIndex(pageIndex.value - 1));
-watchImmediate([pageSize, table], ([size, table]) => table.setPageSize(size));
-watchEffect(() => table.value.setSorting(sorting.value));
+watchImmediate(
+    () => [settings.fileView.pageSize, table.value] as const,
+    ([size, table]) => table.setPageSize(size)
+);
 </script>
 
 <template>
@@ -280,7 +289,7 @@ watchEffect(() => table.value.setSorting(sorting.value));
         <div class="paginator" v-if="data != null && data.length > 50">
             <Paginator
                 v-model:page-index="pageIndex"
-                v-model:page-size="pageSize"
+                v-model:page-size="settings.fileView.pageSize"
                 :page-sizes
                 :total="data.length"
             />
