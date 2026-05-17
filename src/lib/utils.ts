@@ -2,7 +2,14 @@ import { isEqual } from '@ver0/deep-equal';
 import type { ClassValue } from 'clsx';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { computed, type ComputedGetter, type ComputedRef, type DebuggerOptions } from 'vue';
+import {
+    computed,
+    ref,
+    type ComputedGetter,
+    type ComputedRef,
+    type DebuggerOptions,
+    type WritableComputedRef
+} from 'vue';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -99,4 +106,14 @@ export function HSVtoRGB(h: number, s: number, v: number) {
             break;
     }
     return [r * 255, g * 255, b * 255] as [number, number, number];
+}
+
+export function computedWithExternalSetter<T>(initial: T, set: (v: NoInfer<T>) => void) {
+    const _value = ref<T>(initial);
+    const comp = computed({
+        get: () => _value.value,
+        set: (v) => set(v)
+    }) as WritableComputedRef<T, T> & { setInternal: (v: T) => T };
+    comp.setInternal = (v: T) => (_value.value = v);
+    return comp;
 }

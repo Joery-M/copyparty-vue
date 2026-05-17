@@ -245,7 +245,7 @@ watchEffect(() => table.value.setSorting(sorting.value));
 <template>
     <div id="wrapper">
         <LoadingTable v-if="isLoading || !table" />
-        <Table v-else :style="{ width: table.getTotalSize() + 'px' }">
+        <Table v-else>
             <TableHeader>
                 <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
                     <TableHead

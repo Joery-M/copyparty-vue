@@ -1,9 +1,29 @@
 <script setup lang="ts">
 import ImagePixelated from '@/assets/image-pixelated.svg?raw';
 import ImageSmooth from '@/assets/image-smooth.svg?raw';
+import Tooltip from '@/components/Tooltip.vue';
+import VideoControls from '@/components/viewers/VideoControls.vue';
 import { getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import type { File } from '@/lib/interop';
+import { useSettings } from '@/stores/useSettings';
+import { Button } from '@shadcn/button';
+import { ButtonGroup } from '@shadcn/button-group';
+import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
+import {
+    onKeyStroke,
+    refDebounced,
+    refWithControl,
+    useElementBounding,
+    useElementHover,
+    useElementSize,
+    useFullscreen,
+    useIdle,
+    useKeyModifier,
+    usePreferredReducedMotion,
+    useTimeoutFn,
+    whenever
+} from '@vueuse/core';
 import {
     Fullscreen,
     Maximize,
@@ -14,26 +34,8 @@ import {
     ZoomIn,
     ZoomOut
 } from 'lucide-vue-next';
+import { computed, ref, useTemplateRef, watchEffect, type ComponentPublicInstance } from 'vue';
 import DialogFooter from '../ui/dialog/DialogFooter.vue';
-
-import Tooltip from '@/components/Tooltip.vue';
-import { useSettings } from '@/stores/useSettings';
-import { Button } from '@shadcn/button';
-import { ButtonGroup } from '@shadcn/button-group';
-import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
-import {
-    onKeyStroke,
-    refWithControl,
-    useElementBounding,
-    useElementHover,
-    useElementSize,
-    useFullscreen,
-    useIdle,
-    useKeyModifier,
-    usePreferredReducedMotion,
-    useTimeoutFn
-} from '@vueuse/core';
-import { computed, nextTick, ref, useTemplateRef, watchEffect } from 'vue';
 
 const props = defineProps<{ file: File }>();
 
@@ -44,7 +46,7 @@ const preferrersReducedMotion = usePreferredReducedMotion();
 
 const backgroundClass = computed(() => {
     if (isLoading.value) return {};
-    if (mediaFullscreenElement.isFullscreen.value) return { 'bg-black': true };
+    if (fullscreenElement.isFullscreen.value) return { 'bg-black': true };
 
     switch (settings.preview.bgType) {
         case 'black':
@@ -73,8 +75,13 @@ const isHoldingShift = useKeyModifier('Shift');
 const controlsElem = useTemplateRef('controls');
 const controlsBounds = useElementBounding(controlsElem);
 
+const videoControlsElem = useTemplateRef<ComponentPublicInstance<typeof VideoControls> | null>(
+    'videoControls'
+);
+const videoControlsBounds = useElementBounding(videoControlsElem);
+
 const wrapperElem = useTemplateRef('wrapper');
-const wrapperFullscreenElement = useFullscreen(wrapperElem);
+const fullscreenElement = useFullscreen(wrapperElem);
 
 const containerElem = useTemplateRef('container');
 const containerSize = useElementSize(containerElem);
@@ -93,19 +100,30 @@ const mediaSize = computed<[number, number]>(() => {
     }
 });
 
-const mediaFullscreenElement = useFullscreen(mediaElem);
-async function tryWrapperFullscreen() {
-    await nextTick();
-    await nextTick();
-    await nextTick();
-    if (mediaFullscreenElement.isFullscreen.value) wrapperFullscreenElement.enter();
-}
+const isOverlappingControls = refDebounced(
+    computed(() => mediaBounds.top.value <= controlsBounds.bottom.value)
+);
+const isOverlappingVideoControls = refDebounced(
+    computed(() => mediaBounds.bottom.value >= videoControlsBounds.top.value)
+);
 
-const isOverlappingControls = computed(() => mediaBounds.top.value <= controlsBounds.bottom.value);
-const isIdle = useIdle(1000);
-const isCursorInside = useElementHover(wrapperElem);
+const isIdle = useIdle(1500, {
+    events: ['mousemove', 'resize', 'keydown', 'touchstart', 'wheel']
+});
+const isCursorInside = useElementHover(wrapperElem, { delayLeave: 250 });
+whenever(
+    () => isOverlappingControls.value || isOverlappingVideoControls.value,
+    () => isIdle.reset()
+);
+
 const hideControls = computed(
     () => isOverlappingControls.value && (isIdle.idle.value || !isCursorInside.value)
+);
+const hideVideoControls = computed(
+    () =>
+        !!videoControlsElem.value &&
+        isOverlappingVideoControls.value &&
+        (isIdle.idle.value || !isCursorInside.value)
 );
 
 const containerMiddle = computed<[number, number]>(() => [
@@ -232,7 +250,7 @@ onKeyStroke(
     ['r', 'R'],
     (e) => ((enableTransition.value = true), (rotation.value += e.shiftKey ? -1 : 1))
 );
-onKeyStroke(['f'], () => wrapperFullscreenElement.toggle());
+onKeyStroke(['f'], () => fullscreenElement.toggle());
 onKeyStroke(['p'], () => (settings.preview.pixelated = !settings.preview.pixelated));
 onKeyStroke(['b'], () => (backgroundTypeSelectOpen.value = true));
 // Zoom to perc/fit
@@ -250,13 +268,19 @@ onKeyStroke(
         }
     }
 );
+
+function isVideo(elem: any): elem is HTMLVideoElement {
+    return (
+        props.file.classification === FileClassification.Video && elem instanceof HTMLVideoElement
+    );
+}
 </script>
 
 <template>
     <div
         class="wrapper"
         ref="wrapper"
-        :class="{ isFullScreen: wrapperFullscreenElement.isFullscreen.value }"
+        :class="{ isFullScreen: fullscreenElement.isFullscreen.value }"
     >
         <div class="container" ref="container">
             <div
@@ -288,18 +312,27 @@ onKeyStroke(
                 ref="media"
                 v-else-if="file.classification === FileClassification.Video"
                 class="media"
-                :class="{ ...backgroundClass, 'transition-all': enableTransition }"
+                :class="{
+                    ...backgroundClass,
+                    'transition-all': enableTransition,
+                    'cursor-none': isIdle.idle.value
+                }"
                 :style="computedStyle"
                 :src="mediaUrl"
                 :alt="file.name"
                 @transitionend="disableTransition()"
                 @loadedmetadata="isLoading = false"
                 @loadeddata="isLoading = false"
-                controls
+                @dblclick="fullscreenElement.toggle()"
                 autoplay
-                @fullscreenchange="tryWrapperFullscreen"
             />
         </div>
+        <VideoControls
+            ref="videoControls"
+            v-if="isVideo(mediaElem)"
+            :video="mediaElem"
+            :class="{ hide: hideVideoControls, overlap: isOverlappingVideoControls }"
+        />
         <DialogFooter
             ref="controls"
             :class="{ hide: hideControls, overlap: isOverlappingControls }"
@@ -337,22 +370,22 @@ onKeyStroke(
                 </Tooltip>
                 <Tooltip
                     :content="
-                        wrapperFullscreenElement.isFullscreen.value
+                        fullscreenElement.isFullscreen.value
                             ? $t('viewer.media.fullscreen_exit')
                             : $t('viewer.media.fullscreen_enter')
                     "
                 >
                     <Button
-                        @click="wrapperFullscreenElement.toggle()"
+                        @click="fullscreenElement.toggle()"
                         variant="accent"
                         size="icon-lg"
                         :aria-label="
-                            wrapperFullscreenElement.isFullscreen.value
+                            fullscreenElement.isFullscreen.value
                                 ? $t('viewer.media.fullscreen_exit')
                                 : $t('viewer.media.fullscreen_enter')
                         "
                     >
-                        <Minimize v-if="wrapperFullscreenElement.isFullscreen.value" />
+                        <Minimize v-if="fullscreenElement.isFullscreen.value" />
                         <Maximize v-else />
                     </Button>
                 </Tooltip>
@@ -503,16 +536,28 @@ onKeyStroke(
 }
 
 [data-slot='dialog-footer'] {
-    @apply absolute top-3 w-full sm:justify-center pointer-events-none! *:pointer-events-auto z-10 h-8 opacity-100 transition-opacity;
+    @apply absolute top-3 w-full sm:justify-center pointer-events-none! *:pointer-events-auto z-10 h-8 opacity-100;
     --spacing: 0.3rem;
 
+    > [data-slot='button-group'] {
+        @apply transition-[opacity,filter] opacity-100;
+    }
+
+    &.hide > [data-slot='button-group'] {
+        @apply opacity-0;
+    }
+
+    &.overlap > [data-slot='button-group'] {
+        filter: drop-shadow(0 4px 9px rgb(0 0 0 / 0.6));
+    }
+}
+.vid-controls {
+    @apply opacity-100 transition-[opacity,box-shadow];
     &.hide {
         @apply opacity-0;
     }
     &.overlap {
-        > [data-slot='button-group'] {
-            filter: drop-shadow(0 4px 9px rgb(0 0 0 / 0.6));
-        }
+        box-shadow: 0 4px 9px rgb(0 0 0 / 0.6);
     }
 }
 </style>

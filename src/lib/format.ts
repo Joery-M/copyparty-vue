@@ -25,9 +25,9 @@ export function formatFileSize(
     return `${num} ${sizes[i]}` + (perSec ? '/s' : '');
 }
 
+const pad = (v: number) => v.toString().padStart(2, '0');
 export function formatTime(seconds: number) {
-    const pad = (v: number) => v.toString().padStart(2, '0');
-
+    if (Number.isNaN(Number(seconds))) return '0:00';
     const ms = Math.round((seconds % 1) * 100);
     const s = Math.floor(seconds % 60);
     const m = Math.floor((seconds / 60) % 60);
@@ -36,5 +36,17 @@ export function formatTime(seconds: number) {
         return `${h}:${pad(m)}:${pad(s)}.${pad(ms)}`;
     } else {
         return `${m}:${pad(s)}.${pad(ms)}`;
+    }
+}
+
+export function formatTimeNoMs(seconds: number) {
+    if (Number.isNaN(Number(seconds))) return '0:00';
+    const s = Math.floor(seconds % 60);
+    const m = Math.floor((seconds / 60) % 60);
+    const h = Math.floor(seconds / 3600);
+    if (h > 0) {
+        return `${h}:${pad(m)}:${pad(s)}`;
+    } else {
+        return `${m}:${pad(s)}`;
     }
 }

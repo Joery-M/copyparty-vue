@@ -15,7 +15,11 @@ export const useSettings = defineStore(
             },
             preview: {
                 bgType: 'transparent' as PreviewBackgroundType,
-                pixelated: false
+                pixelated: false,
+                video: {
+                    volume: 1,
+                    muted: false
+                }
             },
             fileView: {
                 type: 'list' as 'list' | 'grid'
