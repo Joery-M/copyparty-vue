@@ -24,8 +24,11 @@ import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
 import {
     onKeyStroke,
     refWithControl,
+    useElementBounding,
+    useElementHover,
     useElementSize,
     useFullscreen,
+    useIdle,
     useKeyModifier,
     usePreferredReducedMotion,
     useTimeoutFn
@@ -67,6 +70,9 @@ const enableTransition = refWithControl(false, {
 });
 const isHoldingShift = useKeyModifier('Shift');
 
+const controlsElem = useTemplateRef('controls');
+const controlsBounds = useElementBounding(controlsElem);
+
 const wrapperElem = useTemplateRef('wrapper');
 const wrapperFullscreenElement = useFullscreen(wrapperElem);
 
@@ -74,6 +80,7 @@ const containerElem = useTemplateRef('container');
 const containerSize = useElementSize(containerElem);
 
 const mediaElem = useTemplateRef('media');
+const mediaBounds = useElementBounding(mediaElem);
 const mediaSize = computed<[number, number]>(() => {
     if (!mediaElem.value || isLoading.value)
         return [containerSize.width.value, containerSize.height.value];
@@ -87,17 +94,19 @@ const mediaSize = computed<[number, number]>(() => {
 });
 
 const mediaFullscreenElement = useFullscreen(mediaElem);
-// whenever(mediaFullscreenElement.isFullscreen, async () => {
-//     // mediaFullscreenElement.exit();
-//     // await until(mediaFullscreenElement.isFullscreen).not.toBeTruthy();
-//     wrapperFullscreenElement.enter();
-// });
 async function tryWrapperFullscreen() {
     await nextTick();
     await nextTick();
     await nextTick();
     if (mediaFullscreenElement.isFullscreen.value) wrapperFullscreenElement.enter();
 }
+
+const isOverlappingControls = computed(() => mediaBounds.top.value <= controlsBounds.bottom.value);
+const isIdle = useIdle(1000);
+const isCursorInside = useElementHover(wrapperElem);
+const hideControls = computed(
+    () => isOverlappingControls.value && (isIdle.idle.value || !isCursorInside.value)
+);
 
 const containerMiddle = computed<[number, number]>(() => [
     containerSize.width.value / 2,
@@ -249,7 +258,6 @@ onKeyStroke(
         ref="wrapper"
         :class="{ isFullScreen: wrapperFullscreenElement.isFullscreen.value }"
     >
-        <div class="h-8"></div>
         <div class="container" ref="container">
             <div
                 v-if="settings.preview.bgType === 'grid' && !isLoading"
@@ -293,8 +301,8 @@ onKeyStroke(
             />
         </div>
         <DialogFooter
-            class="sm:justify-center pointer-events-none! *:pointer-events-auto z-10 h-8"
-            style="--spacing: 0.3rem"
+            ref="controls"
+            :class="{ hide: hideControls, overlap: isOverlappingControls }"
         >
             <ButtonGroup>
                 <Tooltip :content="$t('viewer.media.background') + ' (B)'">
@@ -465,12 +473,12 @@ onKeyStroke(
     @apply flex flex-col size-full pointer-events-none gap-5;
 
     &.isFullScreen {
-        @apply p-5 pointer-events-auto;
+        @apply pointer-events-auto;
     }
 }
 
 .container {
-    @apply self-center justify-self-center h-0 min-w-full flex-1 relative;
+    @apply self-center justify-self-center h-0 min-w-full flex-1 relative my-12;
 
     .background-grid {
         position: absolute;
@@ -488,6 +496,23 @@ onKeyStroke(
         max-height: none;
 
         will-change: transform, top, left;
+    }
+}
+.wrapper.isFullScreen .container {
+    @apply m-0;
+}
+
+[data-slot='dialog-footer'] {
+    @apply absolute top-3 w-full sm:justify-center pointer-events-none! *:pointer-events-auto z-10 h-8 opacity-100 transition-opacity;
+    --spacing: 0.3rem;
+
+    &.hide {
+        @apply opacity-0;
+    }
+    &.overlap {
+        > [data-slot='button-group'] {
+            filter: drop-shadow(0 4px 9px rgb(0 0 0 / 0.6));
+        }
     }
 }
 </style>
