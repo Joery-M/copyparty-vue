@@ -50,7 +50,7 @@ function onDoubleClick() {
 
         default: {
             const aTag = document.createElement('a');
-            aTag.setAttribute('href', getApiUrl(props.entry.fullPath, { dl: '' }));
+            aTag.setAttribute('href', getApiUrl(props.entry.fullPath));
             aTag.setAttribute('target', '_blank');
             aTag.click();
             aTag.remove();

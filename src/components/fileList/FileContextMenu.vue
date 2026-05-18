@@ -11,7 +11,7 @@ import {
     ContextMenuSubContent,
     ContextMenuSubTrigger
 } from '@shadcn/context-menu';
-import { Download, ExternalLink, Image } from 'lucide-vue-next';
+import { Download, ExternalLink, FileVideo, Image, TextInitial } from 'lucide-vue-next';
 import { injectContextMenuRootContext } from 'reka-ui';
 import type { QueryObject } from 'ufo';
 import { computed } from 'vue';
@@ -44,7 +44,6 @@ const handlers = {
         const aTag = document.createElement('a');
         aTag.setAttribute('href', getApiUrl(props.file.fullPath, { dl: '' }));
         aTag.setAttribute('download', props.file.name);
-        aTag.setAttribute('target', '_blank');
         aTag.click();
         aTag.remove();
     },
@@ -116,7 +115,14 @@ const rootContext = injectContextMenuRootContext();
                         rootContext.onOpenChange(false);
                     "
                 >
-                    <Image />
+                    <FileVideo v-if="file.classification === FileClassification.Video" />
+                    <TextInitial
+                        v-else-if="
+                            file.classification === FileClassification.PlainText ||
+                            file.classification === FileClassification.RichText
+                        "
+                    />
+                    <Image v-else />
                 </Button>
             </Tooltip>
             <Tooltip :content="$t('actions.open_new_tab')">
