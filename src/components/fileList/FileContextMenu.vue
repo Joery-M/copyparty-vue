@@ -83,7 +83,20 @@ const handlers = {
                 });
         }
     },
-    openNewTab: () => open(getApiUrl(props.file.fullPath), '_blank')
+    openNewTab: () => {
+        const url =
+            props.file.classification === FileClassification.Directory
+                ? router.resolve({
+                      name: 'viewer',
+                      params: { path: props.file.fullPath.concat('') }
+                  }).href
+                : getApiUrl(props.file.fullPath);
+        const aTag = document.createElement('a');
+        aTag.setAttribute('href', url);
+        aTag.setAttribute('target', '_blank');
+        aTag.click();
+        aTag.remove();
+    }
 };
 
 const rootContext = injectContextMenuRootContext();

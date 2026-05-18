@@ -48,21 +48,36 @@ function onDoubleClick() {
                 hash: '#' + props.entry.name
             });
 
-        default: {
-            const aTag = document.createElement('a');
-            aTag.setAttribute('href', getApiUrl(props.entry.fullPath));
-            aTag.setAttribute('target', '_blank');
-            aTag.click();
-            aTag.remove();
-        }
+        default:
+            location.href = getApiUrl(props.entry.fullPath);
     }
 }
+
+const openNewTab = () => {
+    const url =
+        props.entry.classification === FileClassification.Directory
+            ? router.resolve({
+                  name: 'viewer',
+                  params: { path: props.entry.fullPath.concat('') }
+              }).href
+            : getApiUrl(props.entry.fullPath);
+    const aTag = document.createElement('a');
+    aTag.setAttribute('href', url);
+    aTag.setAttribute('target', '_blank');
+    aTag.click();
+    aTag.remove();
+};
 </script>
 
 <template>
     <ContextMenu>
         <ContextMenuTrigger as-child>
-            <Card @dblclick.prevent="onDoubleClick()" role="gridcell" class="gap-2 py-2">
+            <Card
+                @pointerup.middle="openNewTab()"
+                @dblclick.prevent="onDoubleClick()"
+                role="gridcell"
+                class="gap-2 py-2"
+            >
                 <div class="thumbnail">
                     <picture :aria-hidden="!hasLoaded">
                         <source :srcset="imageUrls.webp" type="image/webp" />
