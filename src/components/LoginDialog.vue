@@ -97,7 +97,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <AlertDescription v-if="authStore.readable.length > 0">
                     {{ $t('accessible_volumes', authStore.readable.length) }}
                     <ul>
-                        <template v-for="dir in authStore.readable" :key="dir">
+                        <template v-for="(dir, i) in authStore.readable" :key="i">
                             <RouterLink
                                 :to="{
                                     name: 'viewer',

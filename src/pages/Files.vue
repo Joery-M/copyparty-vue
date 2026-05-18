@@ -1,5 +1,6 @@
 <script lang="ts">
 import { API } from '@/lib/api';
+import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
@@ -22,15 +23,17 @@ import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
 import { Separator } from '@shadcn/separator';
-import { useDropZone, useEventListener } from '@vueuse/core';
+import { useDropZone, useEventListener, whenever } from '@vueuse/core';
 import { computed, defineAsyncComponent } from 'vue';
 import TreeView from '../components/TreeView.vue';
 
 const settings = useSettings();
 const uploader = useUploader();
 const routeState = useRouteState();
+const authStore = useAuth();
 
 const listDirQuery = useListDirQuery();
+
 const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
 const MarkdownViewer = defineAsyncComponent(
     () => import('@/components/viewers/MarkdownViewer.vue')
@@ -45,6 +48,24 @@ useDropZone(document.body, {
 useEventListener(document, 'paste', (ev) => {
     const f = ev.clipboardData?.items;
     if (f && f.length > 0) uploader.upload(ev.clipboardData.items, routeState.dir);
+});
+
+whenever(listDirQuery.error, (err) => {
+    if (err instanceof API.ApiError) {
+        if (err.cause.code === 403) {
+            authStore.loginDialog.reveal({
+                path: routeState.dir,
+                reason: 'unauthorized',
+                canCancel: false
+            });
+        } else if (err.cause.code === 401) {
+            authStore.loginDialog.reveal({
+                path: routeState.dir,
+                reason: 'not found',
+                canCancel: false
+            });
+        }
+    }
 });
 </script>
 

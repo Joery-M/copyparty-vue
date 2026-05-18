@@ -1,13 +1,12 @@
 <script lang="ts" setup>
 import LoadingTable from '@/components/fileList/LoadingTable.vue';
 import Tooltip from '@/components/Tooltip.vue';
-import { API, getApiUrl, useLoadingState } from '@/lib/api';
+import { getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { formatFileSize, formatTime } from '@/lib/format';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { dedupedComputed } from '@/lib/utils';
 import { useListDirQuery } from '@/pages/Files.vue';
-import { useAuth } from '@/stores/useAuth';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { type _JSONPrimitive } from '@pinia/colada';
@@ -34,29 +33,10 @@ import FileContextMenu from './FileContextMenu.vue';
 import FileListRowOptions from './FileListRowOptions.vue';
 import Paginator from './Paginator.vue';
 
-const authStore = useAuth();
 const routeState = useRouteState();
 const settings = useSettings();
 
 const listDirQuery = useListDirQuery();
-
-whenever(listDirQuery.error, (err) => {
-    if (err instanceof API.ApiError) {
-        if (err.cause.code === 403) {
-            authStore.loginDialog.reveal({
-                path: routeState.dir,
-                reason: 'unauthorized',
-                canCancel: false
-            });
-        } else if (err.cause.code === 401) {
-            authStore.loginDialog.reveal({
-                path: routeState.dir,
-                reason: 'not found',
-                canCancel: false
-            });
-        }
-    }
-});
 
 const isLoading = useLoadingState(listDirQuery.isPending);
 
