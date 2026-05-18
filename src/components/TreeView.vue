@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { cn } from '@/lib/utils';
 import { useRouteState } from '@/stores/useRouteState';
+import { useTreeView } from '@/stores/useTreeView';
 import {
     Sidebar,
     SidebarContent,
@@ -9,6 +10,7 @@ import {
     SidebarMenu,
     SidebarProvider
 } from '@shadcn/sidebar';
+import { watchImmediate } from '@vueuse/core';
 import { ref, type HTMLAttributes } from 'vue';
 import TreeViewList from './TreeViewList.vue';
 
@@ -17,7 +19,13 @@ const props = defineProps<{
     wrapperClass?: HTMLAttributes['class'];
 }>();
 
-const routePath = useRouteState();
+const routeState = useRouteState();
+const treeViewStore = useTreeView();
+
+watchImmediate(
+    () => routeState.dir,
+    (dir) => treeViewStore.openPath(dir)
+);
 
 const isOpen = ref(true);
 </script>
@@ -29,7 +37,7 @@ const isOpen = ref(true);
                 <SidebarMenu> </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-                <TreeViewList dir="/" :route-path="routePath.dir" />
+                <TreeViewList dirName="/" :path="[]" />
             </SidebarContent>
         </Sidebar>
         <SidebarInset :class="cn('min-w-0', props.class)">

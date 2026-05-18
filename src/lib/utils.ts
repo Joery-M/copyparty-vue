@@ -5,9 +5,12 @@ import { twMerge } from 'tailwind-merge';
 import {
     computed,
     ref,
+    shallowRef,
+    toValue,
     type ComputedGetter,
     type ComputedRef,
     type DebuggerOptions,
+    type MaybeRefOrGetter,
     type WritableComputedRef
 } from 'vue';
 
@@ -116,4 +119,14 @@ export function computedWithExternalSetter<T>(initial: T, set: (v: NoInfer<T>) =
     }) as WritableComputedRef<T, T> & { setInternal: (v: T) => T };
     comp.setInternal = (v: T) => (_value.value = v);
     return comp;
+}
+
+export function refWithInit<T>(init: MaybeRefOrGetter<T>) {
+    const wasSet = shallowRef(false);
+    const inner = shallowRef<T>();
+    const initial = computed(() => toValue(init));
+    return computed({
+        get: () => (wasSet.value ? inner.value! : initial.value),
+        set: (v) => ((wasSet.value = true), (inner.value = v))
+    });
 }

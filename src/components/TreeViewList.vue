@@ -1,11 +1,8 @@
 <script lang="ts" setup>
-import { useQuery } from '@pinia/colada';
-import { whenever } from '@vueuse/core';
-import { ref } from 'vue';
-
-import { API, useLoadingState } from '@/lib/api';
-import { arrayStartsWith } from '@/lib/utils';
-
+import { useLoadingState } from '@/lib/api';
+import { refWithInit } from '@/lib/utils';
+import { useTreeView } from '@/stores/useTreeView';
+import { useQueryState } from '@pinia/colada';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shadcn/collapsible';
 import {
     SidebarGroup,
@@ -16,38 +13,23 @@ import {
     SidebarMenuItem,
     SidebarMenuSkeleton
 } from '@shadcn/sidebar';
+import { whenever } from '@vueuse/core';
 import { ChevronRight } from 'lucide-vue-next';
 
-const props = withDefaults(
-    defineProps<{
-        base?: string[];
-        dir: string;
-        // From useRouteDirectory()
-        routePath: string[];
-    }>(),
-    {
-        base: () => []
-    }
-);
+const props = defineProps<{
+    path: string[];
+    dirName: string;
+}>();
 
-const isOpen = ref(false);
-// Set to true if we ever enter the dir
-whenever(
-    () => arrayStartsWith(props.routePath, props.base),
-    () => {
-        isOpen.value = true;
-    },
-    {
-        immediate: true,
-        once: true
-    }
-);
+const treeViewStore = useTreeView();
 
-const treeQuery = useQuery(() => ({ ...API.getFileTreeQuery(props.base), enabled: isOpen.value }));
+const treeQuery = useQueryState(() => ['tree', ...props.path]);
 const isLoading = useLoadingState(
     // Is true when loading for first time and if enabled
-    () => treeQuery.isPending.value && treeQuery.isLoading.value
+    () => treeQuery.isPending.value && treeQuery.asyncStatus.value === 'loading'
 );
+const isOpen = refWithInit(() => treeViewStore.isPathOpen(props.path));
+whenever(isOpen, () => treeViewStore.openPath(props.path), { once: true });
 </script>
 
 <template>
@@ -55,7 +37,12 @@ const isLoading = useLoadingState(
         <Collapsible v-model:open="isOpen">
             <SidebarGroupLabel class="h-fit">
                 <SidebarMenuButton
-                    @click="$router.push({ name: 'viewer', params: { path: base.concat('') } })"
+                    @click="
+                        $router.push({
+                            name: 'viewer',
+                            params: { path: path.map(decodeURIComponent).concat('') }
+                        })
+                    "
                     class="pl-0"
                 >
                     <CollapsibleTrigger @click.stop>
@@ -64,7 +51,7 @@ const isLoading = useLoadingState(
                             class="transition-transform m-2"
                         />
                     </CollapsibleTrigger>
-                    <span>{{ dir }}</span>
+                    <span>{{ decodeURIComponent(dirName) }}</span>
                 </SidebarMenuButton>
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -73,13 +60,9 @@ const isLoading = useLoadingState(
                         <template v-if="isLoading" v-for="_ in 8">
                             <SidebarMenuSkeleton show-icon />
                         </template>
-                        <template
-                            v-else-if="treeQuery.data.value"
-                            v-for="dir in treeQuery.data.value"
-                            :key="dir"
-                        >
+                        <template v-for="dir in treeViewStore.getPathItems(path)" :key="dir">
                             <SidebarMenuItem>
-                                <TreeViewList :base="base.concat(dir)" :dir :route-path />
+                                <TreeViewList :path="path.concat(dir)" :dirName="dir" />
                             </SidebarMenuItem>
                         </template>
                     </SidebarMenu>

@@ -12,9 +12,9 @@ const baseUrl = stringifyParsedURL(
     )
 );
 
-export function getApiUrl(strings: string[], params?: QueryObject): string {
+export function getApiUrl(strings: string[], params?: QueryObject, noEncode = false): string {
     const parts = Array.isArray(strings) ? strings : [strings];
-    const resolved = resolveURL(baseUrl, ...parts.map(encodeURIComponent));
+    const resolved = resolveURL(baseUrl, ...(noEncode ? parts.map(encodeURIComponent) : parts));
     if (params) {
         return withQuery(resolved, params);
     } else {
@@ -37,22 +37,39 @@ export namespace API {
         }
     }
 
-    interface FileTreeResponse {
+    type FileTreeResponseRecursive = {
         a: string[];
-    }
+    } & {
+        [K in `k${string}`]?: FileTreeResponseRecursive;
+    };
 
-    export function getFileTree(path: string[], signal: AbortSignal) {
-        return fetch(getApiUrl(path, { tree: '.' }), { signal })
+    export function getFileTreeRecursive(path: string[], signal: AbortSignal) {
+        return fetch(getApiUrl(path, { tree: null }, true), { signal })
             .then((r) => extractError(r))
             .then((r) => r.json())
-            .then((r: FileTreeResponse) => r.a.map(decodeURIComponent));
-    }
+            .then((res: FileTreeResponseRecursive) => {
+                const tree = new Map<string[], string[]>();
 
-    export const getFileTreeQuery = defineQueryOptions((path: string[]) => ({
-        key: ['tree', ...path],
-        query: ({ signal }) => getFileTree(path, signal),
-        staleTime: 30_000
-    }));
+                let curLeaf: FileTreeResponseRecursive | undefined = res;
+                const depth: string[] = [];
+                while (curLeaf) {
+                    const key = Object.keys(curLeaf!).find((k) =>
+                        k.startsWith('k')
+                    ) as `k${string}`;
+
+                    const children = key ? curLeaf.a.concat(key.slice(1)) : curLeaf.a;
+                    tree.set(
+                        depth.map(decodeURIComponent),
+                        children.sort((a, b) => a.localeCompare(b)).map(decodeURIComponent)
+                    );
+                    curLeaf = key ? curLeaf[key] : undefined;
+                    if (key) {
+                        depth.push(key.slice(1));
+                    }
+                }
+                return tree;
+            });
+    }
 
     export interface ListDirectoryEntry {
         load?: string;
