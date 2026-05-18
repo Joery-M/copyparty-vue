@@ -1,4 +1,5 @@
 import { API } from '@/lib/api';
+import { pathToParts } from '@/lib/utils';
 import { useQuery, useQueryCache } from '@pinia/colada';
 import { useConfirmDialog, whenever } from '@vueuse/core';
 import { defineStore } from 'pinia';
@@ -35,8 +36,8 @@ export const useAuth = defineStore('auth', () => {
     return {
         usernameRequired: computed(() => helloPageData.data.value?.usernames),
         username: computed(() => helloPageData.data.value?.uname),
-        readable: computed(() => helloPageData.data.value?.readable ?? []),
-        writable: computed(() => helloPageData.data.value?.writable ?? []),
+        readable: computed(() => helloPageData.data.value?.readable.map(pathToParts) ?? []),
+        writable: computed(() => helloPageData.data.value?.writable.map(pathToParts) ?? []),
         async getPermissions(dir: string[]) {
             const query = queryCache.ensure(API.getListDirectoryQuery(dir));
             const res = await queryCache.refresh(query);

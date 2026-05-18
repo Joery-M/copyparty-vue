@@ -1,4 +1,5 @@
 import { isEqual } from '@ver0/deep-equal';
+import { useMemoize } from '@vueuse/core';
 import type { ClassValue } from 'clsx';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -71,15 +72,10 @@ export function dedupedComputed<T>(
     }, debugOptions);
 }
 
-const extColorCache = new Map<string, number>();
-export async function seededRandom(source: string) {
-    if (extColorCache.has(source)) return extColorCache.get(source)!;
-
+export const seededRandom = useMemoize(async (source: string) => {
     const hash = await crypto.subtle.digest('sha-256', new TextEncoder().encode(source));
-    const v = new Uint8Array(hash)[0] / 256;
-    extColorCache.set(source, v);
-    return v;
-}
+    return new Uint8Array(hash)[0] / 256;
+});
 
 export function HSVtoRGB(h: number, s: number, v: number) {
     let r, g, b, i, f, p, q, t;

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { API } from '@/lib/api';
-import { pathToParts } from '@/lib/utils';
 import { useAuth, type LoginDialogPayload } from '@/stores/useAuth';
 import { useQueryCache } from '@pinia/colada';
 import { Alert, AlertDescription, AlertTitle } from '@shadcn/alert';
@@ -102,7 +101,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                             <RouterLink
                                 :to="{
                                     name: 'viewer',
-                                    params: { path: pathToParts(dir).concat('') }
+                                    params: { path: dir.concat('') }
                                 }"
                                 @click="loginDialog.cancel()"
                             >
