@@ -23,7 +23,8 @@ export const useSettings = defineStore(
             },
             fileView: {
                 type: 'list' as 'list' | 'grid',
-                pageSize: 50
+                pageSize: 50,
+                gridSize: 60
             }
         }),
     { persist: { key: 'cpp-settings' } }

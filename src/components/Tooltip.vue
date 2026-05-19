@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shadcn/tooltip';
-import { useElementVisibility, useEventListener } from '@vueuse/core';
+import { reactiveOmit, useElementVisibility, useEventListener } from '@vueuse/core';
+import { useForwardProps, type TooltipRootProps } from 'reka-ui';
 import { shallowRef, useTemplateRef } from 'vue';
 
-defineProps<{ content: string; useViewportTest?: boolean }>();
+const props = defineProps<
+    TooltipRootProps & { content: string | number; useViewportTest?: boolean }
+>();
 
 const tester = useTemplateRef('tester');
 const isVisible = useElementVisibility(tester);
@@ -12,11 +15,14 @@ const fullscreenElem = shallowRef<HTMLElement | undefined>();
 useEventListener(document, 'fullscreenchange', (ev) => {
     fullscreenElem.value = ev.target instanceof HTMLElement ? ev.target : undefined;
 });
+
+const delegatedProps = reactiveOmit(props, ['content', 'useViewportTest']);
+const forwarded = useForwardProps(delegatedProps);
 </script>
 
 <template>
     <div v-if="useViewportTest" id="pos-tester" ref="tester"></div>
-    <Tooltip v-if="!useViewportTest || isVisible">
+    <Tooltip v-if="!useViewportTest || isVisible" v-bind="forwarded">
         <TooltipTrigger as-child>
             <slot> &nbsp; </slot>
         </TooltipTrigger>

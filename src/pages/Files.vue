@@ -75,10 +75,12 @@ whenever(listDirQuery.error, (err) => {
     <div class="flex flex-col flex-1">
         <Separator class="mb-2" />
         <TreeView wrapper-class="inline-flex flex-1" class="p-6 flex flex-col gap-3">
-            <RouteBreadCrumb />
+            <div class="flex items-center">
+                <RouteBreadCrumb class="flex-1" />
+                <ViewSelector />
+            </div>
             <FileListView v-if="settings.fileView.type === 'list'" />
             <FileGridView v-else-if="settings.fileView.type === 'grid'" />
-            <ViewSelector />
             <Separator v-if="readmes.length" class="mb-10" />
             <template v-for="readme in readmes">
                 <MarkdownViewer :input="readme"></MarkdownViewer>

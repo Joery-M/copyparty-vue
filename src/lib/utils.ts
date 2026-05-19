@@ -117,12 +117,16 @@ export function computedWithExternalSetter<T>(initial: T, set: (v: NoInfer<T>) =
     return comp;
 }
 
-export function refWithInit<T>(init: MaybeRefOrGetter<T>) {
+export function refWithInit<T>(
+    init: MaybeRefOrGetter<T>
+): WritableComputedRef<T, T> & { reset: () => void } {
     const wasSet = shallowRef(false);
     const inner = shallowRef<T>();
     const initial = computed(() => toValue(init));
-    return computed({
+    const c = computed({
         get: () => (wasSet.value ? inner.value! : initial.value),
         set: (v) => ((wasSet.value = true), (inner.value = v))
-    });
+    }) as WritableComputedRef<T, T> & { reset: () => void };
+    c.reset = () => (wasSet.value = false);
+    return c;
 }
