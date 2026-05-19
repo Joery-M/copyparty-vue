@@ -23,8 +23,14 @@ export const useTreeView = defineStore('tree-view', () => {
      * @example
      * Input:  [["dir1", "dir2"], ["dir1", "dir2", "dir3"], ["dir1", "otherDir", "inOtherDir"]]
      * Output: [["dir1", "dir2", "dir3"], ["dir1", "otherDir", "inOtherDir"]]
+     *
+     * @example Edge case: There are no other paths to compare, so return the only one (or none)
+     * Input:  [["dir1"]]
+     * Output: [["dir1"]]
      */
     const lowestOpenedLeaves = dedupedComputed(() => {
+        if (openedLeaves.size < 2) return Array.from(openedLeaves.values());
+
         const lowestLeaves = new Set<string[]>([[]]);
         for (const path of openedLeaves.values()) {
             const isDeeperThanExisting = Array.from(openedLeaves.values()).some(
@@ -70,8 +76,23 @@ export const useTreeView = defineStore('tree-view', () => {
         openPath(path: string[]) {
             path.forEach((_, i) => {
                 const p = path.slice(0, i + 1);
+                // The reason I hash the path instead of defining a consistent key is:
+                //  1. I'm lazy
+                //  2. The best other option I could come up with was joining the path element with some
+                //     separator, but since copyparty allows for any character in a directory, and I
+                //     decode uri-encoded chars early on, that becomes iffy, could still be possible though
                 openedLeaves.set(hash(p), p);
             });
+        },
+        /**
+         * Close all paths that are child to `path`
+         */
+        closeChildPaths(path: string[]) {
+            for (const [key, leaf] of openedLeaves) {
+                if (leaf.length > path.length && arrayStartsWith(leaf, path)) {
+                    openedLeaves.delete(key);
+                }
+            }
         }
     };
 });

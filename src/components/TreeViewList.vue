@@ -3,6 +3,7 @@ import { useLoadingState } from '@/lib/api';
 import { refWithInit } from '@/lib/utils';
 import { useTreeView } from '@/stores/useTreeView';
 import { useQueryState } from '@pinia/colada';
+import { Button } from '@shadcn/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shadcn/collapsible';
 import {
     SidebarGroup,
@@ -13,8 +14,8 @@ import {
     SidebarMenuItem,
     SidebarMenuSkeleton
 } from '@shadcn/sidebar';
-import { whenever } from '@vueuse/core';
 import { ChevronRight } from 'lucide-vue-next';
+import { watch } from 'vue';
 
 const props = defineProps<{
     path: string[];
@@ -29,13 +30,22 @@ const isLoading = useLoadingState(
     () => treeQuery.isPending.value && treeQuery.asyncStatus.value === 'loading'
 );
 const isOpen = refWithInit(() => treeViewStore.isPathOpen(props.path));
-whenever(isOpen, () => treeViewStore.openPath(props.path), { once: true });
+watch(isOpen, (isOpen) => {
+    if (isOpen) treeViewStore.openPath(props.path);
+    else treeViewStore.closeChildPaths(props.path);
+});
 </script>
 
 <template>
     <SidebarGroup class="py-0">
-        <Collapsible v-model:open="isOpen">
-            <SidebarGroupLabel class="h-fit">
+        <Collapsible v-model:open="isOpen" :data-not-root="path.length > 0">
+            <SidebarGroupLabel>
+                <CollapsibleTrigger :as="Button" variant="ghost" size="icon" :aria-expanded="false">
+                    <ChevronRight
+                        :class="{ ['rotate-90']: isOpen }"
+                        class="transition-transform duration-100! m-2"
+                    />
+                </CollapsibleTrigger>
                 <SidebarMenuButton
                     @click="
                         $router.push({
@@ -45,18 +55,12 @@ whenever(isOpen, () => treeViewStore.openPath(props.path), { once: true });
                     "
                     class="pl-0"
                 >
-                    <CollapsibleTrigger @click.stop>
-                        <ChevronRight
-                            :class="{ ['rotate-90']: isOpen }"
-                            class="transition-transform m-2"
-                        />
-                    </CollapsibleTrigger>
                     <span>{{ decodeURIComponent(dirName) }}</span>
                 </SidebarMenuButton>
             </SidebarGroupLabel>
             <SidebarGroupContent>
                 <CollapsibleContent>
-                    <SidebarMenu v-if="isOpen">
+                    <SidebarMenu>
                         <template v-if="isLoading" v-for="_ in 8">
                             <SidebarMenuSkeleton show-icon />
                         </template>
@@ -71,3 +75,26 @@ whenever(isOpen, () => treeViewStore.openPath(props.path), { once: true });
         </Collapsible>
     </SidebarGroup>
 </template>
+
+<style scoped>
+@reference "@/style.css";
+
+[data-slot='sidebar-group-label'] {
+    @apply h-7 pl-0.5;
+
+    [data-slot='collapsible-trigger'] {
+        /* All this is just to make it look like the menu button */
+        @apply rounded-r-none border-none h-full w-fit hover:text-sidebar-accent-foreground hover:bg-sidebar-accent focus-visible:ring-2 ring-sidebar-ring transition-transform;
+        > svg {
+            @apply mx-1 my-0;
+        }
+    }
+    [data-sidebar='menu-button'] {
+        @apply rounded-l-none border-none active:translate-y-px p-0 pl-1 h-full;
+    }
+}
+
+[data-slot='collapsible'][data-not-root='true'] {
+    @apply border-l border-accent ml-1;
+}
+</style>

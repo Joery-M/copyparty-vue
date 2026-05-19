@@ -188,10 +188,10 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
 const sorting = ref<SortingState>([]);
 
 function resetSorting() {
-    if (listDirQuery.data.value?.sort) {
+    if (listDirQuery.data.value?.sort && listDirQuery.data.value?.sort !== 'href') {
         sorting.value = [{ id: listDirQuery.data.value.sort, desc: true }];
     } else {
-        sorting.value = [{ id: 'name', desc: true }];
+        sorting.value = [];
     }
 }
 
