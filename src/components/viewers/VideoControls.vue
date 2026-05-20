@@ -128,9 +128,11 @@ useEventListener(
 
 .vid-controls {
     @apply pointer-events-auto
-        absolute bottom-5 left-20 right-20 h-8 px-1
+        absolute left-5 right-5 sm:left-20 sm:right-20 h-8 px-1
         bg-accent rounded-md
         flex items-center gap-2;
+
+    bottom: calc(var(--viewer-margin-bottom) - calc(var(--spacing) * 8));
 
     > [data-slot='slider'] {
         @apply flex-1 h-8;

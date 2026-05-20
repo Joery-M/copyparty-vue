@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { sidebarBusKey } from '@/components/TreeView.vue';
 import { useAuth } from '@/stores/useAuth';
 import { useRouteState } from '@/stores/useRouteState';
 import { useUploader } from '@/stores/useUploader';
@@ -9,8 +10,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from '@shadcn/dropdown-menu';
-import { useFileDialog } from '@vueuse/core';
-import { ArrowUp, User2 } from 'lucide-vue-next';
+import { useEventBus, useFileDialog, useMediaQuery } from '@vueuse/core';
+import { ArrowUp, Menu, User2 } from 'lucide-vue-next';
 
 const auth = useAuth();
 const routeState = useRouteState();
@@ -22,10 +23,16 @@ fileDialog.onChange((fileList) => {
     if (!fileList || fileList.length == 0) return;
     uploader.upload(fileList, routeState.dir);
 });
+
+const bus = useEventBus(sidebarBusKey);
+const isMobile = useMediaQuery('(max-width: 768px)')
 </script>
 
 <template>
     <div class="toolbar">
+        <Button size="icon-lg" variant="outline" @click="bus.emit(true)" v-if="isMobile">
+            <Menu />
+        </Button>
         <div class="spacer" />
         <DropdownMenu>
             <DropdownMenuTrigger>

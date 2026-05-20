@@ -12,7 +12,8 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarMenuSkeleton
+    SidebarMenuSkeleton,
+    useSidebar
 } from '@shadcn/sidebar';
 import { ChevronRight } from 'lucide-vue-next';
 import { watch } from 'vue';
@@ -23,6 +24,7 @@ const props = defineProps<{
 }>();
 
 const treeViewStore = useTreeView();
+const sidebar = useSidebar();
 
 const treeQuery = useQueryState(() => ['tree', ...props.path]);
 const isLoading = useLoadingState(
@@ -51,9 +53,9 @@ watch(isOpen, (isOpen) => {
                         $router.push({
                             name: 'viewer',
                             params: { path: path.map(decodeURIComponent).concat('') }
-                        })
+                        });
+                        sidebar.setOpenMobile(false);
                     "
-                    class="pl-0"
                 >
                     <span>{{ decodeURIComponent(dirName) }}</span>
                 </SidebarMenuButton>
@@ -80,13 +82,13 @@ watch(isOpen, (isOpen) => {
 @reference "@/style.css";
 
 [data-slot='sidebar-group-label'] {
-    @apply h-7 pl-0.5;
+    @apply h-7 pl-0.5 max-md:h-8;
 
     [data-slot='collapsible-trigger'] {
         /* All this is just to make it look like the menu button */
         @apply rounded-r-none border-none h-full w-fit hover:text-sidebar-accent-foreground hover:bg-sidebar-accent focus-visible:ring-2 ring-sidebar-ring transition-transform;
         > svg {
-            @apply mx-1 my-0;
+            @apply md:mx-1 my-0;
         }
     }
     [data-sidebar='menu-button'] {
@@ -95,6 +97,6 @@ watch(isOpen, (isOpen) => {
 }
 
 [data-slot='collapsible'][data-not-root='true'] {
-    @apply border-l border-accent ml-1;
+    @apply border-l border-accent ml-2 md:ml-1;
 }
 </style>

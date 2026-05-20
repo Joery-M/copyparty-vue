@@ -18,6 +18,8 @@ const props = withDefaults(defineProps<SidebarProps>(), {
 })
 
 const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+
+defineExpose(useSidebar())
 </script>
 
 <template>

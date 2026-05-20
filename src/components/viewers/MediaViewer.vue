@@ -327,6 +327,7 @@ function isVideo(elem: any): elem is HTMLVideoElement {
                 @loadeddata="isLoading = false"
                 @dblclick="fullscreenElement.toggle()"
                 autoplay
+                playsinline
             />
         </div>
         <VideoControls
@@ -338,6 +339,7 @@ function isVideo(elem: any): elem is HTMLVideoElement {
         <DialogFooter
             ref="controls"
             :class="{ hide: hideControls, overlap: isOverlappingControls }"
+            class="flex-row sm:flex-row flex-wrap sm:justify-center max-w-full"
         >
             <ButtonGroup>
                 <Tooltip :content="$t('viewer.media.background') + ' (B)'">
@@ -506,14 +508,32 @@ function isVideo(elem: any): elem is HTMLVideoElement {
 
 .wrapper {
     @apply flex flex-col size-full pointer-events-none gap-5;
+    --viewer-margin-top: calc(var(--spacing) * 12 + env(safe-area-inset-top));
+    --viewer-margin-bottom: calc(var(--spacing) * 12 + env(safe-area-inset-bottom));
 
     &.isFullScreen {
         @apply pointer-events-auto;
     }
 }
 
+[data-slot='dialog-footer'] > * {
+    --spacing: 0.3rem;
+}
+
+@media (height < 20rem) {
+    .wrapper {
+        --viewer-margin-top: calc(calc(var(--spacing) * 9) + env(safe-area-inset-top));
+        --viewer-margin-bottom: calc(calc(var(--spacing) * 9) + env(safe-area-inset-bottom));
+    }
+    [data-slot='dialog-footer'] > * {
+        --spacing: 0.25rem;
+    }
+}
+
 .container {
-    @apply self-center justify-self-center h-0 min-w-full flex-1 relative my-12;
+    @apply self-center justify-self-center h-0 min-w-full flex-1 relative;
+    margin-top: var(--viewer-margin-top);
+    margin-bottom: var(--viewer-margin-bottom);
 
     .background-grid {
         position: absolute;
@@ -538,8 +558,8 @@ function isVideo(elem: any): elem is HTMLVideoElement {
 }
 
 [data-slot='dialog-footer'] {
-    @apply absolute top-3 w-full sm:justify-center pointer-events-none! *:pointer-events-auto z-10 h-8 opacity-100;
-    --spacing: 0.3rem;
+    @apply absolute left-5 right-5 sm:justify-center pointer-events-none! *:pointer-events-auto z-10 h-8 opacity-100;
+    top: calc(var(--viewer-margin-top) - calc(var(--spacing) * 8));
 
     > [data-slot='button-group'] {
         @apply transition-[opacity,filter] opacity-100;

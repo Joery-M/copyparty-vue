@@ -6,7 +6,8 @@ import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
 export const useListDirQuery = defineColadaLoader({
     key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
-    query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal)
+    query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal),
+    staleTime: 30_000
 });
 </script>
 
@@ -72,10 +73,10 @@ whenever(listDirQuery.error, (err) => {
 <template>
     <Toolbar />
 
-    <div class="flex flex-col flex-1">
+    <div class="flex flex-col flex-1 mb-[env(safe-area-inset-bottom)]">
         <Separator class="mb-2" />
         <TreeView wrapper-class="inline-flex flex-1" class="p-6 flex flex-col gap-3">
-            <div class="flex items-center">
+            <div class="flex sm:items-center max-sm:flex-col max-sm:gap-2">
                 <RouteBreadCrumb class="flex-1" />
                 <ViewSelector />
             </div>

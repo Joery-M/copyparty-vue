@@ -107,7 +107,7 @@ export namespace API {
         srvinf: string;
         acct: string;
         perms: string[];
-        cfg: LsConfig;
+        cfg?: LsConfig;
         logues: string[];
         readmes: string[];
         fnugg: string;
@@ -136,7 +136,7 @@ export namespace API {
                 perms: res.perms as Permissions[],
                 readmes: res.readmes,
                 tags: res.taglist,
-                sort: res.cfg.dsort
+                sort: res.cfg?.dsort
             }));
     }
 
