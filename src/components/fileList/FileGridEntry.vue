@@ -16,9 +16,9 @@ const router = useRouter();
 const props = defineProps<{ entry: AnyDirectoryEntry; dir: string[] }>();
 
 const imageUrls = computed(() => ({
-    webp: getApiUrl(props.entry.fullPath, { th: 'w', no_fallback: '' }),
-    jxl: getApiUrl(props.entry.fullPath, { th: 'x', no_fallback: '' }),
-    jpeg: getApiUrl(props.entry.fullPath, { th: 'j', no_fallback: '' })
+    webp: getApiUrl(props.entry.fullPath, { th: 'w', no_fallback: '', cache: '' }),
+    jxl: getApiUrl(props.entry.fullPath, { th: 'x', no_fallback: '', cache: '' }),
+    jpeg: getApiUrl(props.entry.fullPath, { th: 'j', no_fallback: '', cache: '' })
 }));
 
 const ext = computed(() => extname(props.entry.name));
