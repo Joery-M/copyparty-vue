@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle
 } from '@shadcn/dialog';
-import { computed, shallowRef } from 'vue';
+import { computed, shallowRef, toValue } from 'vue';
 
 const dialog = useUploader().confirmDialog;
 
@@ -27,10 +27,10 @@ dialog.onReveal((p) => (data.value = p));
         <DialogContent v-if="data">
             <DialogHeader>
                 <DialogTitle>
-                    {{ $t(data.title) }}
+                    {{ toValue(data.title) }}
                 </DialogTitle>
                 <DialogDescription class="max-h-96 overflow-y-auto">
-                    {{ $t(data.description) }}
+                    {{ toValue(data.description) }}
 
                     <ul v-if="data.files">
                         <li v-for="file in files.top" :key="file">

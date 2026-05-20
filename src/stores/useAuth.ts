@@ -45,7 +45,7 @@ export const useAuth = defineStore('auth', () => {
         },
         loginDialog: dialog,
         logout: () =>
-            API.login('x').finally(() => {
+            API.logout().finally(() => {
                 queryCache.invalidateQueries({ key: ['ls'] }, true);
                 queryCache.invalidateQueries({ key: ['tree'] }, true);
                 queryCache.invalidateQueries({ key: ['hello'] }, true);

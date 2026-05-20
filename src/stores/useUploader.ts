@@ -4,10 +4,12 @@ import { useConfirmDialog } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { withTrailingSlash } from 'ufo';
 import { Up2K, type FileMap, type FileOrDirMap } from 'up2k';
+import type { MaybeRefOrGetter } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 export interface ConfirmDialogPayload {
-    title: string;
-    description: string;
+    title: MaybeRefOrGetter<string>;
+    description: MaybeRefOrGetter<string>;
     files?: FileMap | FileOrDirMap;
 }
 
@@ -15,6 +17,7 @@ export const useUploader = defineStore('uploader', () => {
     const queryCache = useQueryCache();
 
     const dialog = useConfirmDialog<ConfirmDialogPayload, boolean, false>();
+    const i18n = useI18n();
 
     return {
         confirmDialog: dialog,
@@ -28,24 +31,24 @@ export const useUploader = defineStore('uploader', () => {
             const acceptedFiles: [File, string][] = [...allFiles.good];
             if (allFiles.bad.size > 0) {
                 const continueAfterBad = await dialog.reveal({
-                    title: 'dialogs.bad_files.title',
-                    description: 'dialogs.bad_files.description',
+                    title: () => i18n.t('dialogs.bad_files.title'),
+                    description: () => i18n.t('dialogs.bad_files.description'),
                     files: allFiles.bad
                 });
                 if (!continueAfterBad.data) return;
             }
             if (allFiles.junk.size > 0) {
                 const uploadJunk = await dialog.reveal({
-                    title: 'dialogs.junk_files.title',
-                    description: 'dialogs.junk_files.description',
+                    title: () => i18n.t('dialogs.junk_files.title'),
+                    description: () => i18n.t('dialogs.junk_files.description'),
                     files: allFiles.junk
                 });
                 if (uploadJunk.data) acceptedFiles.push(...allFiles.junk);
             }
             if (allFiles.bad.size === 0 && allFiles.junk.size === 0) {
                 const canContinue = await dialog.reveal({
-                    title: 'dialogs.confirm.title',
-                    description: 'dialogs.confirm.description',
+                    title: () => i18n.t('dialogs.confirm.title'),
+                    description: () => i18n.t('dialogs.confirm.description'),
                     files: allFiles.good
                 });
                 if (!canContinue.data) return;

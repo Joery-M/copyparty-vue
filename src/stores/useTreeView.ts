@@ -6,12 +6,25 @@ import { defineStore } from 'pinia';
 import { shallowReactive, watch } from 'vue';
 
 export const useTreeView = defineStore('tree-view', () => {
-    const treeQueryOptions = defineQueryOptions((path: string[]) => ({
-        key: ['tree', ...path],
-        query: ({ signal }) => API.getFileTreeRecursive(path, signal)
-    }));
+    const treeQueryOptions = defineQueryOptions<string[], Map<string[], string[]>, API.ApiError>(
+        (path: string[]) => ({
+            key: ['tree', ...path],
+            query: ({ signal }) => API.getFileTreeRecursive(path, signal)
+        })
+    );
 
     const openedLeaves = shallowReactive(new Map<string, string[]>([]));
+
+    /**
+     * Close all paths that are part of `path`, including `path` itself
+     */
+    function closePath(path: string[]) {
+        for (const [key, leaf] of openedLeaves) {
+            if (leaf.length >= path.length && arrayStartsWith(leaf, path)) {
+                openedLeaves.delete(key);
+            }
+        }
+    }
 
     /**
      * Get the tail end of each branch
@@ -29,7 +42,8 @@ export const useTreeView = defineStore('tree-view', () => {
      * Output: [["dir1"]]
      */
     const lowestOpenedLeaves = dedupedComputed(() => {
-        if (openedLeaves.size < 2) return Array.from(openedLeaves.values());
+        if (openedLeaves.size == 0) return [[]];
+        else if (openedLeaves.size == 1) return Array.from(openedLeaves.values());
 
         const lowestLeaves = new Set<string[]>([[]]);
         for (const path of openedLeaves.values()) {
@@ -50,13 +64,20 @@ export const useTreeView = defineStore('tree-view', () => {
         key: () => ['full-tree'],
         query: async () => {
             const leaves = lowestOpenedLeaves.value;
-            const trees = await Promise.all(
-                leaves.map((path) => queryCache.refresh(queryCache.ensure(treeQueryOptions(path))))
+            const trees = await Promise.allSettled(
+                leaves.map((path) =>
+                    queryCache.refresh(queryCache.ensure(treeQueryOptions(path))).catch((err) => {
+                        console.error('Error fetching file tree for path:', path.join('/'), err);
+                        closePath(path);
+                        throw err;
+                    })
+                )
             );
 
             return new Map(
                 trees
-                    .map((v) => (v.data ? Array.from(v.data) : []))
+                    .filter((v) => v.status === 'fulfilled')
+                    .map((v) => (v.value.data ? Array.from(v.value.data) : []))
                     .flat(1)
                     .map(([k, v]) => [hash(k), v] as [string, string[]])
             );

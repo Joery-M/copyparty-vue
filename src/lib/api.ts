@@ -202,17 +202,31 @@ export namespace API {
         staleTime: 30_000
     });
 
-    export function login(password: string, username?: string) {
-        const form = new FormData();
-        form.set('act', 'login');
-        form.set('uname', username || '');
-        form.set('cppwd', password);
-        form.set('uhash', '');
+    interface CustomJsonLoginResponse {
+        continue: string;
+        uname?: string | null;
+    }
 
-        return fetch(getApiUrl([]), { method: 'POST', body: form })
-            .then((r) => r.text())
-            .then((res) => res.includes('<h1>hi '))
-            .catch(() => false);
+    export function login(pwd: string, uname?: string) {
+        return fetch(getApiUrl([], { login: '' }), {
+            method: 'POST',
+            headers: { 'Content-Encoding': 'application/json' },
+            body: JSON.stringify({
+                uname,
+                pwd
+            })
+        })
+            .then(extractError)
+            .then((r) => r.json())
+            .then((res: CustomJsonLoginResponse) => res.uname);
+    }
+
+    export function logout() {
+        return fetch(getApiUrl([], { logout: '' }), {
+            method: 'POST',
+            headers: { 'Content-Encoding': 'application/json' },
+            body: JSON.stringify({})
+        }).then(extractError);
     }
 }
 

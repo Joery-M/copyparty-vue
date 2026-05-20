@@ -7,6 +7,8 @@ import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 export const useListDirQuery = defineColadaLoader({
     key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
     query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal),
+    lazy: true,
+    errors: true,
     staleTime: 30_000
 });
 </script>

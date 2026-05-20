@@ -17,6 +17,7 @@ import { FormControl, FormField, FormItem, FormLabel } from '@shadcn/form';
 import { Input } from '@shadcn/input';
 import { toTypedSchema } from '@vee-validate/valibot';
 import { Lock } from 'lucide-vue-next';
+import { VisuallyHidden } from 'reka-ui';
 import * as v from 'valibot';
 import { useForm } from 'vee-validate';
 import { computed, ref, shallowRef } from 'vue';
@@ -56,13 +57,13 @@ const failedLogin = ref(false);
 
 const onSubmit = form.handleSubmit(async (values) => {
     failedLogin.value = false;
-    const success = await API.login(values.password, values.username);
-    if (success) {
+    try {
+        await API.login(values.password, values.username);
         loginDialog.confirm();
         queryCache.invalidateQueries({ key: ['ls'] }, true);
         queryCache.invalidateQueries({ key: ['tree'] }, true);
         queryCache.invalidateQueries({ key: ['hello'] }, true);
-    } else {
+    } catch (error) {
         failedLogin.value = true;
         // If we were logged in, now we aren't
         if (authStore.username) {
@@ -87,7 +88,9 @@ const onSubmit = form.handleSubmit(async (values) => {
         >
             <DialogHeader>
                 <DialogTitle> {{ $t('dialogs.login.title') }} </DialogTitle>
-                <DialogDescription> {{ $t('dialogs.login.description') }} </DialogDescription>
+                <VisuallyHidden>
+                    <DialogDescription> {{ $t('dialogs.login.description') }} </DialogDescription>
+                </VisuallyHidden>
             </DialogHeader>
             <Alert v-if="data.path" variant="destructive">
                 <Lock />
@@ -106,7 +109,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                                 @click="loginDialog.cancel()"
                             >
                                 <li>
-                                    - <code>{{ dir }}</code>
+                                    - <code>/{{ dir.join('/') }}/</code>
                                 </li>
                             </RouterLink>
                         </template>
