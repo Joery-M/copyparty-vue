@@ -9,7 +9,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "build-copyparty": "bash -e scripts/build.sh"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
