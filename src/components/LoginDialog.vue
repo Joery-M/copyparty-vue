@@ -62,6 +62,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         loginDialog.confirm();
         queryCache.invalidateQueries({ key: ['ls'] }, true);
         queryCache.invalidateQueries({ key: ['tree'] }, true);
+        queryCache.invalidateQueries({ key: ['full-tree'] }, true);
         queryCache.invalidateQueries({ key: ['hello'] }, true);
     } catch (error) {
         failedLogin.value = true;
@@ -69,6 +70,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         if (authStore.username) {
             queryCache.invalidateQueries({ key: ['ls'] }, true);
             queryCache.invalidateQueries({ key: ['tree'] }, true);
+            queryCache.invalidateQueries({ key: ['full-tree'] }, true);
             queryCache.invalidateQueries({ key: ['hello'] }, true);
         }
     }
