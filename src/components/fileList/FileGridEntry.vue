@@ -130,6 +130,10 @@ const openNewTab = () => {
             @apply text-center text-accent-foreground text-2xl font-mono;
         }
     }
+
+    img {
+        @apply size-full object-contain;
+    }
 }
 
 [data-slot='card-title'] {
