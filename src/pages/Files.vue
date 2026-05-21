@@ -26,7 +26,7 @@ import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
 import { Separator } from '@shadcn/separator';
-import { useDropZone, useEventListener, whenever } from '@vueuse/core';
+import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
 import { computed, defineAsyncComponent } from 'vue';
 import TreeView from '../components/TreeView.vue';
 
@@ -68,6 +68,14 @@ whenever(listDirQuery.error, (err) => {
                 canCancel: false
             });
         }
+    }
+});
+
+useTitle(() => {
+    if (routeState.file) {
+        return `${routeState.file} - copyparty`;
+    } else {
+        return routeState.dir.length > 0 ? `${routeState.dir.at(-1)} - copyparty` : `copyparty`;
     }
 });
 </script>
