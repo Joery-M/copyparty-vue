@@ -1,0 +1,4 @@
+[submodule "copyparty"]
+	path = copyparty
+	url = https://github.com/Joery-M/copyparty
+	branch = custom-frontend
