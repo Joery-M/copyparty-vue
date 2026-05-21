@@ -110,7 +110,7 @@ const openNewTab = () => {
                     </div>
                 </div>
                 <CardTitle>
-                    <label id="filename">{{ entry.name }}</label>
+                    <label id="filename">{{ entry.tags.get('title') || entry.name }}</label>
                 </CardTitle>
             </Card>
         </ContextMenuTrigger>
@@ -139,7 +139,7 @@ const openNewTab = () => {
 [data-slot='card-title'] {
     @apply flex-1 grid place-items-center w-full;
     > label {
-        @apply line-clamp-2 text-center text-base;
+        @apply line-clamp-2 px-2 text-center text-base;
         word-break: break-word;
     }
 }
