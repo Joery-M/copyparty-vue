@@ -47,7 +47,7 @@ git submodule status copyparty
 
 MSYS_NO_PATHCONV=1 node_modules/.bin/vite build --base "/.cpr/vue"
 
-sfx_files=('copyparty/web/vue,')
+sfx_files=('copyparty/web/vue,' 'copyparty/_vue_assets.py,')
 python_files=()
 count=0
 while IFS= read -r -d $'\0'; do
