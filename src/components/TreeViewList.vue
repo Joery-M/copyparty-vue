@@ -52,12 +52,12 @@ watch(isOpen, (isOpen) => {
                     @click="
                         $router.push({
                             name: 'viewer',
-                            params: { path: path.map(decodeURIComponent).concat('') }
+                            params: { path: path.concat('') }
                         });
                         sidebar.setOpenMobile(false);
                     "
                 >
-                    <span>{{ decodeURIComponent(dirName) }}</span>
+                    <span>{{ dirName }}</span>
                 </SidebarMenuButton>
             </SidebarGroupLabel>
             <SidebarGroupContent>

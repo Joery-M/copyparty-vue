@@ -13,7 +13,8 @@ export const usePreview = defineStore('preview', () => {
         if (routeState.file) {
             return new File(routeState.dir, {
                 ext: extname(routeState.file),
-                href: basename(routeState.file)
+                // Slightly stupid since @vueuse/router decodes, then we encode, and then decode again in the constructor, but idc really
+                href: encodeURIComponent(basename(routeState.file))
             });
         } else {
             return null;
