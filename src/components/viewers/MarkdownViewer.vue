@@ -4,7 +4,7 @@ import { fromHighlighter } from '@shikijs/markdown-exit';
 import { computedAsync, useDark } from '@vueuse/core';
 import DOMPurify from 'dompurify';
 import { createMarkdownExit } from 'markdown-exit';
-import taskList from 'markdown-it-task-lists';
+import taskList from './markdown-it-plugins/task-list';
 import { joinRelativeURL, parseURL } from 'ufo';
 import { effect, shallowRef, triggerRef, type HTMLAttributes } from 'vue';
 
@@ -18,7 +18,9 @@ const isDark = useDark();
 const router = useRouter();
 const routeState = useRouteState();
 
-const parser = shallowRef(createMarkdownExit({ html: true }).use(taskList));
+const parser = shallowRef(
+    createMarkdownExit({ html: true }).use(taskList, { label: true, labelAfter: true })
+);
 const sanitizer = DOMPurify(window);
 
 // This hook replaces relative image urls with their respective paths

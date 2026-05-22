@@ -27,6 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.4.2",
+    "lucide-static": "^1.16.0",
     "lucide-vue-next": "^1.0.0",
     "markdown-exit": "1.0.0-beta.9",
     "markdown-it-task-lists": "^2.1.1",

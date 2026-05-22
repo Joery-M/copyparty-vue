@@ -1,2 +1,54 @@
+@reference "@/style.css";
+
 @import './github-markdown-dark.css' (prefers-color-scheme: dark);
 @import './github-markdown-light.css' (prefers-color-scheme: light);
+
+.markdown-body input[type='checkbox'] {
+    @apply appearance-none size-4 border border-input rounded-[4px] relative;
+}
+
+.markdown-body input[type='checkbox'].indeterminate::after,
+.markdown-body input[type='checkbox']:checked::after {
+    @apply size-full inline-block bg-primary-foreground absolute top-0 left-0;
+    content: '';
+    mask-size: calc(var(--spacing) * 3.5);
+    mask-repeat: no-repeat;
+    mask-position: center;
+}
+
+.markdown-body input[type='checkbox']:checked {
+    @apply bg-primary border-primary;
+    &::after {
+        -webkit-mask-image: url('../../../../node_modules/lucide-static/icons/check.svg');
+        mask-image: url('../../../../node_modules/lucide-static/icons/check.svg');
+    }
+}
+
+.markdown-body input[type='checkbox'].indeterminate {
+    @apply bg-accent border-input/50;
+    &::after {
+        -webkit-mask-image: url('../../../../node_modules/lucide-static/icons/minus.svg');
+        mask-image: url('../../../../node_modules/lucide-static/icons/minus.svg');
+    }
+}
+
+.markdown-body ol,
+.markdown-body ul:not(.task-list),
+.markdown-body menu {
+    list-style: revert;
+    margin: revert;
+    padding: revert;
+}
+
+.markdown-body .task-list__input:checked + .task-list__label {
+    @apply opacity-75;
+}
+.markdown-body .task-list__input.indeterminate + .task-list__label {
+    @apply opacity-75;
+    text-decoration: line-through;
+}
+.markdown-body .task-list__item {
+    @apply gap-1;
+    display: flex;
+    align-items: center;
+}
