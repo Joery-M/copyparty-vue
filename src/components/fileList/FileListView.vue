@@ -24,7 +24,7 @@ import {
     type ColumnDef,
     type SortingState
 } from '@tanstack/vue-table';
-import { watchImmediate, whenever } from '@vueuse/core';
+import { watchImmediate } from '@vueuse/core';
 import { SortAsc, SortDesc } from 'lucide-vue-next';
 import { computed, h, ref, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -189,17 +189,14 @@ const sorting = ref<SortingState>([]);
 
 function resetSorting() {
     if (listDirQuery.data.value?.sort && listDirQuery.data.value?.sort !== 'href') {
-        sorting.value = [{ id: listDirQuery.data.value.sort, desc: true }];
+        const asc = listDirQuery.data.value.sort.startsWith('-');
+        const id = asc ? listDirQuery.data.value.sort.slice(1) : listDirQuery.data.value.sort;
+        sorting.value = [{ id, desc: !asc }];
     } else {
         sorting.value = [];
     }
 }
-
-whenever(
-    () => listDirQuery.data.value?.sort,
-    () => resetSorting(),
-    { immediate: true }
-);
+watchEffect(() => resetSorting());
 
 const data = dedupedComputed(() => listDirQuery.data.value?.entries ?? null);
 const table = computed(() =>
