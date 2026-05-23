@@ -77,7 +77,15 @@ useEventListener(
         </Button>
         <Slider
             :model-value="[time]"
-            @update:model-value="$event && video.fastSeek($event[0])"
+            @update:model-value="
+                (ev) => {
+                    if (ev && !Number.isNaN(ev[0]) && Number.isFinite(ev[0])) {
+                        try {
+                            video.fastSeek(ev[0]);
+                        } catch {}
+                    }
+                }
+            "
             @value-commit="video.currentTime = $event[0]"
             :max="duration"
             :loaded="buffered"
