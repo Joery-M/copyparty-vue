@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { API, getApiUrl } from '@/lib/api';
+import { API } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { type AnyDirectoryEntry } from '@/lib/interop';
+import { useHandlers } from '@/stores/useHandlers';
 import { Button } from '@shadcn/button';
 import {
     ContextMenuContent,
@@ -13,14 +14,14 @@ import {
 } from '@shadcn/context-menu';
 import { Download, ExternalLink, FileVideo, Image, TextInitial } from 'lucide-vue-next';
 import { injectContextMenuRootContext } from 'reka-ui';
-import type { QueryObject } from 'ufo';
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
 import Tooltip from '../Tooltip.vue';
 
-const router = useRouter();
+const handlers = useHandlers();
 
-const props = defineProps<{ dir: string[]; file: AnyDirectoryEntry }>();
+const props = defineProps<{ dir: string[]; file: AnyDirectoryEntry; perms: API.Permissions[] }>();
+const canWrite = computed(() => props.perms.includes('write'));
+const canDelete = computed(() => props.perms.includes('delete'));
 
 const canView = computed(
     () =>
@@ -31,73 +32,6 @@ const canView = computed(
         props.file.classification === FileClassification.Video
 );
 const canDownload = computed(() => props.file.classification !== FileClassification.Directory);
-
-const handlers = {
-    view() {
-        router.push({
-            name: 'viewer',
-            params: { path: props.dir.concat('') },
-            hash: '#' + props.file.name
-        });
-    },
-    download() {
-        const aTag = document.createElement('a');
-        aTag.setAttribute('href', getApiUrl(props.file.fullPath, { dl: '' }));
-        aTag.setAttribute('download', props.file.name);
-        aTag.click();
-        aTag.remove();
-    },
-    downloadArchive(params: QueryObject, ext: string) {
-        if (props.file.classification === FileClassification.Directory) {
-            const a = document.createElement('a');
-            try {
-                a.href = getApiUrl(props.file.fullPath, params);
-                a.download = props.file.name + (ext ? `.${ext}` : '');
-                a.target = '_blank';
-                a.click();
-            } finally {
-                a.remove();
-            }
-        } else {
-            // Form submit to get data
-            // Not checked since I still have CORS errors (womp womp)
-            const form = new FormData();
-            form.set('act', ext);
-            form.set('files', encodeURIComponent(props.file.name));
-            fetch(getApiUrl(props.file.fullPath.slice(0, -1).concat(''), params), {
-                method: 'POST',
-                body: form
-            })
-                .then(API.extractError)
-                .then((res) => res.blob())
-                .then((blob) => {
-                    const a = document.createElement('a');
-                    try {
-                        a.href = URL.createObjectURL(blob);
-                        a.download = props.file.name;
-                        a.target = '_blank';
-                        a.click();
-                    } finally {
-                        a.remove();
-                    }
-                });
-        }
-    },
-    openNewTab: () => {
-        const url =
-            props.file.classification === FileClassification.Directory
-                ? router.resolve({
-                      name: 'viewer',
-                      params: { path: props.file.fullPath.concat('') }
-                  }).href
-                : getApiUrl(props.file.fullPath);
-        const aTag = document.createElement('a');
-        aTag.setAttribute('href', url);
-        aTag.setAttribute('target', '_blank');
-        aTag.click();
-        aTag.remove();
-    }
-};
 
 const rootContext = injectContextMenuRootContext();
 </script>
@@ -111,7 +45,7 @@ const rootContext = injectContextMenuRootContext();
                     size="icon-lg"
                     variant="ghost"
                     @click="
-                        handlers.download();
+                        handlers.download(file);
                         rootContext.onOpenChange(false);
                     "
                 >
@@ -124,7 +58,7 @@ const rootContext = injectContextMenuRootContext();
                     size="icon-lg"
                     variant="ghost"
                     @click="
-                        handlers.view();
+                        handlers.view(dir, file.name);
                         rootContext.onOpenChange(false);
                     "
                 >
@@ -143,7 +77,7 @@ const rootContext = injectContextMenuRootContext();
                     size="icon-lg"
                     variant="ghost"
                     @click="
-                        handlers.openNewTab();
+                        handlers.openNewTab(file);
                         rootContext.onOpenChange(false);
                     "
                 >
@@ -154,7 +88,7 @@ const rootContext = injectContextMenuRootContext();
 
         <!-- Archive options -->
         <ContextMenuSeparator />
-        <ContextMenuItem @click="handlers.downloadArchive({ zip: '' }, 'zip')">
+        <ContextMenuItem @click="handlers.downloadArchive(file, { zip: '' }, 'zip')">
             {{ $t('actions.archive.zip') }}
         </ContextMenuItem>
         <ContextMenuSub>
@@ -162,26 +96,38 @@ const rootContext = injectContextMenuRootContext();
                 {{ $t('actions.archive_options') }}
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
-                <ContextMenuItem @click="handlers.downloadArchive({ tar: '' }, 'tar')">
+                <ContextMenuItem @click="handlers.downloadArchive(file, { tar: '' }, 'tar')">
                     {{ $t('actions.archive.tar') }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive({ tar: 'gz:1' }, 'tgz')">
+                <ContextMenuItem @click="handlers.downloadArchive(file, { tar: 'gz:1' }, 'tgz')">
                     {{ $t('actions.archive.tgz') }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive({ tar: 'xz:1' }, 'txz')">
+                <ContextMenuItem @click="handlers.downloadArchive(file, { tar: 'xz:1' }, 'txz')">
                     {{ $t('actions.archive.txz') }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive({ tar: 'pax' }, 'pax')">
+                <ContextMenuItem @click="handlers.downloadArchive(file, { tar: 'pax' }, 'pax')">
                     {{ $t('actions.archive.pax') }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive({ zip: 'dos' }, 'zip')">
+                <ContextMenuItem @click="handlers.downloadArchive(file, { zip: 'dos' }, 'zip')">
                     {{ $t('actions.archive.zip_dos') }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive({ zip: 'crc' }, 'zip')">
+                <ContextMenuItem @click="handlers.downloadArchive(file, { zip: 'crc' }, 'zip')">
                     {{ $t('actions.archive.zip_crc') }}
                 </ContextMenuItem>
             </ContextMenuSubContent>
         </ContextMenuSub>
+        <template v-if="canWrite">
+            <ContextMenuSeparator />
+            <ContextMenuItem @click="handlers.mkdir(dir)">
+                {{ $t('actions.new_folder') }}
+            </ContextMenuItem>
+        </template>
+        <template v-if="canDelete">
+            <ContextMenuSeparator />
+            <ContextMenuItem @click="handlers.delete([file.fullPath])">
+                {{ $t('actions.delete') }}
+            </ContextMenuItem>
+        </template>
     </ContextMenuContent>
 </template>
 

@@ -14,7 +14,13 @@ const data = dedupedComputed(() => listDirQuery.data.value?.entries ?? null);
 
 <template>
     <div class="wrapper">
-        <FileGridEntry v-for="entry in data" :key="entry.name" :entry :dir="routeState.dir" />
+        <FileGridEntry
+            v-for="entry in data"
+            :key="entry.name"
+            :entry
+            :dir="routeState.dir"
+            :perms="listDirQuery.data.value?.perms ?? []"
+        />
     </div>
 </template>
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import FileContextMenu from '@/components/fileList/FileContextMenu.vue';
-import { getApiUrl } from '@/lib/api';
+import { API, getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { HSVtoRGB, seededRandom } from '@/lib/utils';
@@ -13,7 +13,7 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
-const props = defineProps<{ entry: AnyDirectoryEntry; dir: string[] }>();
+const props = defineProps<{ entry: AnyDirectoryEntry; dir: string[]; perms: API.Permissions[] }>();
 
 const imageUrls = computed(() => ({
     webp: getApiUrl(props.entry.fullPath, { th: 'w', no_fallback: '', cache: '' }),
@@ -114,7 +114,7 @@ const openNewTab = () => {
                 </CardTitle>
             </Card>
         </ContextMenuTrigger>
-        <FileContextMenu :file="entry" :dir />
+        <FileContextMenu :file="entry" :dir :perms />
     </ContextMenu>
 </template>
 

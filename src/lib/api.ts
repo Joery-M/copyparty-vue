@@ -228,6 +228,22 @@ export namespace API {
             body: JSON.stringify({})
         }).then(extractError);
     }
+
+    export function mkdir(dir: string[], name: string) {
+        const body = new FormData();
+        body.set('act', 'mkdir');
+        body.set('name', name);
+        return fetch(getApiUrl(dir), { body, method: 'POST' }).then(extractError);
+    }
+
+    export function rm(paths: string[][]) {
+        const body = paths.map((p) => ['', ...p, ''].join('/'));
+        return fetch(getApiUrl([], { delete: '' }), {
+            method: 'POST',
+            headers: { 'Content-Encoding': 'application/json' },
+            body: JSON.stringify(body)
+        }).then(extractError);
+    }
 }
 
 /**

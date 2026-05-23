@@ -262,7 +262,11 @@ watchImmediate(
                             </TableCell>
                         </TableRow>
                     </ContextMenuTrigger>
-                    <FileContextMenu :file="row.original" :dir="routeState.dir" />
+                    <FileContextMenu
+                        :file="row.original"
+                        :dir="routeState.dir"
+                        :perms="listDirQuery.data.value?.perms ?? []"
+                    />
                 </ContextMenu>
             </TableBody>
         </Table>

@@ -1,6 +1,5 @@
 <script lang="ts">
 import { API } from '@/lib/api';
-import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
@@ -17,14 +16,17 @@ export const useListDirQuery = defineColadaLoader({
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import FileGridView from '@/components/fileList/FileGridView.vue';
 import FileListView from '@/components/fileList/FileListView.vue';
+import FileViewContextMenu from '@/components/fileList/FileViewContextMenu.vue';
 import ViewSelector from '@/components/fileList/ViewSelector.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
+import { useAuth } from '@/stores/useAuth';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
+import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
 import { Separator } from '@shadcn/separator';
 import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
 import { computed, defineAsyncComponent } from 'vue';
@@ -86,13 +88,21 @@ useTitle(() => {
     <div class="flex flex-col flex-1 mb-[env(safe-area-inset-bottom)]">
         <Separator class="mb-2" />
         <TreeView wrapper-class="inline-flex flex-1" class="p-6 flex flex-col gap-3">
-            <div class="flex sm:items-center max-sm:flex-col max-sm:gap-2">
-                <RouteBreadCrumb class="flex-1" />
-                <ViewSelector />
-            </div>
-            <FileListView v-if="settings.fileView.type === 'list'" />
-            <FileGridView v-else-if="settings.fileView.type === 'grid'" />
-            <Separator v-if="readmes.length" class="mb-10" />
+            <ContextMenu>
+                <ContextMenuTrigger
+                    class="flex flex-col gap-3"
+                    :class="{ 'min-h-full': !readmes.length }"
+                >
+                    <div class="flex sm:items-center max-sm:flex-col max-sm:gap-2">
+                        <RouteBreadCrumb class="flex-1" />
+                        <ViewSelector />
+                    </div>
+                    <FileListView v-if="settings.fileView.type === 'list'" />
+                    <FileGridView v-else-if="settings.fileView.type === 'grid'" />
+                    <Separator v-if="readmes.length" class="my-5" />
+                </ContextMenuTrigger>
+                <FileViewContextMenu />
+            </ContextMenu>
             <template v-for="readme in readmes">
                 <MarkdownViewer :input="readme"></MarkdownViewer>
             </template>

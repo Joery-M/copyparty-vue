@@ -1,26 +1,18 @@
 import { getApiUrl } from '@/lib/api';
+import { useConfirm } from '@/stores/useConfirm';
 import { useQueryCache } from '@pinia/colada';
-import { useConfirmDialog } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { withTrailingSlash } from 'ufo';
-import { Up2K, type FileMap, type FileOrDirMap } from 'up2k';
-import type { MaybeRefOrGetter } from 'vue';
+import { Up2K } from 'up2k';
 import { useI18n } from 'vue-i18n';
-
-export interface ConfirmDialogPayload {
-    title: MaybeRefOrGetter<string>;
-    description: MaybeRefOrGetter<string>;
-    files?: FileMap | FileOrDirMap;
-}
 
 export const useUploader = defineStore('uploader', () => {
     const queryCache = useQueryCache();
 
-    const dialog = useConfirmDialog<ConfirmDialogPayload, boolean, false>();
     const i18n = useI18n();
+    const dialog = useConfirm();
 
     return {
-        confirmDialog: dialog,
         upload: async (files: DataTransferItemList | FileList | File[] | File, dir: string[]) => {
             const start = performance.now();
             const up2k = new Up2K({
@@ -47,8 +39,8 @@ export const useUploader = defineStore('uploader', () => {
             }
             if (allFiles.bad.size === 0 && allFiles.junk.size === 0) {
                 const canContinue = await dialog.reveal({
-                    title: () => i18n.t('dialogs.confirm.title'),
-                    description: () => i18n.t('dialogs.confirm.description'),
+                    title: () => i18n.t('dialogs.confirm_upload.title'),
+                    description: () => i18n.t('dialogs.confirm_upload.description'),
                     files: allFiles.good
                 });
                 if (!canContinue.data) return;

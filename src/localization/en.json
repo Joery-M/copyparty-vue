@@ -51,9 +51,13 @@
       "title": "Junk files found",
       "description": "You probably didn't intend for these files to be uploaded:"
     },
-    "confirm": {
+    "confirm_upload": {
       "title": "Confirm files to upload",
       "description": "Are you sure you want to upload these files?"
+    },
+    "confirm_delete": {
+      "title": "Confirm files to delete",
+      "description": "Are you sure you want to delete these files/folders?"
     }
   },
   "and_more": "And {n} more",
@@ -90,7 +94,9 @@
       "zip_crc": "Download as .zip (with CRC)",
       "zip_dos": "Download as .zip (for DOS)",
       "zip": "Download as .zip"
-    }
+    },
+    "new_folder": "New folder",
+    "delete": "Delete"
   },
   "list": "List",
   "list_view": "List view",
