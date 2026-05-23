@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import LoadingTable from '@/components/fileList/LoadingTable.vue';
 import Tooltip from '@/components/Tooltip.vue';
 import { getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
@@ -29,9 +28,10 @@ import { SortAsc, SortDesc } from 'lucide-vue-next';
 import { computed, h, ref, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate, RouterLink } from 'vue-router';
-import FileContextMenu from './FileContextMenu.vue';
+import FileContextMenu from '../FileContextMenu.vue';
+import Paginator from '../Paginator.vue';
 import FileListRowOptions from './FileListRowOptions.vue';
-import Paginator from './Paginator.vue';
+import LoadingTable from './LoadingTable.vue';
 
 const routeState = useRouteState();
 const settings = useSettings();
