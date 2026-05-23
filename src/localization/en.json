@@ -14,7 +14,8 @@
       "ac": "Audio codec",
       "fmt": "Format",
       "res": "Resolution",
-      ".fps": "FPS"
+      ".fps": "FPS",
+      "descript.ion": "Description"
     }
   },
   "filename": "File name",
