@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import SortableHeader from '@/components/fileList/list/SortableHeader.vue';
 import Tooltip from '@/components/Tooltip.vue';
 import { getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
@@ -9,7 +10,6 @@ import { useListDirQuery } from '@/pages/Files.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { type _JSONPrimitive } from '@pinia/colada';
-import { Button } from '@shadcn/button';
 import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { valueUpdater } from '@shadcn/table/utils';
@@ -24,7 +24,6 @@ import {
     type SortingState
 } from '@tanstack/vue-table';
 import { watchImmediate } from '@vueuse/core';
-import { SortAsc, SortDesc } from 'lucide-vue-next';
 import { computed, h, ref, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate, RouterLink } from 'vue-router';
@@ -114,30 +113,11 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
     const sizeFormat = settings.format.fileSizes;
 
     const getSortableHeader = (text: string, column: Column<AnyDirectoryEntry>) =>
-        h(
-            Button,
-            {
-                variant: 'ghost',
-                onClick: () => {
-                    const curSort = column.getIsSorted();
-                    if (!curSort) {
-                        column.toggleSorting(true);
-                    } else if (curSort === 'desc') {
-                        column.toggleSorting(false);
-                    } else {
-                        resetSorting();
-                    }
-                }
-            },
-            () => [
-                text,
-                column.getIsSorted()
-                    ? h(column.getIsSorted() === 'asc' ? SortAsc : SortDesc, {
-                          class: 'size-4'
-                      })
-                    : undefined
-            ]
-        );
+        h(SortableHeader, {
+            text,
+            column,
+            onResetSort: () => resetSorting()
+        });
 
     return [
         {
@@ -188,9 +168,10 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
 const sorting = ref<SortingState>([]);
 
 function resetSorting() {
-    if (listDirQuery.data.value?.sort && listDirQuery.data.value?.sort !== 'href') {
-        const asc = listDirQuery.data.value.sort.startsWith('-');
-        const id = asc ? listDirQuery.data.value.sort.slice(1) : listDirQuery.data.value.sort;
+    const sortKey = listDirQuery.data.value?.sort;
+    if (sortKey && sortKey !== 'href') {
+        const asc = sortKey.startsWith('-');
+        const id = asc ? sortKey.slice(1) : sortKey;
         sorting.value = [{ id, desc: !asc }];
     } else {
         sorting.value = [];
