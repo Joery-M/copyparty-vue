@@ -13,7 +13,6 @@ import { computed, shallowRef, toValue } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const dialog = useConfirm();
-console.log(dialog);
 
 const data = shallowRef<ConfirmDialogPayload>();
 const files = computed(() => {

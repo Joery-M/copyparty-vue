@@ -1,42 +1,50 @@
 <script setup lang="ts">
-import { Tooltip, TooltipContent, TooltipTrigger } from '@shadcn/tooltip';
-import { reactiveOmit, useElementVisibility, useEventListener } from '@vueuse/core';
-import { useForwardProps, type TooltipRootProps } from 'reka-ui';
-import { shallowRef, useTemplateRef } from 'vue';
+import { reactiveOmit, useEventListener } from '@vueuse/core';
+import {
+    TooltipArrow,
+    TooltipContent,
+    TooltipPortal,
+    TooltipRoot,
+    TooltipTrigger,
+    useForwardProps,
+    type TooltipRootProps
+} from 'reka-ui';
+import { shallowRef } from 'vue';
 
-const props = defineProps<
-    TooltipRootProps & { content: string | number; useViewportTest?: boolean }
->();
-
-const tester = useTemplateRef('tester');
-const isVisible = useElementVisibility(tester);
+const props = defineProps<TooltipRootProps & { content: string | number }>();
 
 const fullscreenElem = shallowRef<HTMLElement | undefined>();
 useEventListener(document, 'fullscreenchange', (ev) => {
     fullscreenElem.value = ev.target instanceof HTMLElement ? ev.target : undefined;
 });
 
-const delegatedProps = reactiveOmit(props, ['content', 'useViewportTest']);
+const delegatedProps = reactiveOmit(props, ['content']);
 const forwarded = useForwardProps(delegatedProps);
 </script>
 
 <template>
-    <div v-if="useViewportTest" id="pos-tester" ref="tester"></div>
-    <Tooltip v-if="!useViewportTest || isVisible" v-bind="forwarded">
+    <TooltipRoot v-bind="forwarded">
         <TooltipTrigger as-child>
             <slot> &nbsp; </slot>
         </TooltipTrigger>
-        <TooltipContent :attach-to="fullscreenElem">
-            <p>{{ content }}</p>
-        </TooltipContent>
-    </Tooltip>
-    <slot v-else> &nbsp; </slot>
+        <TooltipPortal :to="fullscreenElem">
+            <TooltipContent class="custom-tooltip" :side-offset="0">
+                <p>{{ content }}</p>
+
+                <TooltipArrow class="arrow" />
+            </TooltipContent>
+        </TooltipPortal>
+    </TooltipRoot>
 </template>
 
-<style scoped>
+<style>
 @reference "@/style.css";
 
-#pos-tester {
-    @apply size-0 m-0 p-0 box-content;
+.custom-tooltip {
+    @apply data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs has-data-[slot=kbd]:pr-1.5 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm bg-foreground text-background z-50 w-fit max-w-xs origin-(--reka-tooltip-content-transform-origin);
+
+    .arrow {
+        @apply size-2.5 rotate-45 rounded-[2px] bg-foreground fill-foreground z-50 translate-y-[calc(-50%-2px)];
+    }
 }
 </style>

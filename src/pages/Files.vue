@@ -14,9 +14,9 @@ export const useListDirQuery = defineColadaLoader({
 
 <script setup lang="ts">
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import FileViewContextMenu from '@/components/fileList/FileViewContextMenu.vue';
 import FileGridView from '@/components/fileList/grid/FileGridView.vue';
 import FileListView from '@/components/fileList/list/FileListView.vue';
-import FileViewContextMenu from '@/components/fileList/FileViewContextMenu.vue';
 import ViewSelector from '@/components/fileList/ViewSelector.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';

@@ -16,7 +16,8 @@
       "res": "Resolution",
       ".fps": "FPS",
       "descript.ion": "Description"
-    }
+    },
+    "hidden_cols": "Hidden columns"
   },
   "filename": "File name",
   "user": {

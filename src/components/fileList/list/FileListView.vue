@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ColumnOptions from '@/components/fileList/list/ColumnOptions.vue';
 import SortableHeader from '@/components/fileList/list/SortableHeader.vue';
 import Tooltip from '@/components/Tooltip.vue';
 import { getApiUrl, useLoadingState } from '@/lib/api';
@@ -24,7 +25,7 @@ import {
     type SortingState
 } from '@tanstack/vue-table';
 import { watchImmediate } from '@vueuse/core';
-import { computed, h, ref, watchEffect } from 'vue';
+import { computed, h, ref, watch, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate, RouterLink } from 'vue-router';
 import FileContextMenu from '../FileContextMenu.vue';
@@ -78,7 +79,7 @@ function getEntryRenderFunction(entry: AnyDirectoryEntry) {
 const i18n = useI18n();
 
 function wrapWithTooltip(text: any, raw: any) {
-    return h(Tooltip, { content: String(raw), useViewportTest: true }, () => h('span', text));
+    return h(Tooltip, { content: String(raw) }, () => h('span', text));
 }
 
 function getTagRenderFunction(tag: string, value?: _JSONPrimitive) {
@@ -89,7 +90,10 @@ function getTagRenderFunction(tag: string, value?: _JSONPrimitive) {
             else return value;
         case 'tdate':
             if (typeof value === 'string')
-                return wrapWithTooltip(new Date(value).toLocaleString(), value);
+                return wrapWithTooltip(
+                    new Date(value).toLocaleString(undefined, { timeZone: 'UTC' }),
+                    value
+                );
             else return value;
         case '.q':
         case '.aq':
@@ -114,6 +118,7 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
 
     const getSortableHeader = (text: string, column: Column<AnyDirectoryEntry>) =>
         h(SortableHeader, {
+            tag: column.id,
             text,
             column,
             onResetSort: () => resetSorting()
@@ -124,6 +129,7 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
             id: 'prefix',
             size: 32,
             maxSize: 21,
+            header: () => h(ColumnOptions),
             cell: () => h(FileListRowOptions)
         },
         {
@@ -151,7 +157,7 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
             header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.ts'), column),
             cell: ({ getValue }) => {
                 const value = getValue<Date>();
-                return wrapWithTooltip(value.toLocaleString(), value);
+                return wrapWithTooltip(value.toLocaleString(undefined, { timeZone: 'UTC' }), value);
             }
         },
         ...tags.value.map((tag) => {
@@ -206,6 +212,16 @@ watchEffect(() => table.value.setPageIndex(pageIndex.value - 1));
 watchImmediate(
     () => [settings.fileView.pageSize, table.value] as const,
     ([size, table]) => table.setPageSize(size)
+);
+
+const hiddenCols = computed(() => settings.fileView.hiddenListColumns);
+watch(
+    () => [hiddenCols.value, table.value] as const,
+    ([hiddenCols, table]) => {
+        const def = Object.fromEntries(hiddenCols.map((k) => [k, false]));
+        table.setColumnVisibility(def);
+    },
+    { deep: 2, immediate: true }
 );
 </script>
 
@@ -268,25 +284,17 @@ watchImmediate(
 
 th {
     @apply text-center not-last:border-r px-0;
-    > button {
-        @apply size-full px-2 rounded-none;
-    }
-    > [data-slot='skeleton'] {
-        @apply mx-2;
-    }
 }
 
 .paginator {
     @apply bg-muted/50 border-t font-medium [&>tr]:last:border-b-0 sticky left-0 w-full p-2;
 }
+
 td {
     @apply px-2 align-middle not-last:border-r;
 
     &:has(> button) {
         @apply p-0;
-        > button {
-            @apply m-0 rounded-none size-8;
-        }
     }
 }
 </style>

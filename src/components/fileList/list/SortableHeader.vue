@@ -1,12 +1,13 @@
 <script setup lang="ts">
+import Tooltip from '@/components/Tooltip.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 import { Button } from '@shadcn/button';
 import type { Column } from '@tanstack/vue-table';
 import { SortAsc, SortDesc } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-const props = defineProps<{ text: string; column: Column<AnyDirectoryEntry> }>();
-const emit = defineEmits<{ 'resetSort': [] }>();
+const props = defineProps<{ tag: string; text: string; column: Column<AnyDirectoryEntry> }>();
+const emit = defineEmits<{ resetSort: [] }>();
 
 function click() {
     const curSort = props.column.getIsSorted();
@@ -23,9 +24,19 @@ const isSorted = computed(() => props.column.getIsSorted());
 </script>
 
 <template>
-    <Button variant="ghost" @click="click()">
-        {{ text }}
-        <SortAsc v-if="isSorted === 'asc'" class="size-4" />
-        <SortDesc v-else-if="isSorted === 'desc'" class="size-4" />
-    </Button>
+    <Tooltip :content="tag">
+        <Button variant="ghost" @click="click()">
+            {{ text }}
+            <SortAsc v-if="isSorted === 'asc'" class="size-4" />
+            <SortDesc v-else-if="isSorted === 'desc'" class="size-4" />
+        </Button>
+    </Tooltip>
 </template>
+
+<style scoped>
+@reference "@/style.css";
+
+button {
+    @apply size-full px-2 rounded-none;
+}
+</style>

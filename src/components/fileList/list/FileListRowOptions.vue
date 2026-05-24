@@ -17,7 +17,13 @@ function handleClick(event: MouseEvent, el: HTMLButtonElement) {
 </script>
 
 <template>
-    <Button ref="btn" size="icon" variant="ghost" @click="handleClick($event, $el)">
+    <Button
+        ref="btn"
+        size="icon"
+        variant="ghost"
+        @click="handleClick($event, $el)"
+        class="h-8 w-full px-2 rounded-none min-h-full"
+    >
         <MoreHorizontal />
     </Button>
 </template>
