@@ -45,19 +45,21 @@ const confirmLabel = computed(() =>
                 <DialogTitle>
                     {{ toValue(data.title) }}
                 </DialogTitle>
-                <DialogDescription class="max-h-96 overflow-y-auto">
+                <DialogDescription>
                     {{ toValue(data.description) }}
-
-                    <ul v-if="data.files">
-                        <li v-for="file in files.top" :key="file">
-                            - <code>{{ file }}</code>
-                        </li>
-                        <li v-if="files.rest > 0">
-                            <i>{{ $t('and_more', files.rest) }}</i>
-                        </li>
-                    </ul>
                 </DialogDescription>
             </DialogHeader>
+
+            <div v-if="data.files" class="pb-3 max-h-96 overflow-auto w-full text-nowrap">
+                <ul>
+                    <li v-for="file in files.top" :key="file">
+                        - <code>{{ file }}</code>
+                    </li>
+                    <li v-if="files.rest > 0">
+                        <i>{{ $t('and_more', files.rest) }}</i>
+                    </li>
+                </ul>
+            </div>
             <DialogFooter>
                 <Button
                     @click="dialog.cancel(false)"

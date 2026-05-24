@@ -19,6 +19,9 @@ export const useUploader = defineStore('uploader', () => {
                 baseUrl: new URL(withTrailingSlash(getApiUrl(dir)))
             });
             const allFiles = await up2k.collectInput(files);
+            const totalFiles =
+                allFiles.bad.size + allFiles.good.size + allFiles.junk.size + allFiles.nil.size;
+            if (totalFiles == 0) return;
 
             const acceptedFiles: [File, string][] = [...allFiles.good];
             if (allFiles.bad.size > 0) {
