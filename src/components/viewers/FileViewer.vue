@@ -4,7 +4,7 @@ import type { File } from '@/lib/interop';
 import { usePreview } from '@/stores/usePreview';
 import { useRouteState } from '@/stores/useRouteState';
 import { computedAsync, whenever } from '@vueuse/core';
-import { computed, defineComponent, h, shallowRef } from 'vue';
+import { computed, shallowRef } from 'vue';
 import DrawerViewer from './DrawerViewer.vue';
 
 import { useI18n } from 'vue-i18n';
@@ -13,26 +13,23 @@ import DialogViewer from './DialogViewer.vue';
 const routeState = useRouteState();
 const previewStore = usePreview();
 
-type ViewerType = 'drawer' | 'dialog';
-
-const defaultComponent = defineComponent((_) => {
-    return () => h('div');
-});
-
-const viewerType = computed<ViewerType>((last) => {
+const viewerType = computed<'drawer' | 'dialog' | undefined>((last) => {
     if (!previewStore.openedFile) return last ?? 'dialog';
 
-    switch (previewStore.forceEditorType || previewStore.openedFile?.classification) {
+    switch (previewStore.openedFile?.classification) {
         case FileClassification.RichText:
         case FileClassification.PlainText:
             return 'drawer';
-        default:
+        case FileClassification.RasterImage:
+        case FileClassification.VectorImage:
+        case FileClassification.Video:
             return 'dialog';
     }
 });
 
 const currentEditor = computedAsync(async () => {
-    switch (previewStore.forceEditorType || previewStore.openedFile?.classification) {
+    // If you are changing this, make sure to update `canView` in `classifyExt.ts`
+    switch (previewStore.openedFile?.classification) {
         case FileClassification.PlainText:
             return import('./PlainTextEditor.vue').then((r) => r.default);
         case FileClassification.RichText:
@@ -41,8 +38,6 @@ const currentEditor = computedAsync(async () => {
         case FileClassification.VectorImage:
         case FileClassification.Video:
             return import('./MediaViewer.vue').then((r) => r.default);
-        default:
-            return defaultComponent;
     }
 });
 
@@ -79,12 +74,12 @@ const description = computed(() => {
         @closing="previewStore.close()"
         @closed="lastFile = null"
     >
-        <suspense v-if="lastFile">
+        <suspense v-if="lastFile && currentEditor">
             <component :is="currentEditor" :file="lastFile" />
         </suspense>
     </drawer-viewer>
     <dialog-viewer
-        v-else
+        v-else-if="viewerType === 'dialog'"
         :open="!!routeState.file"
         :title
         :description
@@ -93,7 +88,7 @@ const description = computed(() => {
             lastFile = null;
         "
     >
-        <suspense v-if="lastFile">
+        <suspense v-if="lastFile && currentEditor">
             <component :is="currentEditor" :file="lastFile" />
         </suspense>
     </dialog-viewer>

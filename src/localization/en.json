@@ -30,6 +30,7 @@
   "folder": "Folder",
   "error": {
     "access_error": "You are unable to access",
+    "not_found_error": "Could not find",
     "invalid_login": "Invalid login"
   },
   "accessible_volumes": "You can access the following volume: | You can access the following volumes:",

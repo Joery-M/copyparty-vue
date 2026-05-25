@@ -97,7 +97,11 @@ const onSubmit = form.handleSubmit(async (values) => {
             <Alert v-if="data.path" variant="destructive">
                 <Lock />
                 <AlertTitle>
-                    {{ $t('error.access_error') }} <code>/{{ data.path.join('/') }}/</code>
+                    <template v-if="data.reason === 'not found'">{{
+                        $t('error.not_found_error')
+                    }}</template>
+                    <template v-else>{{ $t('error.access_error') }} </template>:
+                    <code>/{{ data.path.join('/') }}</code>
                 </AlertTitle>
                 <AlertDescription v-if="authStore.readable.length > 0">
                     {{ $t('accessible_volumes', authStore.readable.length) }}

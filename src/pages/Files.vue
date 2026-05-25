@@ -5,10 +5,7 @@ import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
 export const useListDirQuery = defineColadaLoader({
     key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
-    query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal),
-    lazy: true,
-    errors: true,
-    staleTime: 30_000
+    query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal)
 });
 </script>
 
@@ -22,20 +19,18 @@ import LoginDialog from '@/components/LoginDialog.vue';
 import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
-import { useAuth } from '@/stores/useAuth';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
 import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
 import { Separator } from '@shadcn/separator';
-import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
+import { useDropZone, useEventListener, useTitle } from '@vueuse/core';
 import { computed, defineAsyncComponent } from 'vue';
 import TreeView from '../components/TreeView.vue';
 
 const settings = useSettings();
 const uploader = useUploader();
 const routeState = useRouteState();
-const authStore = useAuth();
 
 const listDirQuery = useListDirQuery();
 
@@ -53,24 +48,6 @@ useDropZone(document.body, {
 useEventListener(document, 'paste', (ev) => {
     const f = ev.clipboardData?.items;
     if (f && f.length > 0) uploader.upload(ev.clipboardData.items, routeState.dir);
-});
-
-whenever(listDirQuery.error, (err) => {
-    if (err instanceof API.ApiError) {
-        if (err.cause.code === 403) {
-            authStore.loginDialog.reveal({
-                path: routeState.dir,
-                reason: 'unauthorized',
-                canCancel: false
-            });
-        } else if (err.cause.code === 401) {
-            authStore.loginDialog.reveal({
-                path: routeState.dir,
-                reason: 'not found',
-                canCancel: false
-            });
-        }
-    }
 });
 
 useTitle(() => {

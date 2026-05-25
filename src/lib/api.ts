@@ -105,6 +105,7 @@ export namespace API {
         files: ListDirectoryEntry[];
         taglist: string[];
         srvinf: string;
+        dir?: string | null;
         acct: string;
         perms: string[];
         cfg?: LsConfig;
@@ -124,25 +125,39 @@ export namespace API {
         | 'html'
         | 'admin';
 
+    export interface ListDirectoryParsedResponse {
+        entries: AnyDirectoryEntry[];
+        perms: Permissions[];
+        readmes: string[];
+        tags: string[];
+        sort: string | undefined;
+        dir?: string | null;
+    }
+
     export function getListDirectory(path: string[], signal?: AbortSignal) {
         return fetch(getApiUrl(path, { ls: '' }), { signal })
             .then((r) => extractError(r))
             .then((r) => r.json())
-            .then((res: ListDirectoryResponse) => ({
-                entries: [
-                    res.dirs.map((entry) => new DirectoryEntry(path, entry)),
-                    res.files.map((entry) => new FileEntry(path, entry))
-                ].flat() as AnyDirectoryEntry[],
-                perms: res.perms as Permissions[],
-                readmes: res.readmes,
-                tags: res.taglist,
-                sort: res.cfg?.dsort
-            }));
+            .then(
+                (res: ListDirectoryResponse) =>
+                    ({
+                        entries: [
+                            res.dirs.map((entry) => new DirectoryEntry(path, entry)),
+                            res.files.map((entry) => new FileEntry(path, entry))
+                        ].flat() as AnyDirectoryEntry[],
+                        perms: res.perms as Permissions[],
+                        readmes: res.readmes,
+                        tags: res.taglist,
+                        sort: res.cfg?.dsort,
+                        dir: res.dir
+                    }) satisfies ListDirectoryParsedResponse
+            );
     }
 
     export const getListDirectoryQuery = defineQueryOptions((dir: string[]) => ({
         key: ['ls', ...dir],
-        query: ({ signal }) => getListDirectory(dir, signal)
+        query: ({ signal }) => getListDirectory(dir, signal),
+        staleTime: 30_000
     }));
 
     interface CustomHelloPageResponse {

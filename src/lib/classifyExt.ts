@@ -92,3 +92,13 @@ export function classifyExtension(ext: string | null | undefined) {
     if (audioTypes.has(e)) return FileClassification.Audio;
     return FileClassification.Unknown;
 }
+
+export function canView(ext: FileClassification) {
+    return [
+        FileClassification.PlainText,
+        FileClassification.RichText,
+        FileClassification.RasterImage,
+        FileClassification.VectorImage,
+        FileClassification.Video
+    ].includes(ext);
+}

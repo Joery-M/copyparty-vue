@@ -39,7 +39,7 @@ import DialogFooter from '../ui/dialog/DialogFooter.vue';
 
 const props = defineProps<{ file: File }>();
 
-const mediaUrl = getApiUrl(props.file.fullPath);
+const mediaUrl = getApiUrl(props.file.fullPath, { cache: '', raw: '' });
 
 const settings = useSettings();
 const preferrersReducedMotion = usePreferredReducedMotion();
