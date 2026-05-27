@@ -34,7 +34,7 @@ fileDialog.onChange((fileList) => {
         <CardContent>
             <DropdownMenu>
                 <DropdownMenuTrigger>
-                    <Button id="upload-btn" size="icon" :variant="fileOver ? 'outline' : 'ghost'">
+                    <Button id="upload-btn" size="icon" :variant="fileOver ? 'default' : 'outline'">
                         <Upload class="size-12" />
                         {{ $t('filelist.upload_only_description') }}
                     </Button>
@@ -56,13 +56,13 @@ fileDialog.onChange((fileList) => {
 @reference "@/style.css";
 
 [data-slot='card-content'] {
-    @apply min-h-48 ring px-0 mx-4 ring-accent rounded-2xl;
+    @apply min-h-48 px-0 mx-4;
 
     [data-slot='dropdown-menu-trigger'] {
         @apply size-full;
 
         #upload-btn {
-            @apply flex-col gap-2 size-full rounded-xl hover:bg-transparent!;
+            @apply flex-col gap-2 size-full rounded-xl;
         }
     }
 }
