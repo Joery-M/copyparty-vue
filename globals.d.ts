@@ -6,3 +6,10 @@ declare module 'markdown-it-task-lists' {
     const taskList: PluginSimple;
     export default taskList;
 }
+
+interface InitialState {
+    dir: string;
+    preview: string;
+}
+
+declare var __initial_state: undefined | InitialState;

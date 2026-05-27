@@ -1,11 +1,16 @@
 <script lang="ts">
 import { API } from '@/lib/api';
+import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
 export const useListDirQuery = defineColadaLoader({
     key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
-    query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal)
+    query: (to, { signal }) => API.getListDirectory(getDirFromRouteParams(to.params), signal),
+    refetchOnWindowFocus: false,
+    staleTime: 30_000,
+    errors: true,
+    lazy: true
 });
 </script>
 
@@ -24,13 +29,14 @@ import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
 import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
 import { Separator } from '@shadcn/separator';
-import { useDropZone, useEventListener, useTitle } from '@vueuse/core';
+import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
 import { computed, defineAsyncComponent } from 'vue';
 import TreeView from '../components/TreeView.vue';
 
 const settings = useSettings();
 const uploader = useUploader();
 const routeState = useRouteState();
+const authStore = useAuth();
 
 const listDirQuery = useListDirQuery();
 
@@ -55,6 +61,24 @@ useTitle(() => {
         return `${routeState.file} - copyparty`;
     } else {
         return routeState.dir.length > 0 ? `${routeState.dir.at(-1)} - copyparty` : `copyparty`;
+    }
+});
+
+whenever(listDirQuery.error, (err) => {
+    if (err instanceof API.ApiError) {
+        if (err.cause.code === 403 || err.cause.code === 401) {
+            authStore.loginDialog.reveal({
+                path: routeState.dir,
+                reason: 'unauthorized',
+                canCancel: false
+            });
+        } else if (err.cause.code === 404) {
+            authStore.loginDialog.reveal({
+                path: routeState.dir,
+                reason: 'not found',
+                canCancel: false
+            });
+        }
     }
 });
 </script>
@@ -89,5 +113,6 @@ useTitle(() => {
     <!-- Overlays -->
     <FileViewer />
     <ConfirmDialog />
-    <LoginDialog />
+    <!-- Only show login dialog if there is no preview open -->
+    <LoginDialog v-if="!routeState.file" />
 </template>

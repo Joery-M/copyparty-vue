@@ -2,13 +2,14 @@ import type { FileClassification } from '@/lib/classifyExt';
 import { File } from '@/lib/interop';
 import { useRouteState } from '@/stores/useRouteState';
 import { whenever } from '@vueuse/core';
-import { useRouteHash } from '@vueuse/router';
 import { basename, extname } from 'pathe';
 import { defineStore } from 'pinia';
 import { computed, shallowRef } from 'vue';
+import { useRouter } from 'vue-router';
 
 export const usePreview = defineStore('preview', () => {
     const routeState = useRouteState();
+    const router = useRouter();
     const openedFile = computed(() => {
         if (routeState.file) {
             return new File(routeState.dir, {
@@ -29,12 +30,20 @@ export const usePreview = defineStore('preview', () => {
         }
     );
 
-    const routeHash = useRouteHash();
     return {
         openedFile,
         forceEditorType,
         close() {
-            routeHash.value = null;
+            // Go to the exact same route, just without a hash
+            router.push({ ...router.currentRoute.value, hash: undefined });
+            // Find all opengraph meta tags and remove them
+            const meta = document.head.querySelectorAll('meta');
+            for (const elem of meta) {
+                const property = elem.getAttribute('property');
+                if (property && (property.startsWith('og:') || property.startsWith('twitter:'))) {
+                    elem.remove();
+                }
+            }
         }
     };
 });
