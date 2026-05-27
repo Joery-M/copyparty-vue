@@ -37,6 +37,15 @@ export namespace API {
         }
     }
 
+    export function jsonResponse<T>(res: Response): Promise<T> {
+        if (res.headers.get('Content-Type') !== 'application/json') {
+            res.body?.cancel();
+            throw new ApiError({ code: res.status, res });
+        } else {
+            return res.json();
+        }
+    }
+
     type FileTreeResponseRecursive = {
         a: string[];
     } & {
@@ -46,8 +55,8 @@ export namespace API {
     export function getFileTreeRecursive(path: string[], signal: AbortSignal) {
         return fetch(getApiUrl(path, { tree: null }, true), { signal })
             .then((r) => extractError(r))
-            .then((r) => r.json())
-            .then((res: FileTreeResponseRecursive) => {
+            .then((r) => jsonResponse<FileTreeResponseRecursive>(r))
+            .then((res) => {
                 const tree = new Map<string[], string[]>();
 
                 let curLeaf: FileTreeResponseRecursive | undefined = res;
@@ -135,11 +144,14 @@ export namespace API {
     }
 
     export function getListDirectory(path: string[], signal?: AbortSignal) {
-        return fetch(getApiUrl(path, { ls: '' }), { signal })
+        return fetch(getApiUrl(path, { ls: '' }), {
+            signal,
+            headers: { Accept: 'application/json' }
+        })
             .then((r) => extractError(r))
-            .then((r) => r.json())
+            .then((r) => jsonResponse<ListDirectoryResponse>(r))
             .then(
-                (res: ListDirectoryResponse) =>
+                (res) =>
                     ({
                         entries: [
                             res.dirs.map((entry) => new DirectoryEntry(path, entry)),
@@ -204,9 +216,12 @@ export namespace API {
     }
 
     export function getHelloPageData(signal: AbortSignal) {
-        return fetch(getApiUrl([], { h: 'j' }), { signal })
-            .then((r) => r.json())
-            .then((res: CustomHelloPageResponse) => {
+        return fetch(getApiUrl([], { h: 'j' }), {
+            signal,
+            headers: { Accept: 'application/json' }
+        })
+            .then((r) => jsonResponse<CustomHelloPageResponse>(r))
+            .then((res) => {
                 return res;
             });
     }
@@ -225,15 +240,18 @@ export namespace API {
     export function login(pwd: string, uname?: string) {
         return fetch(getApiUrl([], { login: '' }), {
             method: 'POST',
-            headers: { 'Content-Encoding': 'application/json' },
+            headers: {
+                'Content-Encoding': 'application/json',
+                Accept: 'application/json'
+            },
             body: JSON.stringify({
                 uname,
                 pwd
             })
         })
             .then(extractError)
-            .then((r) => r.json())
-            .then((res: CustomJsonLoginResponse) => res.uname);
+            .then((r) => jsonResponse<CustomJsonLoginResponse>(r))
+            .then((res) => res.uname);
     }
 
     export function logout() {
