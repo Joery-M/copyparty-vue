@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import Tooltip from '@/components/Tooltip.vue';
 import { sidebarBusKey } from '@/components/TreeView.vue';
+import { useListDirQuery } from '@/pages/Files.vue';
 import { useAuth } from '@/stores/useAuth';
 import { useRouteState } from '@/stores/useRouteState';
 import { useUploader } from '@/stores/useUploader';
@@ -12,10 +14,12 @@ import {
 } from '@shadcn/dropdown-menu';
 import { useEventBus, useFileDialog, useMediaQuery } from '@vueuse/core';
 import { ArrowUp, Menu, User2 } from 'lucide-vue-next';
+import { computed } from 'vue';
 
 const auth = useAuth();
 const routeState = useRouteState();
 const uploader = useUploader();
+const listDirQuery = useListDirQuery();
 
 const fileDialog = useFileDialog({ reset: true });
 
@@ -25,7 +29,11 @@ fileDialog.onChange((fileList) => {
 });
 
 const bus = useEventBus(sidebarBusKey);
-const isMobile = useMediaQuery('(max-width: 768px)')
+const isMobile = useMediaQuery('(max-width: 768px)');
+
+const canUpload = computed(
+    () => !!listDirQuery.data.value && listDirQuery.data.value.perms.includes('write')
+);
 </script>
 
 <template>
@@ -35,11 +43,23 @@ const isMobile = useMediaQuery('(max-width: 768px)')
         </Button>
         <div class="spacer" />
         <DropdownMenu>
-            <DropdownMenuTrigger>
-                <Button size="lg">
+            <DropdownMenuTrigger :disabled="!canUpload">
+                <Button v-if="canUpload" size="lg">
                     {{ $t('upload') }}
                     <ArrowUp />
                 </Button>
+                <Tooltip v-else :content="$t('error.cant_upload')">
+                    <Button
+                        size="lg"
+                        disabled
+                        variant="accent"
+                        class="disabled:pointer-events-auto"
+                        aria-haspopup
+                    >
+                        {{ $t('upload') }}
+                        <ArrowUp />
+                    </Button>
+                </Tooltip>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem @click="fileDialog.open()">

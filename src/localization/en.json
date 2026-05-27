@@ -43,7 +43,8 @@
     "not_found_error": "Could not find",
     "invalid_login": "Invalid login",
     "api": "Server responded with code {code}, please check the server logs",
-    "api_unknown": "Please check the server logs"
+    "api_unknown": "Please check the server logs",
+    "cant_upload": "You are unable to upload to this folder"
   },
   "validation": {
     "required": "{0} is required"
