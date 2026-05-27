@@ -4,7 +4,7 @@
 @import './github-markdown-light.css' (prefers-color-scheme: light);
 
 .markdown-body input[type='checkbox'] {
-    @apply appearance-none size-4 border border-input rounded-[4px] relative;
+    @apply appearance-none size-4 border border-input rounded-[4px] relative mr-1 translate-y-px;
 }
 
 .markdown-body input[type='checkbox'].indeterminate::after,
@@ -46,9 +46,4 @@
 .markdown-body .task-list__input.indeterminate + .task-list__label {
     @apply opacity-75;
     text-decoration: line-through;
-}
-.markdown-body .task-list__item {
-    @apply gap-1;
-    display: flex;
-    align-items: center;
 }
