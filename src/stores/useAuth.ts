@@ -4,6 +4,8 @@ import { useQuery, useQueryCache } from '@pinia/colada';
 import { useConfirmDialog, whenever } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { toast } from 'vue-sonner';
 
 export type LoginReason = 'unauthorized' | 'not found';
 
@@ -18,6 +20,8 @@ export interface LoginDialogPayload {
 
 export const useAuth = defineStore('auth', () => {
     const queryCache = useQueryCache();
+    const i18n = useI18n();
+
     const helloPageData = useQuery(API.getHelloPageDataQuery);
 
     const dialog = useConfirmDialog<LoginDialogPayload>();
@@ -44,12 +48,50 @@ export const useAuth = defineStore('auth', () => {
             return res.data?.perms ?? [];
         },
         loginDialog: dialog,
+        login: (password: string, username?: string) =>
+            API.login(password, username)
+                .then((uname) => {
+                    toast(() => i18n.t('toast.logged_in', [uname]), {
+                        dismissible: true,
+                        position: 'bottom-right'
+                    });
+                    return true;
+                })
+                .catch((err) => {
+                    toast.error(() => i18n.t('toast.error'), {
+                        description: () =>
+                            err instanceof API.ApiError
+                                ? i18n.t('error.api', err.cause)
+                                : i18n.t('error.api_unknown')
+                    });
+                    return false;
+                })
+                .finally(() => {
+                    queryCache.invalidateQueries({ key: ['ls'] }, true);
+                    queryCache.invalidateQueries({ key: ['tree'] }, true);
+                    queryCache.invalidateQueries({ key: ['full-tree'] }, true);
+                    queryCache.invalidateQueries({ key: ['hello'] }, true);
+                }),
         logout: () =>
-            API.logout().finally(() => {
-                queryCache.invalidateQueries({ key: ['ls'] }, true);
-                queryCache.invalidateQueries({ key: ['tree'] }, true);
-                queryCache.invalidateQueries({ key: ['full-tree'] }, true);
-                queryCache.invalidateQueries({ key: ['hello'] }, true);
-            })
+            API.logout()
+                .then(() => {
+                    toast(() => i18n.t('toast.logged_out'));
+                })
+                .catch((err) => {
+                    toast.error(() => i18n.t('toast.error'), {
+                        description: () =>
+                            err instanceof API.ApiError
+                                ? i18n.t('error.api', err.cause)
+                                : i18n.t('error.api_unknown'),
+                        dismissible: true,
+                        position: 'bottom-right'
+                    });
+                })
+                .finally(() => {
+                    queryCache.invalidateQueries({ key: ['ls'] }, true);
+                    queryCache.invalidateQueries({ key: ['tree'] }, true);
+                    queryCache.invalidateQueries({ key: ['full-tree'] }, true);
+                    queryCache.invalidateQueries({ key: ['hello'] }, true);
+                })
     };
 });

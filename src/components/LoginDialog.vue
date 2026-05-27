@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { API } from '@/lib/api';
 import { useAuth, type LoginDialogPayload } from '@/stores/useAuth';
-import { useQueryCache } from '@pinia/colada';
 import { Alert, AlertDescription, AlertTitle } from '@shadcn/alert';
 import { Button } from '@shadcn/button';
 import {
@@ -25,7 +23,6 @@ import { RouterLink } from 'vue-router';
 
 const authStore = useAuth();
 const loginDialog = authStore.loginDialog;
-const queryCache = useQueryCache();
 
 const data = shallowRef<LoginDialogPayload>();
 
@@ -57,23 +54,9 @@ const failedLogin = ref(false);
 
 const onSubmit = form.handleSubmit(async (values) => {
     failedLogin.value = false;
-    try {
-        await API.login(values.password, values.username);
-        loginDialog.confirm();
-        queryCache.invalidateQueries({ key: ['ls'] }, true);
-        queryCache.invalidateQueries({ key: ['tree'] }, true);
-        queryCache.invalidateQueries({ key: ['full-tree'] }, true);
-        queryCache.invalidateQueries({ key: ['hello'] }, true);
-    } catch (error) {
-        failedLogin.value = true;
-        // If we were logged in, now we aren't
-        if (authStore.username) {
-            queryCache.invalidateQueries({ key: ['ls'] }, true);
-            queryCache.invalidateQueries({ key: ['tree'] }, true);
-            queryCache.invalidateQueries({ key: ['full-tree'] }, true);
-            queryCache.invalidateQueries({ key: ['hello'] }, true);
-        }
-    }
+    const success = await authStore.login(values.password, values.username);
+    failedLogin.value = !success;
+    loginDialog.confirm();
 });
 </script>
 

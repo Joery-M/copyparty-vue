@@ -140,3 +140,8 @@
         @apply duration-[0ms];
     }
 }
+
+
+[data-sonner-toast][data-styled="true"] [data-description] {
+    color: unset !important;
+}

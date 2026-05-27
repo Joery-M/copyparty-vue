@@ -39,7 +39,9 @@
   "error": {
     "access_error": "You are unable to access",
     "not_found_error": "Could not find",
-    "invalid_login": "Invalid login"
+    "invalid_login": "Invalid login",
+    "api": "Server responded with code {code}, please check the server logs",
+    "api_unknown": "Please check the server logs"
   },
   "validation": {
     "required": "{0} is required"
@@ -104,5 +106,10 @@
     },
     "new_folder": "New folder",
     "delete": "Delete"
+  },
+  "toast": {
+    "error": "An error occurred",
+    "logged_out": "Successfully logged out",
+    "logged_in": "Logged in as {0}"
   }
 }
