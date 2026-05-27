@@ -1,4 +1,5 @@
 <script lang="ts">
+import OnlyUploadCard from '@/components/fileList/OnlyUploadCard.vue';
 import { API } from '@/lib/api';
 import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
@@ -45,7 +46,7 @@ const MarkdownViewer = defineAsyncComponent(
     () => import('@/components/viewers/MarkdownViewer.vue')
 );
 
-useDropZone(document.body, {
+const dropzone = useDropZone(document.body, {
     onDrop(files, event) {
         const f = event.dataTransfer?.items ?? files;
         if (f && f.length > 0) uploader.upload(f, routeState.dir);
@@ -81,11 +82,17 @@ whenever(listDirQuery.error, (err) => {
         }
     }
 });
+const canOnlyUpload = computed(
+    () =>
+        listDirQuery.data.value &&
+        listDirQuery.data.value.perms.length > 0 &&
+        listDirQuery.data.value.perms.includes('write') &&
+        !listDirQuery.data.value.perms.includes('read')
+);
 </script>
 
 <template>
     <Toolbar />
-
     <div class="flex flex-col flex-1 mb-[env(safe-area-inset-bottom)]">
         <Separator class="mb-2" />
         <TreeView wrapper-class="inline-flex flex-1" class="p-6 flex flex-col gap-3">
@@ -96,9 +103,13 @@ whenever(listDirQuery.error, (err) => {
                 >
                     <div class="flex sm:items-center max-sm:flex-col max-sm:gap-2">
                         <RouteBreadCrumb class="flex-1" />
-                        <ViewSelector />
+                        <ViewSelector v-if="!canOnlyUpload" />
                     </div>
-                    <FileListView v-if="settings.fileView.type === 'list'" />
+                    <OnlyUploadCard
+                        v-if="canOnlyUpload"
+                        :file-over="dropzone.isOverDropZone.value"
+                    />
+                    <FileListView v-else-if="settings.fileView.type === 'list'" />
                     <FileGridView v-else-if="settings.fileView.type === 'grid'" />
                     <Separator v-if="readmes.length" class="my-5" />
                 </ContextMenuTrigger>

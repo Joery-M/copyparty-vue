@@ -29,7 +29,9 @@
       ".fps": "FPS",
       "descript.ion": "Description"
     },
-    "hidden_cols": "Hidden columns"
+    "hidden_cols": "Hidden columns",
+    "upload_only_title": "You can only upload to this folder",
+    "upload_only_description": "Click here, drag or paste a file to upload"
   },
   "user": {
     "login": "Log in",
