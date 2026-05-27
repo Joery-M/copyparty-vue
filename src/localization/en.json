@@ -1,4 +1,16 @@
 {
+  "file": "File",
+  "folder": "Folder",
+  "upload": "Upload",
+  "filename": "File name",
+  "accessible_volumes": "You can access the following volume: | You can access the following volumes:",
+  "cancel": "Cancel",
+  "continue": "Continue",
+  "and_more": "And {n} more",
+  "list": "List",
+  "list_view": "List view",
+  "grid": "Grid",
+  "grid_view": "Grid view",
   "filelist": {
     "tags": {
       "sz": "Size",
@@ -19,26 +31,19 @@
     },
     "hidden_cols": "Hidden columns"
   },
-  "filename": "File name",
   "user": {
     "login": "Log in",
     "switch": "Switch user",
     "logout": "Log out"
   },
-  "upload": "Upload",
-  "file": "File",
-  "folder": "Folder",
   "error": {
     "access_error": "You are unable to access",
     "not_found_error": "Could not find",
     "invalid_login": "Invalid login"
   },
-  "accessible_volumes": "You can access the following volume: | You can access the following volumes:",
   "validation": {
     "required": "{0} is required"
   },
-  "cancel": "Cancel",
-  "continue": "Continue",
   "dialogs": {
     "login": {
       "title": "Log in",
@@ -63,7 +68,6 @@
       "description": "Are you sure you want to delete these files/folders?"
     }
   },
-  "and_more": "And {n} more",
   "viewer": {
     "default_title": "File viewer",
     "default_description": "Empty file viewer",
@@ -100,9 +104,5 @@
     },
     "new_folder": "New folder",
     "delete": "Delete"
-  },
-  "list": "List",
-  "list_view": "List view",
-  "grid": "Grid",
-  "grid_view": "Grid view"
+  }
 }
