@@ -28,7 +28,3 @@ export const router = createRouter({
         }
     ]
 });
-
-router.beforeEach((r) => {
-    console.log('Routing to', r);
-});
