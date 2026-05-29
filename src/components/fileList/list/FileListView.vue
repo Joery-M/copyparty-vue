@@ -7,7 +7,7 @@ import { FileClassification } from '@/lib/classifyExt';
 import { formatFileSize, formatTime } from '@/lib/format';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { dedupedComputed } from '@/lib/utils';
-import { useListDirQuery } from '@/pages/Files.vue';
+import { useFileSelection, useListDirQuery } from '@/pages/Files.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { type _JSONPrimitive } from '@pinia/colada';
@@ -22,6 +22,7 @@ import {
     useVueTable,
     type Column,
     type ColumnDef,
+    type RowSelectionState,
     type SortingState
 } from '@tanstack/vue-table';
 import { watchImmediate } from '@vueuse/core';
@@ -34,6 +35,7 @@ import FileListRowOptions from './FileListRowOptions.vue';
 import LoadingTable from './LoadingTable.vue';
 
 const routeState = useRouteState();
+const fileSelection = useFileSelection();
 const settings = useSettings();
 
 const listDirQuery = useListDirQuery();
@@ -185,18 +187,36 @@ function resetSorting() {
 }
 watchEffect(() => resetSorting());
 
+const rowSelectionDeduped = dedupedComputed(() =>
+    Object.fromEntries(
+        Array.from(fileSelection.selectedFiles.keys()).map(({ name }) => [name, true])
+    )
+);
+const rowSelection = computed<RowSelectionState>({
+    get: () => rowSelectionDeduped.value,
+    set: (v) => fileSelection.setSelectedNames(Object.keys(v))
+});
+
 const data = dedupedComputed(() => listDirQuery.data.value?.entries ?? null);
 const table = computed(() =>
     useVueTable({
         data: computed(() => data.value ?? []),
         state: {
-            sorting: sorting.value
+            sorting: sorting.value,
+            rowSelection: rowSelection.value
         },
         columns: columns.value,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         onSortingChange: (u) => valueUpdater(u, sorting),
-        getPaginationRowModel: getPaginationRowModel()
+        getPaginationRowModel: getPaginationRowModel(),
+        enableRowSelection: true,
+        enableMultiRowSelection: true,
+        getRowId: (r) => r.name,
+        onRowSelectionChange: (u) => {
+            console.log(typeof u === 'function' ? u(rowSelection.value) : u);
+            valueUpdater(u, rowSelection);
+        }
     })
 );
 
@@ -247,8 +267,15 @@ watch(
             <TableBody>
                 <ContextMenu v-for="row in table.getRowModel().rows" :key="row.id" as-child>
                     <ContextMenuTrigger as-child>
-                        <TableRow :data-state="row.getIsSelected() ? 'selected' : undefined">
-                            <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
+                        <TableRow
+                            :data-state="row.getIsSelected() ? 'selected' : undefined"
+                            @click.self="row.toggleSelected()"
+                        >
+                            <TableCell
+                                v-for="cell in row.getVisibleCells()"
+                                :key="cell.id"
+                                @click.self="row.toggleSelected()"
+                            >
                                 <FlexRender
                                     :render="cell.column.columnDef.cell"
                                     :props="cell.getContext()"

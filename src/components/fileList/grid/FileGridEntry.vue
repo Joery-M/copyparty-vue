@@ -4,16 +4,20 @@ import { API, getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { HSVtoRGB, seededRandom } from '@/lib/utils';
+import { useFileSelection } from '@/pages/Files.vue';
 import { Card, CardTitle } from '@shadcn/card';
 import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
 import { computedAsync } from '@vueuse/core';
 import { extname } from 'pathe';
-import { computed, ref } from 'vue';
+import { computed, ref, toRaw } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const fileSelection = useFileSelection();
 
 const props = defineProps<{ entry: AnyDirectoryEntry; dir: string[]; perms: API.Permissions[] }>();
+
+const isSelected = computed(() => fileSelection.selectedFiles.has(toRaw(props.entry)));
 
 const imageUrls = computed(() => ({
     webp: getApiUrl(props.entry.fullPath, { th: 'w', no_fallback: '', cache: '' }),
@@ -76,7 +80,8 @@ const openNewTab = () => {
                 @pointerup.middle="openNewTab()"
                 @dblclick.prevent="onDoubleClick()"
                 role="gridcell"
-                class="gap-2 py-2"
+                @click="fileSelection.toggleEntry(entry)"
+                :class="{ isSelected }"
             >
                 <div class="thumbnail">
                     <picture :aria-hidden="!hasLoaded">
@@ -136,11 +141,19 @@ const openNewTab = () => {
     }
 }
 
-[data-slot='card-title'] {
-    @apply flex-1 grid place-items-center w-full;
-    > label {
-        @apply line-clamp-2 px-2 text-center text-base;
-        word-break: break-word;
+[role='gridcell'] {
+    @apply gap-2 py-2 ring-0 ring-primary transition-all;
+
+    &.isSelected {
+        @apply bg-input ring-3;
+    }
+
+    [data-slot='card-title'] {
+        @apply flex-1 grid place-items-center w-full;
+        > label {
+            @apply line-clamp-2 px-2 text-center text-base;
+            word-break: break-word;
+        }
     }
 }
 </style>

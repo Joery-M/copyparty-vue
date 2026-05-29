@@ -1,8 +1,11 @@
 <script lang="ts">
-import OnlyUploadCard from '@/components/fileList/OnlyUploadCard.vue';
 import { API } from '@/lib/api';
+import type { AnyDirectoryEntry } from '@/lib/interop';
 import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
+import { isEqual } from '@ver0/deep-equal';
+import { defineStore } from 'pinia';
+import { onBeforeRouteUpdate } from 'vue-router';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
 export const useListDirQuery = defineColadaLoader({
@@ -13,6 +16,42 @@ export const useListDirQuery = defineColadaLoader({
     errors: true,
     lazy: true
 });
+
+export const useFileSelection = defineStore('file-selection', () => {
+    const listDirQuery = useListDirQuery();
+
+    const selectedFiles = shallowRef(new Set<AnyDirectoryEntry>());
+    const dirEntries = computed(() => listDirQuery.data.value?.entries ?? null);
+
+    return {
+        selectedFiles,
+        invertSelection() {
+            if (!dirEntries.value) return;
+            const newSelection = new Set(dirEntries.value);
+            selectedFiles.value.forEach((f) => newSelection.delete(f));
+            selectedFiles.value = newSelection;
+        },
+        selectAll() {
+            if (!dirEntries.value) return;
+            selectedFiles.value = new Set(dirEntries.value);
+        },
+        selectNone() {
+            selectedFiles.value = new Set();
+        },
+        setSelectedNames(names: string[]) {
+            if (!dirEntries.value) return;
+            selectedFiles.value = new Set(
+                dirEntries.value.filter(({ name }) => names.includes(name))
+            );
+        },
+        toggleEntry(entry: AnyDirectoryEntry) {
+            selectedFiles.value.has(entry)
+                ? selectedFiles.value.delete(entry)
+                : selectedFiles.value.add(entry);
+            triggerRef(selectedFiles); // Dont ask, idk
+        }
+    };
+});
 </script>
 
 <script setup lang="ts">
@@ -20,6 +59,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import FileViewContextMenu from '@/components/fileList/FileViewContextMenu.vue';
 import FileGridView from '@/components/fileList/grid/FileGridView.vue';
 import FileListView from '@/components/fileList/list/FileListView.vue';
+import OnlyUploadCard from '@/components/fileList/OnlyUploadCard.vue';
 import ViewSelector from '@/components/fileList/ViewSelector.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';
@@ -31,13 +71,14 @@ import { useUploader } from '@/stores/useUploader';
 import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
 import { Separator } from '@shadcn/separator';
 import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
-import { computed, defineAsyncComponent } from 'vue';
+import { computed, defineAsyncComponent, shallowRef, triggerRef } from 'vue';
 import TreeView from '../components/TreeView.vue';
 
 const settings = useSettings();
 const uploader = useUploader();
 const routeState = useRouteState();
 const authStore = useAuth();
+const fileSelection = useFileSelection();
 
 const listDirQuery = useListDirQuery();
 
@@ -89,6 +130,11 @@ const canOnlyUpload = computed(
         listDirQuery.data.value.perms.includes('write') &&
         !listDirQuery.data.value.perms.includes('read')
 );
+onBeforeRouteUpdate((to, from) => {
+    if (!isEqual(getDirFromRouteParams(to.params), getDirFromRouteParams(from.params))) {
+        fileSelection.selectNone();
+    }
+});
 </script>
 
 <template>
