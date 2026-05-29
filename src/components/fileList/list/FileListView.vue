@@ -5,6 +5,7 @@ import { useLoadingState } from '@/lib/api';
 import { type AnyDirectoryEntry } from '@/lib/interop';
 import { dedupedComputed } from '@/lib/utils';
 import { useFileSelection, useListDirQuery } from '@/pages/Files.vue';
+import { getDirFromRouteParams } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { valueUpdater } from '@shadcn/table/utils';
@@ -19,6 +20,7 @@ import {
     type RowSelectionState,
     type SortingState
 } from '@tanstack/vue-table';
+import { isEqual } from '@ver0/deep-equal';
 import { watchImmediate } from '@vueuse/core';
 import { computed, h, ref, watch, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -135,8 +137,10 @@ const pageSizes = [50, 100, 250, 500];
 const pageIndex = ref(1);
 
 // Reset if we go to a different route since we might not have multiple pages there
-onBeforeRouteUpdate(() => {
-    pageIndex.value = 1;
+onBeforeRouteUpdate((to, from) => {
+    if (!isEqual(getDirFromRouteParams(to.params), getDirFromRouteParams(from.params))) {
+        pageIndex.value = 1;
+    }
 });
 
 watchEffect(() => table.value.setPageIndex(pageIndex.value - 1));
