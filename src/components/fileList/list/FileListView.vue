@@ -1,18 +1,12 @@
 <script lang="ts" setup>
 import ColumnOptions from '@/components/fileList/list/ColumnOptions.vue';
 import SortableHeader from '@/components/fileList/list/SortableHeader.vue';
-import Tooltip from '@/components/Tooltip.vue';
-import { getApiUrl, useLoadingState } from '@/lib/api';
-import { FileClassification } from '@/lib/classifyExt';
-import { formatFileSize, formatTime } from '@/lib/format';
-import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
+import { useLoadingState } from '@/lib/api';
+import { type AnyDirectoryEntry } from '@/lib/interop';
 import { dedupedComputed } from '@/lib/utils';
 import { useFileSelection, useListDirQuery } from '@/pages/Files.vue';
-import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
-import { type _JSONPrimitive } from '@pinia/colada';
-import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { valueUpdater } from '@shadcn/table/utils';
 import {
     FlexRender,
@@ -28,13 +22,11 @@ import {
 import { watchImmediate } from '@vueuse/core';
 import { computed, h, ref, watch, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { onBeforeRouteUpdate, RouterLink } from 'vue-router';
-import FileContextMenu from '../FileContextMenu.vue';
+import { onBeforeRouteUpdate } from 'vue-router';
 import Paginator from '../Paginator.vue';
-import FileListRowOptions from './FileListRowOptions.vue';
+import FileListRow from './FileListRow.vue';
 import LoadingTable from './LoadingTable.vue';
 
-const routeState = useRouteState();
 const fileSelection = useFileSelection();
 const settings = useSettings();
 
@@ -42,72 +34,7 @@ const listDirQuery = useListDirQuery();
 
 const isLoading = useLoadingState(listDirQuery.isPending);
 
-function getEntryRenderFunction(entry: AnyDirectoryEntry) {
-    if (entry instanceof Directory || entry.classification === FileClassification.Directory) {
-        return h(
-            RouterLink,
-            { to: { name: 'viewer', params: { path: entry.fullPath.concat('') } } },
-            () => entry.name
-        );
-    }
-
-    switch (entry.classification) {
-        case FileClassification.PlainText:
-        case FileClassification.RichText:
-        case FileClassification.RasterImage:
-        case FileClassification.VectorImage:
-        case FileClassification.Video:
-            return h(
-                RouterLink,
-                {
-                    to: {
-                        name: 'viewer',
-                        params: { path: routeState.dir.concat('') },
-                        hash: '#' + entry.name
-                    }
-                },
-                () => entry.name
-            );
-
-        default:
-            return h(
-                'a',
-                { href: getApiUrl(entry.fullPath), download: entry.name, target: '_blank' },
-                entry.name
-            );
-    }
-}
-
 const i18n = useI18n();
-
-function wrapWithTooltip(text: any, raw: any) {
-    return h(Tooltip, { content: String(raw) }, () => h('span', text));
-}
-
-function getTagRenderFunction(tag: string, value?: _JSONPrimitive) {
-    switch (tag) {
-        case '.dur':
-            if (typeof value === 'number' && !Number.isNaN(Number(value)))
-                return wrapWithTooltip(formatTime(Number(value)), value);
-            else return value;
-        case 'tdate':
-            if (typeof value === 'string')
-                return wrapWithTooltip(
-                    new Date(value).toLocaleString(undefined, { timeZone: 'UTC' }),
-                    value
-                );
-            else return value;
-        case '.q':
-        case '.aq':
-        case '.vq':
-            if (typeof value === 'number' && !Number.isNaN(Number(value)))
-                return wrapWithTooltip(formatFileSize(value * 1000, 'SI', false, true), value);
-            else return value;
-
-        default:
-            return value;
-    }
-}
 
 const tags = dedupedComputed(() => listDirQuery.data.value?.tags ?? []);
 const tagHeaders = computed(() => {
@@ -116,8 +43,6 @@ const tagHeaders = computed(() => {
 });
 
 const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
-    const sizeFormat = settings.format.fileSizes;
-
     const getSortableHeader = (text: string, column: Column<AnyDirectoryEntry>) =>
         h(SortableHeader, {
             tag: column.id,
@@ -131,43 +56,29 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
             id: 'prefix',
             size: 32,
             maxSize: 21,
-            header: () => h(ColumnOptions),
-            cell: () => h(FileListRowOptions)
+            header: () => h(ColumnOptions)
         },
         {
             id: 'href',
             accessorKey: 'name',
             minSize: 300,
-            header: ({ column }) => getSortableHeader(i18n.t('filename'), column),
-            cell: ({ row: { original } }) => getEntryRenderFunction(original)
+            header: ({ column }) => getSortableHeader(i18n.t('filename'), column)
         },
         {
             id: 'sz',
             accessorKey: 'size',
-            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.sz'), column),
-            cell: ({ getValue }) => {
-                const value = getValue<number>();
-                return wrapWithTooltip(
-                    formatFileSize(value, sizeFormat.type, sizeFormat.bits),
-                    value
-                );
-            }
+            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.sz'), column)
         },
         {
             id: 'ts',
             accessorKey: 'created',
-            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.ts'), column),
-            cell: ({ getValue }) => {
-                const value = getValue<Date>();
-                return wrapWithTooltip(value.toLocaleString(undefined, { timeZone: 'UTC' }), value);
-            }
+            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.ts'), column)
         },
         ...tags.value.map((tag) => {
             return {
                 id: tag,
                 accessorFn: (v) => v.tags.get(tag),
-                header: ({ column }) => getSortableHeader(tagHeaders.value[tag] ?? tag, column),
-                cell: ({ getValue }) => getTagRenderFunction(tag, getValue<_JSONPrimitive>())
+                header: ({ column }) => getSortableHeader(tagHeaders.value[tag] ?? tag, column)
             } satisfies ColumnDef<AnyDirectoryEntry>;
         })
     ];
@@ -265,30 +176,7 @@ watch(
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <ContextMenu v-for="row in table.getRowModel().rows" :key="row.id" as-child>
-                    <ContextMenuTrigger as-child>
-                        <TableRow
-                            :data-state="row.getIsSelected() ? 'selected' : undefined"
-                            @click.self="row.toggleSelected()"
-                        >
-                            <TableCell
-                                v-for="cell in row.getVisibleCells()"
-                                :key="cell.id"
-                                @click.self="row.toggleSelected()"
-                            >
-                                <FlexRender
-                                    :render="cell.column.columnDef.cell"
-                                    :props="cell.getContext()"
-                                />
-                            </TableCell>
-                        </TableRow>
-                    </ContextMenuTrigger>
-                    <FileContextMenu
-                        :file="row.original"
-                        :dir="routeState.dir"
-                        :perms="listDirQuery.data.value?.perms ?? []"
-                    />
-                </ContextMenu>
+                <FileListRow v-for="row in table.getRowModel().rows" :key="row.id" :row />
             </TableBody>
         </Table>
         <div class="paginator" v-if="data != null && data.length > 50">

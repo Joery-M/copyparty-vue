@@ -1,3 +1,9 @@
+<script lang="ts">
+const fullscreenElem = shallowRef<HTMLElement | undefined>();
+useEventListener(document, 'fullscreenchange', (ev) => {
+    fullscreenElem.value = ev.target instanceof HTMLElement ? ev.target : undefined;
+});
+</script>
 <script setup lang="ts">
 import { reactiveOmit, useEventListener } from '@vueuse/core';
 import {
@@ -12,11 +18,6 @@ import {
 import { shallowRef } from 'vue';
 
 const props = defineProps<TooltipRootProps & { content: string | number }>();
-
-const fullscreenElem = shallowRef<HTMLElement | undefined>();
-useEventListener(document, 'fullscreenchange', (ev) => {
-    fullscreenElem.value = ev.target instanceof HTMLElement ? ev.target : undefined;
-});
 
 const delegatedProps = reactiveOmit(props, ['content']);
 const forwarded = useForwardProps(delegatedProps);

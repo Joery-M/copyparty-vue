@@ -130,3 +130,27 @@ export function refWithInit<T>(
     c.reset = () => (wasSet.value = false);
     return c;
 }
+
+export enum TableCellFormat {
+    DataSize,
+    DateTime,
+    Duration,
+    Other
+}
+
+export function getTableCellFormat(tag: string) {
+    switch (tag) {
+        case 'sz':
+        case '.q':
+        case '.aq':
+        case '.vq':
+            return TableCellFormat.DataSize;
+        case 'ts':
+        case 'tdate':
+            return TableCellFormat.DateTime;
+        case '.dur':
+            return TableCellFormat.Duration;
+        default:
+            return TableCellFormat.Other;
+    }
+}
