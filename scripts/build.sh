@@ -42,6 +42,10 @@ if [ ! -f "node_modules/.bin/vite" ]; then
 	fatal "Could not find vite, did you run 'pnpm i'?"
 fi
 
+if [ ! -d "copyparty/.git" ]; then
+	fatal "Submodule doesn't exist, did you run 'git submodule update'?"
+fi
+
 debug "Checking if submodule exists..."
 git submodule status copyparty
 

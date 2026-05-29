@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-git pull --recurse-submodules
+git submodule update
 
 scripts/build.sh
 
