@@ -11,6 +11,8 @@ defineOptions({
     inheritAttrs: false
 });
 
+const emit = defineEmits<{ open: [] }>();
+
 const { forwardRef, currentElement } = useForwardExpose();
 const props = defineProps<{ data: any; disabled?: boolean }>();
 const { disabled } = toRefs(props);
@@ -25,6 +27,7 @@ function clearLongPress() {
 function handleOpen(event: MouseEvent | PointerEvent) {
     if (currentElement.value) {
         rootContext.open(props.data, { x: event.clientX, y: event.clientY }, currentElement.value);
+        emit('open');
     }
 }
 

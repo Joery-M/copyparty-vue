@@ -41,8 +41,9 @@ function onDoubleClick() {
 </script>
 
 <template>
-    <ContextMenuTarget :data="entry">
+    <ContextMenuTarget :data="entry" @open="row.toggleSelected(true)">
         <TableRow
+            tabindex="-1"
             :data-state="row.getIsSelected() ? 'selected' : undefined"
             @click="row.toggleSelected()"
             @dblclick.prevent="onDoubleClick()"
@@ -50,7 +51,7 @@ function onDoubleClick() {
             <template v-for="cell in row.getVisibleCells()" :key="cell.id" v-once>
                 <!-- Options -->
                 <TableCell v-if="cell.column.id === 'prefix'">
-                    <FileListRowOptions :entry="cell.row.original" />
+                    <FileListRowOptions :row />
                 </TableCell>
                 <!-- Header -->
                 <TableCell v-else-if="cell.column.id === 'href'">
@@ -128,5 +129,8 @@ td {
     &:has(> button) {
         @apply p-0;
     }
+}
+tr {
+    @apply focus:ring focus-visible:ring focus-visible:outline-none ring-primary ring-0 ring-inset transition-shadow last:rounded-b;
 }
 </style>

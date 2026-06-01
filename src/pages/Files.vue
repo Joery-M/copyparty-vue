@@ -1,5 +1,7 @@
 <script lang="ts">
 import { API } from '@/lib/api';
+import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
+import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
@@ -7,8 +9,6 @@ import { isEqual } from '@ver0/deep-equal';
 import { defineStore } from 'pinia';
 import { onBeforeRouteUpdate } from 'vue-router';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
-import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
-import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 
 export const useListDirQuery = defineColadaLoader({
     key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
@@ -71,7 +71,13 @@ import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
 import { Separator } from '@shadcn/separator';
-import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
+import {
+    onKeyStroke,
+    useDropZone,
+    useEventListener,
+    useTitle,
+    whenever
+} from '@vueuse/core';
 import { computed, defineAsyncComponent, shallowRef, triggerRef } from 'vue';
 import TreeView from '../components/TreeView.vue';
 
@@ -136,6 +142,13 @@ onBeforeRouteUpdate((to, from) => {
         fileSelection.selectNone();
     }
 });
+
+const el = document.querySelector('#app');
+console.log(el);
+onKeyStroke('Escape', (ev) => (console.log(ev.target), fileSelection.selectNone()), {
+    passive: true,
+    target: el
+});
 </script>
 
 <template>
@@ -146,7 +159,7 @@ onBeforeRouteUpdate((to, from) => {
             <ContextMenuRoot>
                 <ContextMenuTarget :data="undefined">
                     <div class="flex flex-col gap-3" :class="{ 'min-h-full': !readmes.length }">
-                        <div class="flex sm:items-center max-sm:flex-col max-sm:gap-2">
+                        <div class="flex sm:items-center max-sm:flex-col max-sm:gap-2 h-7">
                             <RouteBreadCrumb class="flex-1" />
                             <ViewSelector v-if="!canOnlyUpload" />
                         </div>

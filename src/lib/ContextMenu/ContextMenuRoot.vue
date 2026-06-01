@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ContextMenuRoot } from 'reka-ui';
-import type { DeepReadonly, ShallowRef } from 'vue';
+import ContextMenuInner from './ContextMenuInner.vue';
 
 defineOptions({ inheritAttrs: false });
 </script>
@@ -19,7 +19,7 @@ defineOptions({ inheritAttrs: false });
 
 <script lang="ts">
 import { createContext } from 'reka-ui';
-import ContextMenuInner from './ContextMenuInner.vue';
+import type { DeepReadonly, ShallowRef } from 'vue';
 
 export interface Point {
     x: number;
