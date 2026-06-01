@@ -7,6 +7,8 @@ import { isEqual } from '@ver0/deep-equal';
 import { defineStore } from 'pinia';
 import { onBeforeRouteUpdate } from 'vue-router';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
+import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
+import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 
 export const useListDirQuery = defineColadaLoader({
     key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
@@ -68,7 +70,6 @@ import FileViewer from '@/components/viewers/FileViewer.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
-import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
 import { Separator } from '@shadcn/separator';
 import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
 import { computed, defineAsyncComponent, shallowRef, triggerRef } from 'vue';
@@ -142,25 +143,30 @@ onBeforeRouteUpdate((to, from) => {
     <div class="flex flex-col flex-1 mb-[env(safe-area-inset-bottom)]">
         <Separator class="mb-2" />
         <TreeView wrapper-class="inline-flex flex-1" class="p-6 flex flex-col gap-3">
-            <ContextMenu>
-                <ContextMenuTrigger
-                    class="flex flex-col gap-3"
-                    :class="{ 'min-h-full': !readmes.length }"
-                >
-                    <div class="flex sm:items-center max-sm:flex-col max-sm:gap-2">
-                        <RouteBreadCrumb class="flex-1" />
-                        <ViewSelector v-if="!canOnlyUpload" />
+            <ContextMenuRoot>
+                <ContextMenuTarget :data="undefined">
+                    <div class="flex flex-col gap-3" :class="{ 'min-h-full': !readmes.length }">
+                        <div class="flex sm:items-center max-sm:flex-col max-sm:gap-2">
+                            <RouteBreadCrumb class="flex-1" />
+                            <ViewSelector v-if="!canOnlyUpload" />
+                        </div>
+                        <OnlyUploadCard
+                            v-if="canOnlyUpload"
+                            :file-over="dropzone.isOverDropZone.value"
+                        />
+                        <FileListView v-else-if="settings.fileView.type === 'list'" />
+                        <FileGridView v-else-if="settings.fileView.type === 'grid'" />
+                        <Separator v-if="readmes.length" class="my-5" />
                     </div>
-                    <OnlyUploadCard
-                        v-if="canOnlyUpload"
-                        :file-over="dropzone.isOverDropZone.value"
+                </ContextMenuTarget>
+                <template v-slot:menu="{ data }">
+                    <FileViewContextMenu
+                        :dir="routeState.dir"
+                        :file="data"
+                        :perms="listDirQuery.data.value?.perms ?? []"
                     />
-                    <FileListView v-else-if="settings.fileView.type === 'list'" />
-                    <FileGridView v-else-if="settings.fileView.type === 'grid'" />
-                    <Separator v-if="readmes.length" class="my-5" />
-                </ContextMenuTrigger>
-                <FileViewContextMenu />
-            </ContextMenu>
+                </template>
+            </ContextMenuRoot>
             <template v-for="readme in readmes">
                 <MarkdownViewer :input="readme"></MarkdownViewer>
             </template>

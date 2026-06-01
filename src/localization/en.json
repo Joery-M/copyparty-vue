@@ -44,7 +44,8 @@
     "invalid_login": "Invalid login",
     "api": "Server responded with code {code}, please check the server logs",
     "api_unknown": "Please check the server logs",
-    "cant_upload": "You are unable to upload to this folder"
+    "cant_upload": "You are unable to upload to this folder",
+    "no_options": "No options available"
   },
   "validation": {
     "required": "{0} is required"

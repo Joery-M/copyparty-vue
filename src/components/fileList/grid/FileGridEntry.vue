@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import FileContextMenu from '@/components/fileList/FileContextMenu.vue';
 import { API, getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
+import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { HSVtoRGB, seededRandom } from '@/lib/utils';
 import { useFileSelection } from '@/pages/Files.vue';
 import { Card, CardTitle } from '@shadcn/card';
-import { ContextMenu, ContextMenuTrigger } from '@shadcn/context-menu';
 import { computedAsync } from '@vueuse/core';
 import { extname } from 'pathe';
 import { computed, ref, toRaw } from 'vue';
@@ -74,53 +73,50 @@ const openNewTab = () => {
 </script>
 
 <template>
-    <ContextMenu>
-        <ContextMenuTrigger as-child>
-            <Card
-                @pointerup.middle="openNewTab()"
-                @dblclick.prevent="onDoubleClick()"
-                role="gridcell"
-                @click="fileSelection.toggleEntry(entry)"
-                :class="{ isSelected }"
-            >
-                <div class="thumbnail">
-                    <picture :aria-hidden="!hasLoaded">
-                        <source :srcset="imageUrls.webp" type="image/webp" />
-                        <source :srcset="imageUrls.jxl" type="image/jxl" />
-                        <img
-                            :src="imageUrls.jpeg"
-                            aria-labelledby="filename"
-                            loading="lazy"
-                            fetchpriority="low"
-                            @load="hasLoaded = true"
-                        />
-                    </picture>
-                    <div
-                        class="fallback"
-                        role="image"
+    <ContextMenuTarget :data="entry">
+        <Card
+            @pointerup.middle="openNewTab()"
+            @dblclick.prevent="onDoubleClick()"
+            role="gridcell"
+            @click="fileSelection.toggleEntry(entry)"
+            :class="{ isSelected }"
+        >
+            <div class="thumbnail">
+                <picture :aria-hidden="!hasLoaded">
+                    <source :srcset="imageUrls.webp" type="image/webp" />
+                    <source :srcset="imageUrls.jxl" type="image/jxl" />
+                    <img
+                        :src="imageUrls.jpeg"
                         aria-labelledby="filename"
-                        :style="{
-                            backgroundColor: `rgb(${fallbackBg})`,
-                            opacity: hasLoaded ? 0 : 1
-                        }"
-                        :aria-hidden="hasLoaded"
-                    >
-                        <p aria-hidden="true" :style="{ color: `rgb(${fallbackText})` }">
-                            {{
-                                entry.classification === FileClassification.Directory
-                                    ? $t('folder')
-                                    : ext
-                            }}
-                        </p>
-                    </div>
+                        loading="lazy"
+                        fetchpriority="low"
+                        @load="hasLoaded = true"
+                    />
+                </picture>
+                <div
+                    class="fallback"
+                    role="image"
+                    aria-labelledby="filename"
+                    :style="{
+                        backgroundColor: `rgb(${fallbackBg})`,
+                        opacity: hasLoaded ? 0 : 1
+                    }"
+                    :aria-hidden="hasLoaded"
+                >
+                    <p aria-hidden="true" :style="{ color: `rgb(${fallbackText})` }">
+                        {{
+                            entry.classification === FileClassification.Directory
+                                ? $t('folder')
+                                : ext
+                        }}
+                    </p>
                 </div>
-                <CardTitle>
-                    <label id="filename">{{ entry.tags.get('title') || entry.name }}</label>
-                </CardTitle>
-            </Card>
-        </ContextMenuTrigger>
-        <FileContextMenu :file="entry" :dir :perms />
-    </ContextMenu>
+            </div>
+            <CardTitle>
+                <label id="filename">{{ entry.tags.get('title') || entry.name }}</label>
+            </CardTitle>
+        </Card>
+    </ContextMenuTarget>
 </template>
 
 <style scoped>

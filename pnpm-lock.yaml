@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  reka-ui:
+    hash: 3d2fc65a4782276a46a15187607f2660bded4711cafa0b0a933b5a95b85c964e
+    path: patches/reka-ui.patch
+
 importers:
 
   .:
@@ -78,8 +83,8 @@ importers:
         specifier: ^4.7.1
         version: 4.7.1(pinia@3.0.4(typescript@6.0.3)(vue@3.5.34(typescript@6.0.3)))
       reka-ui:
-        specifier: ^2.9.7
-        version: 2.9.7(vue@3.5.34(typescript@6.0.3))
+        specifier: ^2.9.8
+        version: 2.9.8(patch_hash=3d2fc65a4782276a46a15187607f2660bded4711cafa0b0a933b5a95b85c964e)(vue@3.5.34(typescript@6.0.3))
       shadcn-vue:
         specifier: ^2.7.1
         version: 2.7.1(eslint@10.2.1(jiti@2.6.1))(vue@3.5.34(typescript@6.0.3))
@@ -106,7 +111,7 @@ importers:
         version: 1.4.0(typescript@6.0.3)
       vaul-vue:
         specifier: ^0.4.1
-        version: 0.4.1(reka-ui@2.9.7(vue@3.5.34(typescript@6.0.3)))(vue@3.5.34(typescript@6.0.3))
+        version: 0.4.1(reka-ui@2.9.8(patch_hash=3d2fc65a4782276a46a15187607f2660bded4711cafa0b0a933b5a95b85c964e)(vue@3.5.34(typescript@6.0.3)))(vue@3.5.34(typescript@6.0.3))
       vee-validate:
         specifier: ^4.15.1
         version: 4.15.1(vue@3.5.34(typescript@6.0.3))
@@ -2838,8 +2843,8 @@ packages:
   regex@6.1.0:
     resolution: {integrity: sha512-6VwtthbV4o/7+OaAF9I5L5V3llLEsoPyq9P1JVXkedTP33c7MfCG0/5NOPcSJn0TzXcG9YUrR0gQSWioew3LDg==}
 
-  reka-ui@2.9.7:
-    resolution: {integrity: sha512-aX7foYYR20v4+majO58OJJdBNfLMm0eJb448l9N4JVy8JB7GXOr4H/S4a+J1pkcoxZH8Cb7YHpJ855+miAm7sA==}
+  reka-ui@2.9.8:
+    resolution: {integrity: sha512-7dxaBJ6nQ0zOQZXPV45219tTEgZPstmihBLS9ABPhSiPiJ8SiF0sacfZHFaBptS0v9N4tzsevq+8MNBpE4p5JQ==}
     peerDependencies:
       vue: '>= 3.4.0'
 
@@ -6090,7 +6095,7 @@ snapshots:
     dependencies:
       regex-utilities: 2.3.0
 
-  reka-ui@2.9.7(vue@3.5.34(typescript@6.0.3)):
+  reka-ui@2.9.8(patch_hash=3d2fc65a4782276a46a15187607f2660bded4711cafa0b0a933b5a95b85c964e)(vue@3.5.34(typescript@6.0.3)):
     dependencies:
       '@floating-ui/dom': 1.7.6
       '@floating-ui/vue': 1.1.11(vue@3.5.34(typescript@6.0.3))
@@ -6320,7 +6325,7 @@ snapshots:
       postcss: 8.5.14
       postcss-selector-parser: 7.1.1
       prompts: 2.4.2
-      reka-ui: 2.9.7(vue@3.5.34(typescript@6.0.3))
+      reka-ui: 2.9.8(patch_hash=3d2fc65a4782276a46a15187607f2660bded4711cafa0b0a933b5a95b85c964e)(vue@3.5.34(typescript@6.0.3))
       semver: 7.7.4
       stringify-object: 6.0.0
       tailwindcss: 4.3.0
@@ -6634,10 +6639,10 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vaul-vue@0.4.1(reka-ui@2.9.7(vue@3.5.34(typescript@6.0.3)))(vue@3.5.34(typescript@6.0.3)):
+  vaul-vue@0.4.1(reka-ui@2.9.8(patch_hash=3d2fc65a4782276a46a15187607f2660bded4711cafa0b0a933b5a95b85c964e)(vue@3.5.34(typescript@6.0.3)))(vue@3.5.34(typescript@6.0.3)):
     dependencies:
       '@vueuse/core': 10.11.1(vue@3.5.34(typescript@6.0.3))
-      reka-ui: 2.9.7(vue@3.5.34(typescript@6.0.3))
+      reka-ui: 2.9.8(patch_hash=3d2fc65a4782276a46a15187607f2660bded4711cafa0b0a933b5a95b85c964e)(vue@3.5.34(typescript@6.0.3))
       vue: 3.5.34(typescript@6.0.3)
     transitivePeerDependencies:
       - '@vue/composition-api'

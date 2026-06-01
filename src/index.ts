@@ -1,9 +1,9 @@
 import { PiniaColada } from '@pinia/colada';
-import { DataLoaderPlugin } from 'vue-router/experimental';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import { createApp } from 'vue';
 import { createI18n } from 'vue-i18n';
+import { DataLoaderPlugin } from 'vue-router/experimental';
 import App from './App.vue';
 import { router } from './router';
 

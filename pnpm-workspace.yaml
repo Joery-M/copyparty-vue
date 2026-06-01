@@ -1,2 +1,4 @@
 packages:
   - up2k
+patchedDependencies:
+  reka-ui: patches/reka-ui.patch

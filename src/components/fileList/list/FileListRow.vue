@@ -10,6 +10,7 @@ import { TableCell, TableCellGeneric, TableRow } from '@shadcn/table';
 import { type Row } from '@tanstack/vue-table';
 import { computed } from 'vue';
 import FileListRowOptions from './FileListRowOptions.vue';
+import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 
 const routeState = useRouteState();
 const settings = useSettings();
@@ -20,79 +21,81 @@ const entry = computed(() => props.row.original);
 </script>
 
 <template>
-    <TableRow
-        :data-state="row.getIsSelected() ? 'selected' : undefined"
-        @click="row.toggleSelected()"
-    >
-        <template v-for="cell in row.getVisibleCells()" :key="cell.id" v-once>
-            <!-- Options -->
-            <TableCell v-if="cell.column.id === 'prefix'">
-                <FileListRowOptions />
-            </TableCell>
-            <!-- Header -->
-            <TableCell v-else-if="cell.column.id === 'href'">
-                <RouterLink
-                    v-if="entry.classification === FileClassification.Directory"
-                    :to="{ name: 'viewer', params: { path: entry.fullPath.concat('') } }"
-                    @click.stop
+    <ContextMenuTarget :data="entry">
+        <TableRow
+            :data-state="row.getIsSelected() ? 'selected' : undefined"
+            @click="row.toggleSelected()"
+        >
+            <template v-for="cell in row.getVisibleCells()" :key="cell.id" v-once>
+                <!-- Options -->
+                <TableCell v-if="cell.column.id === 'prefix'">
+                    <FileListRowOptions :entry="cell.row.original" />
+                </TableCell>
+                <!-- Header -->
+                <TableCell v-else-if="cell.column.id === 'href'">
+                    <RouterLink
+                        v-if="entry.classification === FileClassification.Directory"
+                        :to="{ name: 'viewer', params: { path: entry.fullPath.concat('') } }"
+                        @click.stop
+                    >
+                        {{ entry.name }}
+                    </RouterLink>
+                    <RouterLink
+                        v-else-if="canView(entry.classification)"
+                        :to="{
+                            name: 'viewer',
+                            params: { path: routeState.dir.concat('') },
+                            hash: '#' + entry.name
+                        }"
+                        @click.stop
+                    >
+                        {{ entry.name }}
+                    </RouterLink>
+                    <a
+                        v-else
+                        :href="getApiUrl(entry.fullPath)"
+                        :download="entry.name"
+                        target="_blank"
+                        @click.stop
+                    >
+                        {{ entry.name }}
+                    </a>
+                </TableCell>
+
+                <!-- @vue-generic {number} -->
+                <TableCellGeneric
+                    v-else-if="getTableCellFormat(cell.column.id) === TableCellFormat.DataSize"
+                    :cell
+                    v-slot="{ value }"
                 >
-                    {{ entry.name }}
-                </RouterLink>
-                <RouterLink
-                    v-else-if="canView(entry.classification)"
-                    :to="{
-                        name: 'viewer',
-                        params: { path: routeState.dir.concat('') },
-                        hash: '#' + entry.name
-                    }"
-                    @click.stop
+                    {{ formatFileSize(value, sizeFormat.type, sizeFormat.bits) }}
+                </TableCellGeneric>
+
+                <!-- @vue-generic {Date} -->
+                <TableCellGeneric
+                    v-else-if="getTableCellFormat(cell.column.id) === TableCellFormat.DateTime"
+                    :cell
+                    v-slot="{ value }"
                 >
-                    {{ entry.name }}
-                </RouterLink>
-                <a
-                    v-else
-                    :href="getApiUrl(entry.fullPath)"
-                    :download="entry.name"
-                    target="_blank"
-                    @click.stop
+                    {{ value.toLocaleString() }}
+                </TableCellGeneric>
+
+                <!-- @vue-generic {number} -->
+                <TableCellGeneric
+                    v-else-if="getTableCellFormat(cell.column.id) === TableCellFormat.Duration"
+                    :cell
+                    v-slot="{ value }"
                 >
-                    {{ entry.name }}
-                </a>
-            </TableCell>
+                    {{ formatTime(value) }}
+                </TableCellGeneric>
 
-            <!-- @vue-generic {number} -->
-            <TableCellGeneric
-                v-else-if="getTableCellFormat(cell.column.id) === TableCellFormat.DataSize"
-                :cell
-                v-slot="{ value }"
-            >
-                {{ formatFileSize(value, sizeFormat.type, sizeFormat.bits) }}
-            </TableCellGeneric>
-
-            <!-- @vue-generic {Date} -->
-            <TableCellGeneric
-                v-else-if="getTableCellFormat(cell.column.id) === TableCellFormat.DateTime"
-                :cell
-                v-slot="{ value }"
-            >
-                {{ value.toLocaleString() }}
-            </TableCellGeneric>
-
-            <!-- @vue-generic {number} -->
-            <TableCellGeneric
-                v-else-if="getTableCellFormat(cell.column.id) === TableCellFormat.Duration"
-                :cell
-                v-slot="{ value }"
-            >
-                {{ formatTime(value) }}
-            </TableCellGeneric>
-
-            <!-- @vue-generic {any} -->
-            <TableCellGeneric v-else :cell v-slot="{ value }">
-                {{ value }}
-            </TableCellGeneric>
-        </template>
-    </TableRow>
+                <!-- @vue-generic {any} -->
+                <TableCellGeneric v-else :cell v-slot="{ value }">
+                    {{ value }}
+                </TableCellGeneric>
+            </template>
+        </TableRow>
+    </ContextMenuTarget>
 </template>
 
 <style scoped>
