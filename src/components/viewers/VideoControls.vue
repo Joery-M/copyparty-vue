@@ -3,18 +3,26 @@ import { formatTimeNoMs } from '@/lib/format';
 import { computedWithExternalSetter } from '@/lib/utils';
 import { Button } from '@shadcn/button';
 import { Slider } from '@shadcn/slider';
-import { useEventListener } from '@vueuse/core';
+import { onKeyStroke, useEventListener, useMounted, watchThrottled } from '@vueuse/core';
 import { Pause, Play, Volume, Volume1, Volume2, VolumeOff } from 'lucide-vue-next';
-import { onMounted, ref, type HTMLAttributes } from 'vue';
+import { onBeforeUnmount, onMounted, ref, shallowRef, watchEffect, type HTMLAttributes } from 'vue';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@shadcn/hover-card';
 import { useSettings } from '@/stores/useSettings';
+import type { File } from '@/lib/interop';
+import { API, getApiUrl } from '@/lib/api';
+import { useQueryCache, type _JSONPrimitive } from '@pinia/colada';
 
-const props = defineProps<{ video: HTMLVideoElement; class?: HTMLAttributes['class'] }>();
+const props = defineProps<{
+    video: HTMLVideoElement;
+    class?: HTMLAttributes['class'];
+    file: File;
+}>();
 
+const queryCache = useQueryCache();
 const settings = useSettings();
 
 const duration = ref(0);
-const time = ref(0);
+const time = computedWithExternalSetter(0, (v) => (props.video.currentTime = v));
 const isPlaying = computedWithExternalSetter(false, (v) =>
     v ? props.video.play() : props.video.pause()
 );
@@ -26,7 +34,7 @@ const volume = computedWithExternalSetter(
 
 // For HMR mostly
 onMounted(() => {
-    time.value = props.video.currentTime;
+    time.setInternal(props.video.currentTime);
     isPlaying.setInternal(!props.video.paused);
     duration.value = props.video.duration;
     volume.value = settings.preview.video.volume;
@@ -34,10 +42,8 @@ onMounted(() => {
     updateBuffered();
 });
 
-useEventListener(
-    props.video,
-    ['timeupdate', 'seeked', 'seeking'],
-    () => (time.value = props.video.currentTime)
+useEventListener(props.video, ['timeupdate', 'seeked', 'seeking'], () =>
+    time.setInternal(props.video.currentTime)
 );
 useEventListener(props.video, ['play', 'playing'], () => isPlaying.setInternal(true));
 useEventListener(props.video, 'pause', () => isPlaying.setInternal(false));
@@ -67,6 +73,90 @@ useEventListener(
         (settings.preview.video.muted = muted.setInternal(props.video.muted))
     )
 );
+
+onKeyStroke([' ', 'k'], () => (isPlaying.value = !isPlaying.value));
+onKeyStroke('ArrowUp', () => ((volume.value += 0.1), (muted.value = false)));
+onKeyStroke('ArrowDown', () => ((volume.value -= 0.1), (muted.value = false)));
+onKeyStroke('m', () => (muted.value = !muted.value));
+onKeyStroke('ArrowLeft', () => (time.value -= 5));
+onKeyStroke('ArrowRight', () => (time.value += 5));
+onKeyStroke('j', () => (time.value -= 10));
+onKeyStroke('l', () => (time.value += 10));
+
+const isMounted = ref(false);
+
+const stringOrUndefined = (v: any) => (typeof v === 'string' ? v : undefined);
+const isValidNum = (v: number) => !Number.isNaN(Number(v)) && Number.isFinite(v);
+const getArtwork = (th: string, type: string) => ({
+    src: getApiUrl(props.file.fullPath, { th, cache: '', no_fallback: '' }),
+    type
+});
+
+onMounted(async () => {
+    if (!('mediaSession' in navigator)) return;
+    isMounted.value = true;
+
+    const tags = shallowRef<Map<string, _JSONPrimitive>>();
+    queryCache
+        .refresh(queryCache.ensure(API.getListDirectoryQuery(props.file.fullPath.slice(0, -1))))
+        .then((r) => (tags.value = r.data?.entries.find((v) => v.name === props.file.name)?.tags));
+
+    watchEffect(() => {
+        const title =
+            stringOrUndefined((tags.value ?? props.file.tags).get('title')) ?? props.file.name;
+        const album = stringOrUndefined((tags.value ?? props.file.tags).get('album'));
+        const artist = stringOrUndefined((tags.value ?? props.file.tags).get('artist'));
+
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title,
+            album,
+            artist,
+            artwork: [
+                getArtwork('w', 'image/webp'),
+                getArtwork('x', 'image/jxl'),
+                getArtwork('j', 'image/jpeg')
+            ]
+        });
+    });
+
+    navigator.mediaSession.setActionHandler('play', () => (isPlaying.value = true));
+    navigator.mediaSession.setActionHandler('pause', () => (isPlaying.value = false));
+    navigator.mediaSession.setActionHandler('stop', () => (isPlaying.value = false));
+    navigator.mediaSession.setActionHandler('seekbackward', () => (time.value -= 10));
+    navigator.mediaSession.setActionHandler('seekforward', () => (time.value += 10));
+    navigator.mediaSession.setActionHandler(
+        'seekto',
+        (v) => v.seekTime != null && (time.value = v.seekTime)
+    );
+
+    watchEffect(
+        () => (navigator.mediaSession.playbackState = isPlaying.value ? 'playing' : 'paused')
+    );
+
+    watchThrottled(
+        () => ({ duration: duration.value, position: time.value }),
+        (v) =>
+            // Could be called after unmount due to throttle
+            isMounted.value &&
+            isValidNum(v.duration) &&
+            isValidNum(v.position) &&
+            navigator.mediaSession.setPositionState(v),
+        { throttle: 500 }
+    );
+});
+
+onBeforeUnmount(() => {
+    if (!('mediaSession' in navigator)) return;
+    isMounted.value = false;
+    navigator.mediaSession.metadata = null;
+    navigator.mediaSession.playbackState = 'none';
+    navigator.mediaSession.setActionHandler('play', null);
+    navigator.mediaSession.setActionHandler('pause', null);
+    navigator.mediaSession.setActionHandler('stop', null);
+    navigator.mediaSession.setActionHandler('seekbackward', null);
+    navigator.mediaSession.setActionHandler('seekforward', null);
+    navigator.mediaSession.setActionHandler('seekto', null);
+});
 </script>
 
 <template>
@@ -86,7 +176,7 @@ useEventListener(
                     }
                 }
             "
-            @value-commit="video.currentTime = $event[0]"
+            @value-commit="time = $event[0]"
             :max="duration"
             :loaded="buffered"
             :step="0.001"

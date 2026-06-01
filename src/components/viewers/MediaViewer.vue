@@ -335,6 +335,7 @@ function isVideo(elem: any): elem is HTMLVideoElement {
             v-if="isVideo(mediaElem)"
             :video="mediaElem"
             :class="{ hide: hideVideoControls, overlap: isOverlappingVideoControls }"
+            :file
         />
         <DialogFooter
             ref="controls"

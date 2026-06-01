@@ -24,7 +24,6 @@ const emits = defineEmits<{ closing: []; closed: [] }>();
             </VisuallyHidden>
             <div class="fixed size-full top-0 left-0" @click="isOpen = false"></div>
             <div
-                ref="content"
                 class="flex flex-col gap-2 p-5 size-full min-h-0 z-1 pointer-events-none *:pointer-events-auto"
             >
                 <slot />

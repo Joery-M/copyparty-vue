@@ -159,7 +159,7 @@ onKeyStroke('Escape', (ev) => (console.log(ev.target), fileSelection.selectNone(
             <ContextMenuRoot>
                 <ContextMenuTarget :data="undefined">
                     <div class="flex flex-col gap-3" :class="{ 'min-h-full': !readmes.length }">
-                        <div class="flex sm:items-center max-sm:flex-col max-sm:gap-2 h-7">
+                        <div class="flex sm:items-center sm:h-7 max-sm:flex-col max-sm:gap-2">
                             <RouteBreadCrumb class="flex-1" />
                             <ViewSelector v-if="!canOnlyUpload" />
                         </div>

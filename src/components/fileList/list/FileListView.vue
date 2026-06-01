@@ -21,7 +21,7 @@ import {
     type SortingState
 } from '@tanstack/vue-table';
 import { isEqual } from '@ver0/deep-equal';
-import { watchImmediate } from '@vueuse/core';
+import { watchImmediate, whenever } from '@vueuse/core';
 import { computed, h, ref, watch, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate } from 'vue-router';
@@ -98,7 +98,11 @@ function resetSorting() {
         sorting.value = [];
     }
 }
-watchEffect(() => resetSorting());
+whenever(
+    () => listDirQuery.data.value?.sort,
+    () => resetSorting(),
+    { once: true }
+);
 
 const rowSelectionDeduped = dedupedComputed(() =>
     Object.fromEntries(
