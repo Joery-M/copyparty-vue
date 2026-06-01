@@ -3,6 +3,7 @@ import { API } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { type AnyDirectoryEntry } from '@/lib/interop';
 import { useHandlers } from '@/stores/useHandlers';
+import { useUploader } from '@/stores/useUploader.ts';
 import {
     ContextMenuItem,
     ContextMenuLabel,
@@ -11,12 +12,21 @@ import {
     ContextMenuSubContent,
     ContextMenuSubTrigger
 } from '@shadcn/context-menu';
+import { useFileDialog } from '@vueuse/core';
 import { Download, ExternalLink, FileVideo, Image, TextInitial } from 'lucide-vue-next';
 import { injectMenuContext } from 'reka-ui/internal';
 import { computed } from 'vue';
 import Tooltip from '../Tooltip.vue';
 
 const handlers = useHandlers();
+const uploader = useUploader();
+
+const fileDialog = useFileDialog({ reset: true });
+
+fileDialog.onChange((fileList) => {
+    if (!fileList || fileList.length == 0) return;
+    uploader.upload(fileList, props.dir);
+});
 
 // No file means target is dir
 const props = defineProps<{ dir: string[]; file?: AnyDirectoryEntry; perms: API.Permissions[] }>();
@@ -47,7 +57,6 @@ const rootContext = injectMenuContext();
         <Tooltip :content="$t('actions.download')">
             <ContextMenuItem
                 :disabled="!canDownload"
-                size="icon-lg"
                 class="p-2"
                 @click="
                     handlers.download(file);
@@ -60,7 +69,6 @@ const rootContext = injectMenuContext();
         <Tooltip :content="$t('actions.view')">
             <ContextMenuItem
                 :disabled="!canView"
-                size="icon-lg"
                 class="p-2"
                 @click="
                     handlers.view(dir, file.name);
@@ -80,7 +88,6 @@ const rootContext = injectMenuContext();
         </Tooltip>
         <Tooltip :content="$t('actions.open_new_tab')">
             <ContextMenuItem
-                size="icon-lg"
                 class="p-2"
                 @click="
                     handlers.openNewTab(file);
@@ -129,6 +136,19 @@ const rootContext = injectMenuContext();
         <ContextMenuItem @click="handlers.mkdir(dir)">
             {{ $t('actions.new_folder') }}
         </ContextMenuItem>
+        <ContextMenuSub>
+            <ContextMenuSubTrigger>
+                {{ $t('upload') }}
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+                <ContextMenuItem @click="fileDialog.open()">
+                    {{ $t('file') }}
+                </ContextMenuItem>
+                <ContextMenuItem @click="fileDialog.open({ directory: true })">
+                    {{ $t('folder') }}
+                </ContextMenuItem>
+            </ContextMenuSubContent>
+        </ContextMenuSub>
     </template>
     <template v-if="canDelete && file">
         <ContextMenuSeparator />

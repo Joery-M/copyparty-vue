@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { API, getApiUrl } from '@/lib/api';
-import { FileClassification } from '@/lib/classifyExt';
+import { canView, FileClassification } from '@/lib/classifyExt';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { HSVtoRGB, seededRandom } from '@/lib/utils';
@@ -39,20 +39,14 @@ function onDoubleClick() {
         return router.push({ name: 'viewer', params: { path: props.entry.fullPath.concat('') } });
     }
 
-    switch (props.entry.classification) {
-        case FileClassification.PlainText:
-        case FileClassification.RichText:
-        case FileClassification.RasterImage:
-        case FileClassification.VectorImage:
-        case FileClassification.Video:
-            return router.push({
-                name: 'viewer',
-                params: { path: props.dir.concat('') },
-                hash: '#' + props.entry.name
-            });
-
-        default:
-            location.href = getApiUrl(props.entry.fullPath);
+    if (canView(props.entry.classification)) {
+        router.push({
+            name: 'viewer',
+            params: { path: props.dir.concat('') },
+            hash: '#' + props.entry.name
+        });
+    } else {
+        location.href = getApiUrl(props.entry.fullPath);
     }
 }
 

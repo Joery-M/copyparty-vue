@@ -1,23 +1,43 @@
 <script setup lang="ts">
 import { getApiUrl } from '@/lib/api.ts';
 import { canView, FileClassification } from '@/lib/classifyExt.ts';
+import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { formatFileSize, formatTime } from '@/lib/format.ts';
-import type { AnyDirectoryEntry } from '@/lib/interop';
+import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { dedupedComputed, getTableCellFormat, TableCellFormat } from '@/lib/utils.ts';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings.ts';
 import { TableCell, TableCellGeneric, TableRow } from '@shadcn/table';
 import { type Row } from '@tanstack/vue-table';
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import FileListRowOptions from './FileListRowOptions.vue';
-import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 
+const router = useRouter();
 const routeState = useRouteState();
 const settings = useSettings();
 const sizeFormat = dedupedComputed(() => settings.format.fileSizes);
 
 const props = defineProps<{ row: Row<AnyDirectoryEntry> }>();
 const entry = computed(() => props.row.original);
+
+function onDoubleClick() {
+    window.getSelection()?.empty();
+    const entry = props.row.original;
+    if (entry instanceof Directory || entry.classification === FileClassification.Directory) {
+        router.push({ name: 'viewer', params: { path: entry.fullPath.concat('') } });
+    }
+
+    if (canView(entry.classification)) {
+        router.push({
+            name: 'viewer',
+            params: { path: routeState.dir.concat('') },
+            hash: '#' + entry.name
+        });
+    } else {
+        location.href = getApiUrl(entry.fullPath);
+    }
+}
 </script>
 
 <template>
@@ -25,6 +45,7 @@ const entry = computed(() => props.row.original);
         <TableRow
             :data-state="row.getIsSelected() ? 'selected' : undefined"
             @click="row.toggleSelected()"
+            @dblclick.prevent="onDoubleClick()"
         >
             <template v-for="cell in row.getVisibleCells()" :key="cell.id" v-once>
                 <!-- Options -->
