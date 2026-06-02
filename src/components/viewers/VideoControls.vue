@@ -135,13 +135,16 @@ onMounted(async () => {
     );
 
     watchThrottled(
-        () => ({ duration: duration.value, position: time.value }),
-        (v) =>
+        () => [duration.value, time.value] as const,
+        ([dur, pos]) =>
             // Could be called after unmount due to throttle
             isMounted.value &&
-            isValidNum(v.duration) &&
-            isValidNum(v.position) &&
-            navigator.mediaSession.setPositionState(v),
+            isValidNum(dur) &&
+            isValidNum(pos) &&
+            navigator.mediaSession.setPositionState({
+                duration: dur,
+                position: Math.min(dur, pos)
+            }),
         { throttle: 500 }
     );
 });
@@ -157,6 +160,7 @@ onBeforeUnmount(() => {
     navigator.mediaSession.setActionHandler('seekbackward', null);
     navigator.mediaSession.setActionHandler('seekforward', null);
     navigator.mediaSession.setActionHandler('seekto', null);
+    navigator.mediaSession.setPositionState();
 });
 </script>
 
