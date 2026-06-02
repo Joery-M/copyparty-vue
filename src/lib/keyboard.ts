@@ -1,4 +1,4 @@
-import { onKeyStroke, type KeyFilter } from '@vueuse/core';
+import { onKeyStroke, type KeyFilter, type OnKeyStrokeOptions } from '@vueuse/core';
 import {
     hasInjectionContext,
     inject,
@@ -25,15 +25,19 @@ function createKeyPredicate(keyFilter: KeyFilter) {
     return () => true;
 }
 
-export function useShortcut(filter: KeyFilter, handler: (event: KeyboardEvent) => void) {
+export function useShortcut(
+    filter: KeyFilter,
+    // Vueuse checks number of arguments to see if options exists
+    ...args: [handler: (event: KeyboardEvent) => void, options?: OnKeyStrokeOptions]
+) {
     if (!hasInjectionContext())
         throw new Error('useShortcut has to be used inside an injection context');
     const guard = inject(CurrentGuard, undefined);
     const predicate = createKeyPredicate(filter);
     if (guard) {
-        onKeyStroke((event) => GuardStack.value[0] === guard && predicate(event), handler);
+        onKeyStroke((event) => GuardStack.value[0] === guard && predicate(event), ...args);
     } else {
-        onKeyStroke((event) => GuardStack.value.length === 0 && predicate(event), handler);
+        onKeyStroke((event) => GuardStack.value.length === 0 && predicate(event), ...args);
     }
 }
 

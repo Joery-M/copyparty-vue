@@ -144,6 +144,10 @@ useShortcut('g', () =>
         ? (settings.fileView.type = 'list')
         : (settings.fileView.type = 'grid')
 );
+useShortcut(
+    (e) => e.key === 'i' && e.ctrlKey,
+    (e) => (e.preventDefault(), fileSelection.invertSelection())
+);
 </script>
 
 <template>
