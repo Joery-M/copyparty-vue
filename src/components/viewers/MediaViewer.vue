@@ -6,12 +6,12 @@ import VideoControls from '@/components/viewers/VideoControls.vue';
 import { getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import type { File } from '@/lib/interop';
+import { useShortcut } from '@/lib/keyboard.ts';
 import { useSettings } from '@/stores/useSettings';
 import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
 import {
-    onKeyStroke,
     refDebounced,
     refWithControl,
     useElementBounding,
@@ -238,25 +238,25 @@ const disableTransition$ = useTimeoutFn(() => (enableTransition.value = false), 
 const disableTransition = disableTransition$.start;
 
 // Zoom in
-onKeyStroke(
+useShortcut(
     (e) => e.key === '+' || e.code === 'Equal',
     (e) => (e.preventDefault(), zoom(zoomInFactor))
 );
 // Zoom out
-onKeyStroke(
+useShortcut(
     (e) => e.key === '-' || e.code === 'Minus',
     (e) => (e.preventDefault(), zoom(zoomOutFactor))
 );
 // Rotate CW/CCW
-onKeyStroke(
+useShortcut(
     ['r', 'R'],
     (e) => ((enableTransition.value = true), (rotation.value += e.shiftKey ? -1 : 1))
 );
-onKeyStroke(['f'], () => fullscreenElement.toggle());
-onKeyStroke(['p'], () => (settings.preview.pixelated = !settings.preview.pixelated));
-onKeyStroke(['b'], () => (backgroundTypeSelectOpen.value = true));
+useShortcut(['f'], () => fullscreenElement.toggle());
+useShortcut(['p'], () => (settings.preview.pixelated = !settings.preview.pixelated));
+useShortcut(['b'], () => (backgroundTypeSelectOpen.value = true));
 // Zoom to perc/fit
-onKeyStroke(
+useShortcut(
     (e) => !Number.isNaN(parseInt(e.key)),
     (e) => {
         const num = parseInt(e.key);

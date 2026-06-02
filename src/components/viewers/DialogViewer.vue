@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useShortcutGuard } from '@/lib/keyboard';
 import {
     Dialog,
     DialogContent,
@@ -11,6 +12,8 @@ import { VisuallyHidden } from 'reka-ui';
 const props = defineProps<{ title: string; description: string }>();
 const isOpen = defineModel<boolean>('open', { required: true });
 const emits = defineEmits<{ closing: []; closed: [] }>();
+
+useShortcutGuard('viewer');
 </script>
 
 <template>

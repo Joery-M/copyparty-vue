@@ -13,10 +13,8 @@ import DialogViewer from './DialogViewer.vue';
 const routeState = useRouteState();
 const previewStore = usePreview();
 
-const viewerType = computed<'drawer' | 'dialog' | undefined>((last) => {
-    if (!previewStore.openedFile) return last ?? 'dialog';
-
-    switch (previewStore.openedFile?.classification) {
+const viewerType = computed<'drawer' | 'dialog' | undefined>(() => {
+    switch (lastFile.value?.classification) {
         case FileClassification.RichText:
         case FileClassification.PlainText:
             return 'drawer';

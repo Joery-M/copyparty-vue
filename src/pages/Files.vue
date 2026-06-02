@@ -3,6 +3,7 @@ import { API } from '@/lib/api';
 import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
+import { useShortcut } from '@/lib/keyboard.ts';
 import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 import { isEqual } from '@ver0/deep-equal';
@@ -71,13 +72,7 @@ import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
 import { Separator } from '@shadcn/separator';
-import {
-    onKeyStroke,
-    useDropZone,
-    useEventListener,
-    useTitle,
-    whenever
-} from '@vueuse/core';
+import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
 import { computed, defineAsyncComponent, shallowRef, triggerRef } from 'vue';
 import TreeView from '../components/TreeView.vue';
 
@@ -143,12 +138,12 @@ onBeforeRouteUpdate((to, from) => {
     }
 });
 
-const el = document.querySelector('#app');
-console.log(el);
-onKeyStroke('Escape', (ev) => (console.log(ev.target), fileSelection.selectNone()), {
-    passive: true,
-    target: el
-});
+useShortcut('Escape', () => fileSelection.selectNone());
+useShortcut('g', () =>
+    settings.fileView.type === 'grid'
+        ? (settings.fileView.type = 'list')
+        : (settings.fileView.type = 'grid')
+);
 </script>
 
 <template>

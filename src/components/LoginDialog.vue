@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useShortcutGuard } from '@/lib/keyboard';
 import { useAuth, type LoginDialogPayload } from '@/stores/useAuth';
 import { Alert, AlertDescription, AlertTitle } from '@shadcn/alert';
 import { Button } from '@shadcn/button';
@@ -58,6 +59,8 @@ const onSubmit = form.handleSubmit(async (values) => {
     failedLogin.value = !success;
     loginDialog.confirm();
 });
+
+useShortcutGuard('login-dialog', () => loginDialog.isRevealed && !!data);
 </script>
 
 <template>

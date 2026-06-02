@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useShortcutGuard } from '@/lib/keyboard';
 import { useConfirm, type ConfirmDialogPayload } from '@/stores/useConfirm';
 import { Button } from '@shadcn/button';
 import {
@@ -36,6 +37,8 @@ const cancelLabel = computed(() =>
 const confirmLabel = computed(() =>
     data.value?.confirmLabel == null ? i18n.t('continue') : toValue(data.value?.confirmLabel)
 );
+
+useShortcutGuard('confirm-dialog', () => dialog.isRevealed);
 </script>
 
 <template>

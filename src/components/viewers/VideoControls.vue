@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { formatTimeNoMs } from '@/lib/format';
+import { useShortcut } from '@/lib/keyboard';
 import { computedWithExternalSetter } from '@/lib/utils';
 import { Button } from '@shadcn/button';
 import { Slider } from '@shadcn/slider';
-import { onKeyStroke, useEventListener, watchThrottled } from '@vueuse/core';
+import { useEventListener, watchThrottled } from '@vueuse/core';
 import { Pause, Play, Volume, Volume1, Volume2, VolumeOff } from 'lucide-vue-next';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watchEffect, type HTMLAttributes } from 'vue';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@shadcn/hover-card';
@@ -74,14 +75,14 @@ useEventListener(
     )
 );
 
-onKeyStroke([' ', 'k'], () => (isPlaying.value = !isPlaying.value));
-onKeyStroke('ArrowUp', () => ((volume.value += 0.1), (muted.value = false)));
-onKeyStroke('ArrowDown', () => ((volume.value -= 0.1), (muted.value = false)));
-onKeyStroke('m', () => (muted.value = !muted.value));
-onKeyStroke('ArrowLeft', () => (time.value -= 5));
-onKeyStroke('ArrowRight', () => (time.value += 5));
-onKeyStroke('j', () => (time.value -= 10));
-onKeyStroke('l', () => (time.value += 10));
+useShortcut([' ', 'k'], () => (isPlaying.value = !isPlaying.value));
+useShortcut('ArrowUp', () => ((volume.value += 0.1), (muted.value = false)));
+useShortcut('ArrowDown', () => ((volume.value -= 0.1), (muted.value = false)));
+useShortcut('m', () => (muted.value = !muted.value));
+useShortcut('ArrowLeft', () => (time.value -= 5));
+useShortcut('ArrowRight', () => (time.value += 5));
+useShortcut('j', () => (time.value -= 10));
+useShortcut('l', () => (time.value += 10));
 
 const isMounted = ref(false);
 
