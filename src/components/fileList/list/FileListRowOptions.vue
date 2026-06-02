@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { Button } from '@shadcn/button';
 import type { Row } from '@tanstack/vue-table';
+
 import { useElementBounding } from '@vueuse/core';
 import { MoreHorizontal } from 'lucide-vue-next';
 import { useTemplateRef } from 'vue';
 
-import { injectCustomContextMenuRootContext } from '@/lib/ContextMenu/ContextMenuRoot.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
+
+import { injectCustomContextMenuRootContext } from '@/lib/ContextMenu/ContextMenuRoot.vue';
+
+import { Button } from '@shadcn/button';
 
 const props = defineProps<{ row: Row<AnyDirectoryEntry> }>();
 

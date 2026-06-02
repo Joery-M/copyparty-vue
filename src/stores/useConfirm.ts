@@ -1,7 +1,8 @@
-import { useConfirmDialog } from '@vueuse/core';
-import { defineStore } from 'pinia';
 import type { FileMap, FileOrDirMap } from 'up2k';
 import type { MaybeRefOrGetter } from 'vue';
+
+import { useConfirmDialog } from '@vueuse/core';
+import { defineStore } from 'pinia';
 
 import type { ButtonVariants } from '@/components/ui/button';
 

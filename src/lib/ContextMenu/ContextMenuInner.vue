@@ -1,15 +1,16 @@
 <script setup lang="ts">
+import type { ContextMenuContentEmits, ContextMenuContentProps } from 'reka-ui';
+import type { HTMLAttributes } from 'vue';
+
 import { reactiveOmit } from '@vueuse/core';
 import {
     ContextMenuContent,
     ContextMenuPortal,
     injectContextMenuRootContext,
     useForwardPropsEmits,
-    type ContextMenuContentEmits,
-    type ContextMenuContentProps,
 } from 'reka-ui';
 import { injectPopperRootContext } from 'reka-ui/internal';
-import { readonly, shallowRef, type HTMLAttributes } from 'vue';
+import { readonly, shallowRef } from 'vue';
 
 import { cn } from '../utils';
 import { provideCustomContextMenuRootContext } from './ContextMenuRoot.vue';

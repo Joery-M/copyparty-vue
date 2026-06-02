@@ -4,10 +4,11 @@ import { defineStore } from 'pinia';
 import { onBeforeRouteUpdate } from 'vue-router';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
+import type { AnyDirectoryEntry } from '@/lib/interop';
+
 import { API } from '@/lib/api';
 import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
-import type { AnyDirectoryEntry } from '@/lib/interop';
 import { useShortcut } from '@/lib/keyboard.ts';
 import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
@@ -59,7 +60,6 @@ export const useFileSelection = defineStore('file-selection', () => {
 </script>
 
 <script setup lang="ts">
-import { Separator } from '@shadcn/separator';
 import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
 import { computed, defineAsyncComponent, shallowRef, triggerRef } from 'vue';
 
@@ -78,6 +78,8 @@ import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
 
 import TreeView from '../components/TreeView.vue';
+
+import { Separator } from '@shadcn/separator';
 
 const settings = useSettings();
 const uploader = useUploader();

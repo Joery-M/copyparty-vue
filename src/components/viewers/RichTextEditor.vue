@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useQuery } from '@pinia/colada';
 
-import { getApiUrl } from '@/lib/api';
 import type { File } from '@/lib/interop';
+
+import { getApiUrl } from '@/lib/api';
 
 import MarkdownViewer from './MarkdownViewer.vue';
 

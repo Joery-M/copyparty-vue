@@ -1,4 +1,7 @@
-import { onKeyStroke, type KeyFilter, type OnKeyStrokeOptions } from '@vueuse/core';
+import type { KeyFilter, OnKeyStrokeOptions } from '@vueuse/core';
+import type { InjectionKey, MaybeRefOrGetter } from 'vue';
+
+import { onKeyStroke } from '@vueuse/core';
 import {
     hasInjectionContext,
     inject,
@@ -8,8 +11,6 @@ import {
     toRaw,
     toRef,
     watchEffect,
-    type InjectionKey,
-    type MaybeRefOrGetter,
 } from 'vue';
 
 const GuardStack = ref<string[]>([]);

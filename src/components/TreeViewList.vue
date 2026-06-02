@@ -1,5 +1,12 @@
 <script lang="ts" setup>
 import { useQueryState } from '@pinia/colada';
+import { ChevronRight } from 'lucide-vue-next';
+import { watch } from 'vue';
+
+import { useLoadingState } from '@/lib/api';
+import { refWithInit } from '@/lib/utils';
+import { useTreeView } from '@/stores/useTreeView';
+
 import { Button } from '@shadcn/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shadcn/collapsible';
 import {
@@ -12,12 +19,6 @@ import {
     SidebarMenuSkeleton,
     useSidebar,
 } from '@shadcn/sidebar';
-import { ChevronRight } from 'lucide-vue-next';
-import { watch } from 'vue';
-
-import { useLoadingState } from '@/lib/api';
-import { refWithInit } from '@/lib/utils';
-import { useTreeView } from '@/stores/useTreeView';
 
 const props = defineProps<{
     path: string[];

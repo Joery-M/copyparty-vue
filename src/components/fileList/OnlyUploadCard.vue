@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Card, CardContent, CardHeader, CardTitle } from '@shadcn/card';
 import { useFileDialog } from '@vueuse/core';
 import { Upload } from 'lucide-vue-next';
 
@@ -12,6 +11,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useRouteState } from '@/stores/useRouteState';
 import { useUploader } from '@/stores/useUploader';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@shadcn/card';
 
 defineProps<{ fileOver: boolean }>();
 

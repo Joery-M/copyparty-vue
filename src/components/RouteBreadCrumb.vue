@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { RouterLink } from 'vue-router';
+
+import { useRouteState } from '@/stores/useRouteState';
+
 import {
     Breadcrumb,
     BreadcrumbEllipsis,
@@ -13,10 +18,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@shadcn/dropdown-menu';
-import { computed } from 'vue';
-import { RouterLink } from 'vue-router';
-
-import { useRouteState } from '@/stores/useRouteState';
 
 const routeState = useRouteState();
 

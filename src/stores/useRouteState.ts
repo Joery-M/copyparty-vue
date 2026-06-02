@@ -1,6 +1,8 @@
+import type { RouteParamsGeneric } from 'vue-router';
+
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
-import { type RouteParamsGeneric, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 
 export const useRouteState = defineStore('route-state', () => {
     const route = useRoute();

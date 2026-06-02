@@ -1,4 +1,15 @@
 <script lang="ts" setup>
+import type { HTMLAttributes } from 'vue';
+
+import { useEventBus, watchImmediate, whenever } from '@vueuse/core';
+import { ref, useTemplateRef } from 'vue';
+
+import { cn } from '@/lib/utils';
+import { useRouteState } from '@/stores/useRouteState';
+import { useTreeView } from '@/stores/useTreeView';
+
+import TreeViewList from './TreeViewList.vue';
+
 import {
     Sidebar,
     SidebarContent,
@@ -7,14 +18,6 @@ import {
     SidebarMenu,
     SidebarProvider,
 } from '@shadcn/sidebar';
-import { useEventBus, watchImmediate, whenever } from '@vueuse/core';
-import { ref, useTemplateRef, type HTMLAttributes } from 'vue';
-
-import { cn } from '@/lib/utils';
-import { useRouteState } from '@/stores/useRouteState';
-import { useTreeView } from '@/stores/useTreeView';
-
-import TreeViewList from './TreeViewList.vue';
 
 const sidebar = useTemplateRef('sidebar');
 
@@ -45,7 +48,7 @@ bus.on(() => sidebar.value?.setOpenMobile(true));
 </script>
 
 <script lang="ts">
-import { type EventBusKey } from '@vueuse/core';
+import type { EventBusKey } from '@vueuse/core';
 
 export const sidebarBusKey: EventBusKey<boolean> = Symbol('sidebar-bus-key');
 </script>

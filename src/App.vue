@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import 'vue-sonner/style.css';
-import { Toaster } from '@shadcn/sonner';
 import { useDark } from '@vueuse/core';
 import { TooltipProvider } from 'reka-ui';
 import { defineAsyncComponent } from 'vue';
 import { RouterView } from 'vue-router';
+
+import { Toaster } from '@shadcn/sonner';
 
 const PiniaColadaDevtools =
     __DEV__ &&

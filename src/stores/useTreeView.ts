@@ -78,8 +78,7 @@ export const useTreeView = defineStore('tree-view', () => {
             return new Map(
                 trees
                     .filter((v) => v.status === 'fulfilled')
-                    .map((v) => (v.value.data ? Array.from(v.value.data) : []))
-                    .flat(1)
+                    .flatMap((v) => (v.value.data ? Array.from(v.value.data) : []))
                     .map(([k, v]) => [hash(k), v] as [string, string[]])
             );
         },

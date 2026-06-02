@@ -1,19 +1,17 @@
+import type { ClassValue } from 'clsx';
+import type {
+    ComputedGetter,
+    ComputedRef,
+    DebuggerOptions,
+    MaybeRefOrGetter,
+    WritableComputedRef,
+} from 'vue';
+
 import { isEqual } from '@ver0/deep-equal';
 import { useMemoize } from '@vueuse/core';
-import type { ClassValue } from 'clsx';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import {
-    computed,
-    ref,
-    shallowRef,
-    toValue,
-    type ComputedGetter,
-    type ComputedRef,
-    type DebuggerOptions,
-    type MaybeRefOrGetter,
-    type WritableComputedRef,
-} from 'vue';
+import { computed, ref, shallowRef, toValue } from 'vue';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -24,7 +22,7 @@ export function arrayStartsWith(whole: any[], part: any[]) {
 }
 
 export function pathToParts(path: string) {
-    return path.split(/[\/\\]+/g).filter((v) => !!v);
+    return path.split(/[/\\]+/g).filter((v) => !!v);
 }
 
 export interface FetchProgress {
@@ -84,6 +82,7 @@ export function HSVtoRGB(h: number, s: number, v: number) {
     p = v * (1 - s);
     q = v * (1 - f * s);
     t = v * (1 - (1 - f) * s);
+    // oxlint-disable no-unused-expressions
     switch (i % 6) {
         case 0:
             ((r = v), (g = t), (b = p));
@@ -104,6 +103,7 @@ export function HSVtoRGB(h: number, s: number, v: number) {
             ((r = v), (g = p), (b = q));
             break;
     }
+    // oxlint-enable no-unused-expressions
     return [r * 255, g * 255, b * 255] as [number, number, number];
 }
 

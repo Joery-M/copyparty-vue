@@ -3,8 +3,9 @@ import { computedAsync, whenever } from '@vueuse/core';
 import { computed, shallowRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { FileClassification } from '@/lib/classifyExt';
 import type { File } from '@/lib/interop';
+
+import { FileClassification } from '@/lib/classifyExt';
 import { usePreview } from '@/stores/usePreview';
 import { useRouteState } from '@/stores/useRouteState';
 
@@ -14,7 +15,7 @@ import DrawerViewer from './DrawerViewer.vue';
 const routeState = useRouteState();
 const previewStore = usePreview();
 
-const viewerType = computed<'drawer' | 'dialog' | undefined>(() => {
+const viewerType = computed(() => {
     switch (lastFile.value?.classification) {
         case FileClassification.RichText:
         case FileClassification.PlainText:
@@ -24,6 +25,7 @@ const viewerType = computed<'drawer' | 'dialog' | undefined>(() => {
         case FileClassification.Video:
             return 'dialog';
     }
+    return undefined;
 });
 
 const currentEditor = computedAsync(async () => {

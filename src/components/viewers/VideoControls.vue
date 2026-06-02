@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import { useQueryCache, type _JSONPrimitive } from '@pinia/colada';
-import { Button } from '@shadcn/button';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@shadcn/hover-card';
-import { Slider } from '@shadcn/slider';
+import type { _JSONPrimitive } from '@pinia/colada';
+import type { HTMLAttributes } from 'vue';
+
+import { useQueryCache } from '@pinia/colada';
 import { useEventListener, watchThrottled } from '@vueuse/core';
 import { Pause, Play, Volume, Volume1, Volume2, VolumeOff } from 'lucide-vue-next';
-import { onBeforeUnmount, onMounted, ref, shallowRef, watchEffect, type HTMLAttributes } from 'vue';
+import { onBeforeUnmount, onMounted, ref, shallowRef, watchEffect } from 'vue';
+
+import type { File } from '@/lib/interop';
 
 import { API, getApiUrl } from '@/lib/api';
 import { formatTimeNoMs } from '@/lib/format';
-import type { File } from '@/lib/interop';
 import { useShortcut } from '@/lib/keyboard';
 import { computedWithExternalSetter } from '@/lib/utils';
 import { useSettings } from '@/stores/useSettings';
+
+import { Button } from '@shadcn/button';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@shadcn/hover-card';
+import { Slider } from '@shadcn/slider';
 
 const props = defineProps<{
     video: HTMLVideoElement;

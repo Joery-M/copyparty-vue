@@ -5,6 +5,7 @@ import { computed, shallowRef } from 'vue';
 import { useRouter } from 'vue-router';
 
 import type { FileClassification } from '@/lib/classifyExt';
+
 import { File } from '@/lib/interop';
 import { useRouteState } from '@/stores/useRouteState';
 

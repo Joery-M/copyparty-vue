@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { Button } from '@shadcn/button';
-import { ButtonGroup } from '@shadcn/button-group';
-import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
+import type { ComponentPublicInstance } from 'vue';
+
 import {
     refDebounced,
     refWithControl,
@@ -25,7 +24,9 @@ import {
     ZoomIn,
     ZoomOut,
 } from 'lucide-vue-next';
-import { computed, ref, useTemplateRef, watchEffect, type ComponentPublicInstance } from 'vue';
+import { computed, ref, useTemplateRef, watchEffect } from 'vue';
+
+import type { File } from '@/lib/interop';
 
 import ImagePixelated from '@/assets/image-pixelated.svg?raw';
 import ImageSmooth from '@/assets/image-smooth.svg?raw';
@@ -33,11 +34,14 @@ import Tooltip from '@/components/Tooltip.vue';
 import VideoControls from '@/components/viewers/VideoControls.vue';
 import { getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
-import type { File } from '@/lib/interop';
 import { useShortcut } from '@/lib/keyboard.ts';
 import { useSettings } from '@/stores/useSettings';
 
 import DialogFooter from '../ui/dialog/DialogFooter.vue';
+
+import { Button } from '@shadcn/button';
+import { ButtonGroup } from '@shadcn/button-group';
+import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
 
 const props = defineProps<{ file: File }>();
 

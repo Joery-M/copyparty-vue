@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@shadcn/table';
+import type { Column, ColumnDef, RowSelectionState, SortingState } from '@tanstack/vue-table';
+
 import { valueUpdater } from '@shadcn/table/utils';
 import {
     FlexRender,
@@ -7,10 +8,6 @@ import {
     getPaginationRowModel,
     getSortedRowModel,
     useVueTable,
-    type Column,
-    type ColumnDef,
-    type RowSelectionState,
-    type SortingState,
 } from '@tanstack/vue-table';
 import { isEqual } from '@ver0/deep-equal';
 import { watchImmediate, whenever } from '@vueuse/core';
@@ -18,10 +15,11 @@ import { computed, h, ref, watch, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate } from 'vue-router';
 
+import type { AnyDirectoryEntry } from '@/lib/interop';
+
 import ColumnOptions from '@/components/fileList/list/ColumnOptions.vue';
 import SortableHeader from '@/components/fileList/list/SortableHeader.vue';
 import { useLoadingState } from '@/lib/api';
-import { type AnyDirectoryEntry } from '@/lib/interop';
 import { dedupedComputed } from '@/lib/utils';
 import { useFileSelection, useListDirQuery } from '@/pages/Files.vue';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
@@ -30,6 +28,8 @@ import { useSettings } from '@/stores/useSettings';
 import Paginator from '../Paginator.vue';
 import FileListRow from './FileListRow.vue';
 import LoadingTable from './LoadingTable.vue';
+
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@shadcn/table';
 
 const fileSelection = useFileSelection();
 const settings = useSettings();

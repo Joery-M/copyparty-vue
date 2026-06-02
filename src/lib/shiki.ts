@@ -1,3 +1,5 @@
+import type { HighlighterCore } from 'shiki';
+
 import batch from '@shikijs/langs/batch';
 import c from '@shikijs/langs/c';
 import cmake from '@shikijs/langs/cmake';
@@ -34,7 +36,7 @@ import xml from '@shikijs/langs/xml';
 import yaml from '@shikijs/langs/yaml';
 import horizon from '@shikijs/themes/horizon';
 import oneLight from '@shikijs/themes/one-light';
-import { createHighlighterCore, createJavaScriptRegexEngine, type HighlighterCore } from 'shiki';
+import { createHighlighterCore, createJavaScriptRegexEngine } from 'shiki';
 
 const themes = [horizon, oneLight];
 

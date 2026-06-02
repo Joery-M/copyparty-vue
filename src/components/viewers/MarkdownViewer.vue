@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import type { HTMLAttributes } from 'vue';
+
 import { fromHighlighter } from '@shikijs/markdown-exit';
 import { computedAsync, useDark } from '@vueuse/core';
 import DOMPurify from 'dompurify';
 import { createMarkdownExit } from 'markdown-exit';
 import { joinRelativeURL, parseURL } from 'ufo';
-import { effect, shallowRef, triggerRef, type HTMLAttributes } from 'vue';
+import { effect, shallowRef, triggerRef } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { getApiUrl } from '@/lib/api';

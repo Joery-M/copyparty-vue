@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import { Card, CardTitle } from '@shadcn/card';
 import { computedAsync } from '@vueuse/core';
 import { extname } from 'pathe';
 import { computed, ref, toRaw } from 'vue';
 import { useRouter } from 'vue-router';
 
+import type { AnyDirectoryEntry } from '@/lib/interop';
+
 import { API, getApiUrl } from '@/lib/api';
 import { canView, FileClassification } from '@/lib/classifyExt';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
-import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
+import { Directory } from '@/lib/interop';
 import { HSVtoRGB, seededRandom } from '@/lib/utils';
 import { useFileSelection } from '@/pages/Files.vue';
+
+import { Card, CardTitle } from '@shadcn/card';
 
 const router = useRouter();
 const fileSelection = useFileSelection();

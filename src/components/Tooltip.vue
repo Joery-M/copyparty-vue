@@ -5,6 +5,8 @@ useEventListener(document, 'fullscreenchange', (ev) => {
 });
 </script>
 <script setup lang="ts">
+import type { TooltipRootProps } from 'reka-ui';
+
 import { reactiveOmit, useEventListener } from '@vueuse/core';
 import {
     TooltipArrow,
@@ -13,7 +15,6 @@ import {
     TooltipRoot,
     TooltipTrigger,
     useForwardProps,
-    type TooltipRootProps,
 } from 'reka-ui';
 import { shallowRef } from 'vue';
 

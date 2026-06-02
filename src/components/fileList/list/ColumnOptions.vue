@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { Button } from '@shadcn/button';
-import { FormControl, FormField, FormItem, FormLabel } from '@shadcn/form';
-import { Popover, PopoverContent, PopoverTrigger } from '@shadcn/popover';
-import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete } from '@shadcn/tags-input';
 import { Settings, Undo2 } from 'lucide-vue-next';
 import { TagsInputItemText } from 'reka-ui';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { useSettings } from '@/stores/useSettings';
+
+import { Button } from '@shadcn/button';
+import { FormControl, FormField, FormItem, FormLabel } from '@shadcn/form';
+import { Popover, PopoverContent, PopoverTrigger } from '@shadcn/popover';
+import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete } from '@shadcn/tags-input';
 
 const i18n = useI18n();
 const settings = useSettings();

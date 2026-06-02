@@ -1,4 +1,17 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/valibot';
+import { Lock } from 'lucide-vue-next';
+import { VisuallyHidden } from 'reka-ui';
+import * as v from 'valibot';
+import { useForm } from 'vee-validate';
+import { computed, ref, shallowRef } from 'vue';
+import { RouterLink } from 'vue-router';
+
+import type { LoginDialogPayload } from '@/stores/useAuth';
+
+import { useShortcutGuard } from '@/lib/keyboard';
+import { useAuth } from '@/stores/useAuth';
+
 import { Alert, AlertDescription, AlertTitle } from '@shadcn/alert';
 import { Button } from '@shadcn/button';
 import {
@@ -12,16 +25,6 @@ import {
 import { FieldError } from '@shadcn/field';
 import { FormControl, FormField, FormItem, FormLabel } from '@shadcn/form';
 import { Input } from '@shadcn/input';
-import { toTypedSchema } from '@vee-validate/valibot';
-import { Lock } from 'lucide-vue-next';
-import { VisuallyHidden } from 'reka-ui';
-import * as v from 'valibot';
-import { useForm } from 'vee-validate';
-import { computed, ref, shallowRef } from 'vue';
-import { RouterLink } from 'vue-router';
-
-import { useShortcutGuard } from '@/lib/keyboard';
-import { useAuth, type LoginDialogPayload } from '@/stores/useAuth';
 
 const authStore = useAuth();
 const loginDialog = authStore.loginDialog;

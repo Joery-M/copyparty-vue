@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { Button } from '@shadcn/button';
 import type { Column } from '@tanstack/vue-table';
+
 import { SortAsc, SortDesc } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-import Tooltip from '@/components/Tooltip.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
+
+import Tooltip from '@/components/Tooltip.vue';
+
+import { Button } from '@shadcn/button';
 
 const props = defineProps<{ tag: string; text: string; column: Column<AnyDirectoryEntry> }>();
 const emit = defineEmits<{ resetSort: [] }>();

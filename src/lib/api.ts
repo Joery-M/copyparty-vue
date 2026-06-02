@@ -1,9 +1,15 @@
-import { defineQueryOptions, type _JSONPrimitive } from '@pinia/colada';
-import { useBrowserLocation, useTimeoutFn } from '@vueuse/core';
-import { parseURL, resolveURL, stringifyParsedURL, withQuery, type QueryObject } from 'ufo';
-import { readonly, ref, toRef, watch, type MaybeRefOrGetter } from 'vue';
+import type { _JSONPrimitive } from '@pinia/colada';
+import type { QueryObject } from 'ufo';
+import type { MaybeRefOrGetter } from 'vue';
 
-import { Directory as DirectoryEntry, File as FileEntry, type AnyDirectoryEntry } from './interop';
+import { defineQueryOptions } from '@pinia/colada';
+import { useBrowserLocation, useTimeoutFn } from '@vueuse/core';
+import { parseURL, resolveURL, stringifyParsedURL, withQuery } from 'ufo';
+import { readonly, ref, toRef, watch } from 'vue';
+
+import type { AnyDirectoryEntry } from './interop';
+
+import { Directory as DirectoryEntry, File as FileEntry } from './interop';
 
 const baseUrl = stringifyParsedURL(
     parseURL(

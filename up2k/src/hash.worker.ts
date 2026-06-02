@@ -87,7 +87,7 @@ async function hashFile({
     await getHasher();
     getHashEncoder();
 
-    const hashChunks: string[] = new Array(chunkCount);
+    const hashChunks: string[] = Array.from({ length: chunkCount });
     let hashI = 0;
 
     const reader = new FileReaderSync();

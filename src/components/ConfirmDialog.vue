@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import { computed, shallowRef, toValue } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+import type { ConfirmDialogPayload } from '@/stores/useConfirm';
+
+import { useShortcutGuard } from '@/lib/keyboard';
+import { useConfirm } from '@/stores/useConfirm';
+
 import { Button } from '@shadcn/button';
 import {
     Dialog,
@@ -8,11 +16,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@shadcn/dialog';
-import { computed, shallowRef, toValue } from 'vue';
-import { useI18n } from 'vue-i18n';
-
-import { useShortcutGuard } from '@/lib/keyboard';
-import { useConfirm, type ConfirmDialogPayload } from '@/stores/useConfirm';
 
 const dialog = useConfirm();
 

@@ -1,15 +1,10 @@
 import { defu } from 'defu';
 
+import type { PartialExcept } from './utils';
+
 import { getChunksize } from './hasher';
 import { Up2KTaskPool } from './taskPool';
-import {
-    isDirectoryEntry,
-    isFileEntry,
-    rdFlatten,
-    sleep,
-    vsplit,
-    type PartialExcept,
-} from './utils';
+import { isDirectoryEntry, isFileEntry, rdFlatten, sleep, vsplit } from './utils';
 
 interface Up2KOptions {
     hashConcurrency: number;
@@ -97,7 +92,7 @@ export class Up2K {
                         dirs.push(wi as FileSystemDirectoryEntry);
                         continue;
                     }
-                } catch (ex) {}
+                } catch {}
                 const fileObj = fObj.getAsFile();
                 if (!fileObj) continue;
                 fObj = fileObj;
@@ -109,7 +104,7 @@ export class Up2K {
                 } else {
                     goodFiles.set(fObj, name);
                 }
-            } catch (ex) {
+            } catch {
                 badFiles.set(fObj, name);
             }
         }
@@ -183,7 +178,7 @@ export class Up2K {
                             } else {
                                 good.set(fobj, name);
                             }
-                        } catch (ex) {
+                        } catch {
                             bad.set(fobj, name);
                         }
                     });

@@ -19,8 +19,9 @@ defineOptions({ inheritAttrs: false });
 </template>
 
 <script lang="ts">
-import { createContext } from 'reka-ui';
 import type { DeepReadonly, ShallowRef } from 'vue';
+
+import { createContext } from 'reka-ui';
 
 export interface Point {
     x: number;

@@ -20,9 +20,7 @@ export class Hasher {
 
     constructor(concurrency: number) {
         if (!Hasher.workers) {
-            Hasher.workers = new Array(concurrency)
-                .fill(undefined)
-                .map(() => new HashWorkerWrapper());
+            Hasher.workers = Array.from({ length: concurrency }).map(() => new HashWorkerWrapper());
             Hasher.idleWorkers = [...Hasher.workers];
         }
     }

@@ -1,4 +1,6 @@
-import { getByPath, setByPath, type Path } from 'dot-path-value';
+import type { Path } from 'dot-path-value';
+
+import { getByPath, setByPath } from 'dot-path-value';
 import { defineStore } from 'pinia';
 import { toRaw } from 'vue';
 

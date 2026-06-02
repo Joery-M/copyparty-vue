@@ -1,12 +1,14 @@
+import type { QueryObject } from 'ufo';
+
 import { useQueryCache } from '@pinia/colada';
 import { defineStore } from 'pinia';
-import type { QueryObject } from 'ufo';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
+import type { AnyDirectoryEntry } from '@/lib/interop';
+
 import { API, getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
-import { type AnyDirectoryEntry } from '@/lib/interop';
 import { useConfirm } from '@/stores/useConfirm';
 
 /**

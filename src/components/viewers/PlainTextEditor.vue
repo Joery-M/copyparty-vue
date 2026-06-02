@@ -3,8 +3,9 @@ import { useQuery } from '@pinia/colada';
 import { useTimeoutFn, whenever } from '@vueuse/core';
 import { effect, ref } from 'vue';
 
+import type { File } from '@/lib/interop';
+
 import { getApiUrl } from '@/lib/api';
-import { type File } from '@/lib/interop';
 import { fetchWithProgress } from '@/lib/utils';
 
 const props = defineProps<{ file: File }>();
