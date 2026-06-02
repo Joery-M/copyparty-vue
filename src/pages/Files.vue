@@ -159,10 +159,10 @@ useShortcut(
     <Toolbar />
     <div class="flex flex-col flex-1 mb-[env(safe-area-inset-bottom)]">
         <Separator class="mb-2" />
-        <TreeView wrapper-class="inline-flex flex-1" class="p-6 flex flex-col gap-3">
+        <TreeView wrapper-class="inline-flex flex-1" class="flex flex-col gap-3">
             <ContextMenuRoot>
                 <ContextMenuTarget :data="undefined">
-                    <div class="flex flex-col gap-3" :class="{ 'min-h-full': !readmes.length }">
+                    <div class="flex flex-col gap-3 p-6" :class="{ 'min-h-full': !readmes.length }">
                         <div class="flex sm:items-center sm:h-7 max-sm:flex-col max-sm:gap-2">
                             <RouteBreadCrumb class="flex-1" />
                             <ViewSelector v-if="!canOnlyUpload" />

@@ -126,7 +126,7 @@ const openNewTab = () => {
     .fallback {
         @apply absolute left-0 top-0 size-full grid place-items-center transition-opacity;
         > p {
-            @apply text-center text-accent-foreground text-2xl font-mono;
+            @apply text-center text-accent-foreground text-2xl font-mono select-none;
         }
     }
 
@@ -136,7 +136,7 @@ const openNewTab = () => {
 }
 
 [role='gridcell'] {
-    @apply gap-2 py-2 ring-0 ring-primary transition-all;
+    @apply gap-2 py-2 ring-0 ring-primary transition-all not-dark:outline;
 
     &.isSelected {
         @apply bg-input ring-3;

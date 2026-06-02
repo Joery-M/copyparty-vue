@@ -137,6 +137,14 @@ td {
     }
 }
 tr {
-    @apply focus:ring focus-visible:ring focus-visible:outline-none ring-primary ring-0 ring-inset transition-shadow last:rounded-b;
+    @apply ring-primary ring-0 ring-inset transition-all last:rounded-b;
+    &:focus,
+    &:focus-visible {
+        @apply outline-none ring-1 border-b-transparent;
+    }
+    &:has(+ tr:focus),
+    &:has(+ tr:focus-visible) {
+        @apply border-b-transparent;
+    }
 }
 </style>
