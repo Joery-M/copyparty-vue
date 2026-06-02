@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { getApiUrl } from '@/lib/api';
-import { type File } from '@/lib/interop';
-import { fetchWithProgress } from '@/lib/utils';
 import { useQuery } from '@pinia/colada';
 import { useTimeoutFn, whenever } from '@vueuse/core';
 import { effect, ref } from 'vue';
+
+import { getApiUrl } from '@/lib/api';
+import { type File } from '@/lib/interop';
+import { fetchWithProgress } from '@/lib/utils';
 
 const props = defineProps<{ file: File }>();
 
@@ -30,7 +31,7 @@ const fileData = useQuery({
         ).then((r) => r.text()),
     gcTime: 0,
     refetchOnReconnect: false,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
 });
 
 const sourceText = ref('');

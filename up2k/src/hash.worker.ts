@@ -77,7 +77,7 @@ async function hashFile({
     start,
     end,
     chunkCount,
-    chunkSize
+    chunkSize,
 }: HashWorkerPayload): Promise<string[]> {
     if (!(file instanceof File)) throw new Error(`Expected blob, got ${file}`);
     const timeStart = performance.now();
@@ -104,7 +104,7 @@ async function hashFile({
         } else {
             performance.measure(`Hash ${file.name}`, {
                 start: timeStart,
-                detail: `${start}/${end}`
+                detail: `${start}/${end}`,
             });
             return hashChunks;
         }
@@ -158,25 +158,25 @@ self.onmessage = async (ev: MessageEvent<HashWorkerMessage>) => {
                 await getHasher();
                 getHashEncoder();
                 self.postMessage({
-                    tid: ev.data.tid
+                    tid: ev.data.tid,
                 } satisfies WorkerMessageResponse);
             } catch (error) {
                 self.postMessage({
                     tid: ev.data.tid,
-                    error: Error('Error initializing', { cause: error })
+                    error: Error('Error initializing', { cause: error }),
                 } satisfies WorkerMessageResponse);
             }
         } else if (ev.data.type === 'work') {
             const data = await hashFile(ev.data);
             self.postMessage({
                 tid: ev.data.tid,
-                data
+                data,
             } satisfies WorkerMessageResponse<string[]>);
         }
     } catch (error) {
         self.postMessage({
             tid: ev.data.tid,
-            error: Error('Error handling message', { cause: error })
+            error: Error('Error handling message', { cause: error }),
         } satisfies WorkerMessageResponse);
     }
 };

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Slot, useForwardExpose } from 'reka-ui';
 import { nextTick, ref, toRefs } from 'vue';
+
 import { injectCustomContextMenuRootContext } from './ContextMenuRoot.vue';
 
 function isTouchOrPen(event: PointerEvent) {
@@ -8,7 +9,7 @@ function isTouchOrPen(event: PointerEvent) {
 }
 
 defineOptions({
-    inheritAttrs: false
+    inheritAttrs: false,
 });
 
 const emit = defineEmits<{ open: [] }>();
@@ -72,7 +73,7 @@ async function handlePointerEvent(event: PointerEvent) {
         @pointerup="handlePointerEvent"
         :style="{
             WebkitTouchCallout: 'none',
-            pointerEvents: 'auto'
+            pointerEvents: 'auto',
         }"
     >
         <slot />

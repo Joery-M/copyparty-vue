@@ -9,7 +9,7 @@ import {
     toRef,
     watchEffect,
     type InjectionKey,
-    type MaybeRefOrGetter
+    type MaybeRefOrGetter,
 } from 'vue';
 
 const GuardStack = ref<string[]>([]);

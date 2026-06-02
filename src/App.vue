@@ -9,7 +9,7 @@ import { RouterView } from 'vue-router';
 const PiniaColadaDevtools =
     __DEV__ &&
     defineAsyncComponent({
-        loader: () => import('@pinia/colada-devtools').then((c) => c.PiniaColadaDevtools)
+        loader: () => import('@pinia/colada-devtools').then((c) => c.PiniaColadaDevtools),
     });
 
 useDark();

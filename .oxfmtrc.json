@@ -2,10 +2,11 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "singleQuote": true,
   "tabWidth": 4,
+  "sortImports": true,
   "useTabs": false,
-  "trailingComma": "none",
+  "trailingComma": "es5",
   "sortPackageJson": true,
-  "ignorePatterns": ["pnpm-lock.yaml", "pnpm-workspace.yaml", "src/components/ui"],
+  "ignorePatterns": ["pnpm-lock.yaml", "pnpm-workspace.yaml", "src/components/ui", "copyparty"],
   "overrides": [
     {
       "files": ["*.json"],

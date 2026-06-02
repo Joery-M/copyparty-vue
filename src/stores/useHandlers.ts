@@ -1,12 +1,13 @@
-import { API, getApiUrl } from '@/lib/api';
-import { FileClassification } from '@/lib/classifyExt';
-import { type AnyDirectoryEntry } from '@/lib/interop';
-import { useConfirm } from '@/stores/useConfirm';
 import { useQueryCache } from '@pinia/colada';
 import { defineStore } from 'pinia';
 import type { QueryObject } from 'ufo';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+
+import { API, getApiUrl } from '@/lib/api';
+import { FileClassification } from '@/lib/classifyExt';
+import { type AnyDirectoryEntry } from '@/lib/interop';
+import { useConfirm } from '@/stores/useConfirm';
 
 /**
  * Handlers for various actions that might be called from multiple locations
@@ -23,7 +24,7 @@ export const useHandlers = defineStore('handlers', () => {
             router.push({
                 name: 'viewer',
                 params: { path: dir.concat('') },
-                hash: '#' + fileName
+                hash: '#' + fileName,
             });
         },
         download(file: AnyDirectoryEntry) {
@@ -52,7 +53,7 @@ export const useHandlers = defineStore('handlers', () => {
                 form.set('files', encodeURIComponent(file.name));
                 fetch(getApiUrl(file.fullPath.slice(0, -1).concat(''), params), {
                     method: 'POST',
-                    body: form
+                    body: form,
                 })
                     .then(API.extractError)
                     .then((res) => res.blob())
@@ -74,7 +75,7 @@ export const useHandlers = defineStore('handlers', () => {
                 file.classification === FileClassification.Directory
                     ? router.resolve({
                           name: 'viewer',
-                          params: { path: file.fullPath.concat('') }
+                          params: { path: file.fullPath.concat('') },
                       }).href
                     : getApiUrl(file.fullPath);
             const aTag = document.createElement('a');
@@ -98,7 +99,7 @@ export const useHandlers = defineStore('handlers', () => {
                 description: () => i18n.t('dialogs.confirm_delete.description'),
                 confirmLabel: () => i18n.t('actions.delete'),
                 confirmVariant: 'destructive',
-                files: paths
+                files: paths,
             });
             if (!canDelete.data) return;
 
@@ -109,6 +110,6 @@ export const useHandlers = defineStore('handlers', () => {
                 queryCache.invalidateQueries({ key: ['ls', ...parentPath] }, true);
             }
             queryCache.invalidateQueries({ key: ['full-tree'] }, true);
-        }
+        },
     };
 });

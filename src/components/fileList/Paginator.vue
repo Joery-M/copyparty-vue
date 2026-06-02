@@ -5,7 +5,7 @@ import {
     PaginationEllipsis,
     PaginationItem,
     PaginationNext,
-    PaginationPrevious
+    PaginationPrevious,
 } from '@shadcn/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shadcn/select';
 

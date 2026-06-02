@@ -1,7 +1,4 @@
 <script lang="ts" setup>
-import { useLoadingState } from '@/lib/api';
-import { refWithInit } from '@/lib/utils';
-import { useTreeView } from '@/stores/useTreeView';
 import { useQueryState } from '@pinia/colada';
 import { Button } from '@shadcn/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shadcn/collapsible';
@@ -13,10 +10,14 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarMenuSkeleton,
-    useSidebar
+    useSidebar,
 } from '@shadcn/sidebar';
 import { ChevronRight } from 'lucide-vue-next';
 import { watch } from 'vue';
+
+import { useLoadingState } from '@/lib/api';
+import { refWithInit } from '@/lib/utils';
+import { useTreeView } from '@/stores/useTreeView';
 
 const props = defineProps<{
     path: string[];
@@ -52,7 +53,7 @@ watch(isOpen, (isOpen) => {
                     @click="
                         $router.push({
                             name: 'viewer',
-                            params: { path: path.concat('') }
+                            params: { path: path.concat('') },
                         });
                         sidebar.setOpenMobile(false);
                     "

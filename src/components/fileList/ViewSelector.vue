@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { refWithInit } from '@/lib/utils';
-import { useSettings } from '@/stores/useSettings';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@shadcn/hover-card';
 import { Slider } from '@shadcn/slider';
 import { ToggleGroup, ToggleGroupItem } from '@shadcn/toggle-group';
 import { usePreferredReducedMotion } from '@vueuse/core';
 import { Grid2X2, List } from 'lucide-vue-next';
+
+import { refWithInit } from '@/lib/utils';
+import { useSettings } from '@/stores/useSettings';
 
 const settings = useSettings();
 const preferrersReducedMotion = usePreferredReducedMotion();

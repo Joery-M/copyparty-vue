@@ -20,7 +20,7 @@ export function formatFileSize(
     const num = (bytes / Math.pow(k, i)).toLocaleString(undefined, {
         maximumFractionDigits: 2,
         maximumSignificantDigits: 3,
-        useGrouping: true
+        useGrouping: true,
     });
     return `${num} ${sizes[i]}` + (perSec ? '/s' : '');
 }

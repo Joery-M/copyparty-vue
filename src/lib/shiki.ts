@@ -1,8 +1,3 @@
-import { createHighlighterCore, createJavaScriptRegexEngine, type HighlighterCore } from 'shiki';
-
-import horizon from '@shikijs/themes/horizon';
-import oneLight from '@shikijs/themes/one-light';
-
 import batch from '@shikijs/langs/batch';
 import c from '@shikijs/langs/c';
 import cmake from '@shikijs/langs/cmake';
@@ -37,6 +32,9 @@ import typescript from '@shikijs/langs/typescript';
 import vue from '@shikijs/langs/vue';
 import xml from '@shikijs/langs/xml';
 import yaml from '@shikijs/langs/yaml';
+import horizon from '@shikijs/themes/horizon';
+import oneLight from '@shikijs/themes/one-light';
+import { createHighlighterCore, createJavaScriptRegexEngine, type HighlighterCore } from 'shiki';
 
 const themes = [horizon, oneLight];
 
@@ -74,7 +72,7 @@ const langs = [
     typescript,
     vue,
     xml,
-    yaml
+    yaml,
 ];
 
 export class CustomShiki {
@@ -87,7 +85,7 @@ export class CustomShiki {
         CustomShiki.shiki = createHighlighterCore({
             themes,
             langs,
-            engine: createJavaScriptRegexEngine()
+            engine: createJavaScriptRegexEngine(),
         });
         return await CustomShiki.shiki;
     }

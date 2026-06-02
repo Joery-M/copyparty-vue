@@ -1,21 +1,22 @@
 <script setup lang="ts">
-import { useRouteState } from '@/stores/useRouteState';
 import {
     Breadcrumb,
     BreadcrumbEllipsis,
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
-    BreadcrumbSeparator
+    BreadcrumbSeparator,
 } from '@shadcn/breadcrumb';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuTrigger
+    DropdownMenuTrigger,
 } from '@shadcn/dropdown-menu';
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
+
+import { useRouteState } from '@/stores/useRouteState';
 
 const routeState = useRouteState();
 
@@ -59,7 +60,7 @@ const dropdownItems = computed(() =>
                 <RouterLink
                     :to="{
                         name: 'viewer',
-                        params: { path: [] }
+                        params: { path: [] },
                     }"
                     class="hover:underline hover:text-foreground"
                 >
@@ -74,7 +75,7 @@ const dropdownItems = computed(() =>
                         v-if="i < routeState.dir.length - 1"
                         :to="{
                             name: 'viewer',
-                            params: { path: routeState.dir.slice(0, i + 1).concat('') }
+                            params: { path: routeState.dir.slice(0, i + 1).concat('') },
                         }"
                         class="hover:underline hover:text-foreground"
                     >

@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { useShortcutGuard } from '@/lib/keyboard';
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
-    DialogTitle
+    DialogTitle,
 } from '@shadcn/dialog';
 import { VisuallyHidden } from 'reka-ui';
+
+import { useShortcutGuard } from '@/lib/keyboard';
 
 const props = defineProps<{ title: string; description: string }>();
 const isOpen = defineModel<boolean>('open', { required: true });

@@ -1,21 +1,23 @@
 <script setup lang="ts">
-import { API } from '@/lib/api';
-import { FileClassification } from '@/lib/classifyExt';
-import { type AnyDirectoryEntry } from '@/lib/interop';
-import { useHandlers } from '@/stores/useHandlers';
-import { useUploader } from '@/stores/useUploader.ts';
 import {
     ContextMenuItem,
     ContextMenuLabel,
     ContextMenuSeparator,
     ContextMenuSub,
     ContextMenuSubContent,
-    ContextMenuSubTrigger
+    ContextMenuSubTrigger,
 } from '@shadcn/context-menu';
 import { useFileDialog } from '@vueuse/core';
 import { Download, ExternalLink, FileVideo, Image, TextInitial } from 'lucide-vue-next';
 import { injectMenuContext } from 'reka-ui/internal';
 import { computed } from 'vue';
+
+import { API } from '@/lib/api';
+import { FileClassification } from '@/lib/classifyExt';
+import { type AnyDirectoryEntry } from '@/lib/interop';
+import { useHandlers } from '@/stores/useHandlers';
+import { useUploader } from '@/stores/useUploader.ts';
+
 import Tooltip from '../Tooltip.vue';
 
 const handlers = useHandlers();

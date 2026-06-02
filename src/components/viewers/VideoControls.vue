@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { formatTimeNoMs } from '@/lib/format';
-import { useShortcut } from '@/lib/keyboard';
-import { computedWithExternalSetter } from '@/lib/utils';
+import { useQueryCache, type _JSONPrimitive } from '@pinia/colada';
 import { Button } from '@shadcn/button';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@shadcn/hover-card';
 import { Slider } from '@shadcn/slider';
 import { useEventListener, watchThrottled } from '@vueuse/core';
 import { Pause, Play, Volume, Volume1, Volume2, VolumeOff } from 'lucide-vue-next';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watchEffect, type HTMLAttributes } from 'vue';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@shadcn/hover-card';
-import { useSettings } from '@/stores/useSettings';
-import type { File } from '@/lib/interop';
+
 import { API, getApiUrl } from '@/lib/api';
-import { useQueryCache, type _JSONPrimitive } from '@pinia/colada';
+import { formatTimeNoMs } from '@/lib/format';
+import type { File } from '@/lib/interop';
+import { useShortcut } from '@/lib/keyboard';
+import { computedWithExternalSetter } from '@/lib/utils';
+import { useSettings } from '@/stores/useSettings';
 
 const props = defineProps<{
     video: HTMLVideoElement;
@@ -90,7 +91,7 @@ const stringOrUndefined = (v: any) => (typeof v === 'string' ? v : undefined);
 const isValidNum = (v: number) => !Number.isNaN(Number(v)) && Number.isFinite(v);
 const getArtwork = (th: string, type: string) => ({
     src: getApiUrl(props.file.fullPath, { th, cache: '', no_fallback: '' }),
-    type
+    type,
 });
 
 onMounted(async () => {
@@ -115,8 +116,8 @@ onMounted(async () => {
             artwork: [
                 getArtwork('w', 'image/webp'),
                 getArtwork('x', 'image/jxl'),
-                getArtwork('j', 'image/jpeg')
-            ]
+                getArtwork('j', 'image/jpeg'),
+            ],
         });
     });
 
@@ -143,7 +144,7 @@ onMounted(async () => {
             isValidNum(pos) &&
             navigator.mediaSession.setPositionState({
                 duration: dur,
-                position: Math.min(dur, pos)
+                position: Math.min(dur, pos),
             }),
         { throttle: 500 }
     );

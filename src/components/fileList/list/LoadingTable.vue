@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { Skeleton } from '@shadcn/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shadcn/table';
 </script>
 
 <template>

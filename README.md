@@ -19,7 +19,6 @@ Missing features:
 - upget/recent uploads
 - Grid view sorting and pagination
 
-
 ## Showcase
 
 ### List view of video files

@@ -1,15 +1,16 @@
-import { API } from '@/lib/api';
-import { arrayStartsWith, dedupedComputed } from '@/lib/utils';
 import { defineQueryOptions, useQuery, useQueryCache } from '@pinia/colada';
 import { hash } from 'ohash';
 import { defineStore } from 'pinia';
 import { shallowReactive, watch } from 'vue';
 
+import { API } from '@/lib/api';
+import { arrayStartsWith, dedupedComputed } from '@/lib/utils';
+
 export const useTreeView = defineStore('tree-view', () => {
     const treeQueryOptions = defineQueryOptions<string[], Map<string[], string[]>, API.ApiError>(
         (path: string[]) => ({
             key: ['tree', ...path],
-            query: ({ signal }) => API.getFileTreeRecursive(path, signal)
+            query: ({ signal }) => API.getFileTreeRecursive(path, signal),
         })
     );
 
@@ -83,7 +84,7 @@ export const useTreeView = defineStore('tree-view', () => {
             );
         },
         placeholderData: () => new Map<string, string[]>(),
-        staleTime: 30_000
+        staleTime: 30_000,
     });
     watch(lowestOpenedLeaves, () => queryCache.invalidateQueries({ key: ['full-tree'] }, true));
 
@@ -114,6 +115,6 @@ export const useTreeView = defineStore('tree-view', () => {
                     openedLeaves.delete(key);
                 }
             }
-        }
+        },
     };
 });

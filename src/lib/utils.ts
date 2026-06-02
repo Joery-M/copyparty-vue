@@ -12,7 +12,7 @@ import {
     type ComputedRef,
     type DebuggerOptions,
     type MaybeRefOrGetter,
-    type WritableComputedRef
+    type WritableComputedRef,
 } from 'vue';
 
 export function cn(...inputs: ClassValue[]) {
@@ -50,12 +50,12 @@ export async function fetchWithProgress(
             }
             onProgress({ size, transferred });
             controller.close();
-        }
+        },
     });
     return new Response(stream, {
         headers: req.headers,
         status: req.status,
-        statusText: req.statusText
+        statusText: req.statusText,
     });
 }
 
@@ -111,7 +111,7 @@ export function computedWithExternalSetter<T>(initial: T, set: (v: NoInfer<T>) =
     const _value = ref<T>(initial);
     const comp = computed({
         get: () => _value.value,
-        set: (v) => set(v)
+        set: (v) => set(v),
     }) as WritableComputedRef<T, T> & { setInternal: (v: T) => T };
     comp.setInternal = (v: T) => (_value.value = v);
     return comp;
@@ -125,7 +125,7 @@ export function refWithInit<T>(
     const initial = computed(() => toValue(init));
     const c = computed({
         get: () => (wasSet.value ? inner.value! : initial.value),
-        set: (v) => ((wasSet.value = true), (inner.value = v))
+        set: (v) => ((wasSet.value = true), (inner.value = v)),
     }) as WritableComputedRef<T, T> & { reset: () => void };
     c.reset = () => (wasSet.value = false);
     return c;
@@ -135,7 +135,7 @@ export enum TableCellFormat {
     DataSize,
     DateTime,
     Duration,
-    Other
+    Other,
 }
 
 export function getTableCellFormat(tag: string) {

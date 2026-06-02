@@ -2,6 +2,7 @@ import { defineQueryOptions, type _JSONPrimitive } from '@pinia/colada';
 import { useBrowserLocation, useTimeoutFn } from '@vueuse/core';
 import { parseURL, resolveURL, stringifyParsedURL, withQuery, type QueryObject } from 'ufo';
 import { readonly, ref, toRef, watch, type MaybeRefOrGetter } from 'vue';
+
 import { Directory as DirectoryEntry, File as FileEntry, type AnyDirectoryEntry } from './interop';
 
 const baseUrl = stringifyParsedURL(
@@ -146,7 +147,7 @@ export namespace API {
     export function getListDirectory(path: string[], signal?: AbortSignal) {
         return fetch(getApiUrl(path, { ls: '' }), {
             signal,
-            headers: { Accept: 'application/json' }
+            headers: { Accept: 'application/json' },
         })
             .then((r) => extractError(r))
             .then((r) => jsonResponse<ListDirectoryResponse>(r))
@@ -155,13 +156,13 @@ export namespace API {
                     ({
                         entries: [
                             res.dirs.map((entry) => new DirectoryEntry(path, entry)),
-                            res.files.map((entry) => new FileEntry(path, entry))
+                            res.files.map((entry) => new FileEntry(path, entry)),
                         ].flat() as AnyDirectoryEntry[],
                         perms: res.perms as Permissions[],
                         readmes: res.readmes,
                         tags: res.taglist,
                         sort: res.cfg?.dsort,
-                        dir: res.dir
+                        dir: res.dir,
                     }) satisfies ListDirectoryParsedResponse
             );
     }
@@ -169,7 +170,7 @@ export namespace API {
     export const getListDirectoryQuery = defineQueryOptions((dir: string[]) => ({
         key: ['ls', ...dir],
         query: ({ signal }) => getListDirectory(dir, signal),
-        staleTime: 30_000
+        staleTime: 30_000,
     }));
 
     interface CustomHelloPageResponse {
@@ -218,7 +219,7 @@ export namespace API {
     export function getHelloPageData(signal: AbortSignal) {
         return fetch(getApiUrl([], { h: 'j' }), {
             signal,
-            headers: { Accept: 'application/json' }
+            headers: { Accept: 'application/json' },
         })
             .then((r) => jsonResponse<CustomHelloPageResponse>(r))
             .then((res) => {
@@ -229,7 +230,7 @@ export namespace API {
         key: ['hello'],
         query: ({ signal }) => getHelloPageData(signal),
         refetchOnWindowFocus: false,
-        staleTime: 30_000
+        staleTime: 30_000,
     });
 
     interface CustomJsonLoginResponse {
@@ -242,12 +243,12 @@ export namespace API {
             method: 'POST',
             headers: {
                 'Content-Encoding': 'application/json',
-                Accept: 'application/json'
+                Accept: 'application/json',
             },
             body: JSON.stringify({
                 uname,
-                pwd
-            })
+                pwd,
+            }),
         })
             .then(extractError)
             .then((r) => jsonResponse<CustomJsonLoginResponse>(r))
@@ -258,7 +259,7 @@ export namespace API {
         return fetch(getApiUrl([], { logout: '' }), {
             method: 'POST',
             headers: { 'Content-Encoding': 'application/json' },
-            body: JSON.stringify({})
+            body: JSON.stringify({}),
         }).then(extractError);
     }
 
@@ -274,7 +275,7 @@ export namespace API {
         return fetch(getApiUrl([], { delete: '' }), {
             method: 'POST',
             headers: { 'Content-Encoding': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
         }).then(extractError);
     }
 }
@@ -286,7 +287,7 @@ export function useLoadingState(loading: MaybeRefOrGetter<boolean>, time = 200) 
     const state = toRef(loading);
     const output = ref(false);
     const timer = useTimeoutFn(() => (output.value = true), time, {
-        immediate: false
+        immediate: false,
     });
     watch(state, (state) => {
         if (state) {

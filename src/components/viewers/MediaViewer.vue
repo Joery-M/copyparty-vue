@@ -1,13 +1,4 @@
 <script setup lang="ts">
-import ImagePixelated from '@/assets/image-pixelated.svg?raw';
-import ImageSmooth from '@/assets/image-smooth.svg?raw';
-import Tooltip from '@/components/Tooltip.vue';
-import VideoControls from '@/components/viewers/VideoControls.vue';
-import { getApiUrl } from '@/lib/api';
-import { FileClassification } from '@/lib/classifyExt';
-import type { File } from '@/lib/interop';
-import { useShortcut } from '@/lib/keyboard.ts';
-import { useSettings } from '@/stores/useSettings';
 import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
@@ -22,7 +13,7 @@ import {
     useKeyModifier,
     usePreferredReducedMotion,
     useTimeoutFn,
-    whenever
+    whenever,
 } from '@vueuse/core';
 import {
     Fullscreen,
@@ -32,9 +23,20 @@ import {
     RotateCcw,
     RotateCw,
     ZoomIn,
-    ZoomOut
+    ZoomOut,
 } from 'lucide-vue-next';
 import { computed, ref, useTemplateRef, watchEffect, type ComponentPublicInstance } from 'vue';
+
+import ImagePixelated from '@/assets/image-pixelated.svg?raw';
+import ImageSmooth from '@/assets/image-smooth.svg?raw';
+import Tooltip from '@/components/Tooltip.vue';
+import VideoControls from '@/components/viewers/VideoControls.vue';
+import { getApiUrl } from '@/lib/api';
+import { FileClassification } from '@/lib/classifyExt';
+import type { File } from '@/lib/interop';
+import { useShortcut } from '@/lib/keyboard.ts';
+import { useSettings } from '@/stores/useSettings';
+
 import DialogFooter from '../ui/dialog/DialogFooter.vue';
 
 const props = defineProps<{ file: File }>();
@@ -68,7 +70,7 @@ const enableZoomToFit = ref(true);
 const enableTransition = refWithControl(false, {
     onBeforeChange(value) {
         if (value && preferrersReducedMotion.value === 'reduce') return false;
-    }
+    },
 });
 const isHoldingShift = useKeyModifier('Shift');
 
@@ -110,7 +112,7 @@ const isOverlappingVideoControls = refDebounced(
 );
 
 const isIdle = useIdle(1500, {
-    events: ['mousemove', 'resize', 'keydown', 'touchstart', 'wheel']
+    events: ['mousemove', 'resize', 'keydown', 'touchstart', 'wheel'],
 });
 const isCursorInside = useElementHover(wrapperElem, { delayLeave: 250 });
 whenever(
@@ -130,13 +132,13 @@ const hideVideoControls = computed(
 
 const containerMiddle = computed<[number, number]>(() => [
     containerSize.width.value / 2,
-    containerSize.height.value / 2
+    containerSize.height.value / 2,
 ]);
 
 const _zoomedMediaSize = ref<[number, number]>();
 const zoomedMediaSize = computed<[number, number]>({
     get: () => _zoomedMediaSize.value ?? mediaSize.value,
-    set: (v) => (_zoomedMediaSize.value = v)
+    set: (v) => (_zoomedMediaSize.value = v),
 });
 const smallestMediaAxis = computed(() =>
     Math.min(zoomedMediaSize.value[0], zoomedMediaSize.value[1])
@@ -184,7 +186,7 @@ function calculateFitRatio(
     const ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
     return [
         Math.floor(Math.max(srcWidth, minWidth) * ratio),
-        Math.floor(Math.max(srcHeight, minHeight) * ratio)
+        Math.floor(Math.max(srcHeight, minHeight) * ratio),
     ];
 }
 
@@ -212,7 +214,7 @@ const computedStyle = computed(() => ({
     left: containerMiddle.value[0] + 'px',
     top: containerMiddle.value[1] + 'px',
     width: mediaSize.value[0] * zoomFactor.value + 'px',
-    height: mediaSize.value[1] * zoomFactor.value + 'px'
+    height: mediaSize.value[1] * zoomFactor.value + 'px',
 }));
 
 watchEffect(() => {
@@ -233,7 +235,7 @@ function clickedRotation() {
 }
 
 const disableTransition$ = useTimeoutFn(() => (enableTransition.value = false), 100, {
-    immediate: false
+    immediate: false,
 });
 const disableTransition = disableTransition$.start;
 
@@ -301,7 +303,7 @@ function isVideo(elem: any): elem is HTMLVideoElement {
                 :style="{
                     ...computedStyle,
                     cursor: isHoldingShift ? 'zoom-out' : 'zoom-in',
-                    imageRendering: settings.preview.pixelated ? 'pixelated' : 'smooth'
+                    imageRendering: settings.preview.pixelated ? 'pixelated' : 'smooth',
                 }"
                 :class="{ ...backgroundClass, 'transition-all': enableTransition }"
                 :src="mediaUrl"
@@ -317,7 +319,7 @@ function isVideo(elem: any): elem is HTMLVideoElement {
                 :class="{
                     ...backgroundClass,
                     'transition-all': enableTransition,
-                    'cursor-none': isIdle.idle.value
+                    'cursor-none': isIdle.idle.value,
                 }"
                 :style="computedStyle"
                 :src="mediaUrl"

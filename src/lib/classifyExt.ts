@@ -6,7 +6,7 @@ export enum FileClassification {
     PlainText,
     RichText,
     Directory,
-    Unknown
+    Unknown,
 }
 
 const rasterImageTypes = new Set([
@@ -24,7 +24,7 @@ const rasterImageTypes = new Set([
     'targa',
     'tiff',
     'ep',
-    'webp'
+    'webp',
 ]);
 
 const vectorImageTypes = new Set(['svg', 'eps']);
@@ -33,7 +33,7 @@ const videoTypes = new Set(['mp4', 'webm', 'ogv', 'mkv', 'mov']);
 
 const richTextTypes = new Set([
     'md',
-    'markdown'
+    'markdown',
     // 'rtf' -- Try support again in the future
 ]);
 
@@ -75,7 +75,7 @@ const audioTypes = new Set([
     'wma',
     'wv',
     'xm',
-    'xpk'
+    'xpk',
 ]);
 
 // Start with the smaller functions and work up
@@ -99,6 +99,6 @@ export function canView(ext: FileClassification) {
         FileClassification.RichText,
         FileClassification.RasterImage,
         FileClassification.VectorImage,
-        FileClassification.Video
+        FileClassification.Video,
     ].includes(ext);
 }

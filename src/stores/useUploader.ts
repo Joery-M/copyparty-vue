@@ -1,10 +1,11 @@
-import { getApiUrl } from '@/lib/api';
-import { useConfirm } from '@/stores/useConfirm';
 import { useQueryCache } from '@pinia/colada';
 import { defineStore } from 'pinia';
 import { withTrailingSlash } from 'ufo';
 import { Up2K } from 'up2k';
 import { useI18n } from 'vue-i18n';
+
+import { getApiUrl } from '@/lib/api';
+import { useConfirm } from '@/stores/useConfirm';
 
 export const useUploader = defineStore('uploader', () => {
     const queryCache = useQueryCache();
@@ -16,7 +17,7 @@ export const useUploader = defineStore('uploader', () => {
         upload: async (files: DataTransferItemList | FileList | File[] | File, dir: string[]) => {
             const start = performance.now();
             const up2k = new Up2K({
-                baseUrl: new URL(withTrailingSlash(getApiUrl(dir)))
+                baseUrl: new URL(withTrailingSlash(getApiUrl(dir))),
             });
             const allFiles = await up2k.collectInput(files);
             const totalFiles =
@@ -28,7 +29,7 @@ export const useUploader = defineStore('uploader', () => {
                 const continueAfterBad = await dialog.reveal({
                     title: () => i18n.t('dialogs.bad_files.title'),
                     description: () => i18n.t('dialogs.bad_files.description'),
-                    files: allFiles.bad
+                    files: allFiles.bad,
                 });
                 if (!continueAfterBad.data) return;
             }
@@ -36,7 +37,7 @@ export const useUploader = defineStore('uploader', () => {
                 const uploadJunk = await dialog.reveal({
                     title: () => i18n.t('dialogs.junk_files.title'),
                     description: () => i18n.t('dialogs.junk_files.description'),
-                    files: allFiles.junk
+                    files: allFiles.junk,
                 });
                 if (uploadJunk.data) acceptedFiles.push(...allFiles.junk);
             }
@@ -44,7 +45,7 @@ export const useUploader = defineStore('uploader', () => {
                 const canContinue = await dialog.reveal({
                     title: () => i18n.t('dialogs.confirm_upload.title'),
                     description: () => i18n.t('dialogs.confirm_upload.description'),
-                    files: allFiles.good
+                    files: allFiles.good,
                 });
                 if (!canContinue.data) return;
             }
@@ -55,6 +56,6 @@ export const useUploader = defineStore('uploader', () => {
 
             queryCache.invalidateQueries({ key: ['ls', ...dir] });
             queryCache.invalidateQueries({ key: ['tree', ...dir] });
-        }
+        },
     };
 });

@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { getApiUrl } from '@/lib/api';
 import { fromHighlighter } from '@shikijs/markdown-exit';
 import { computedAsync, useDark } from '@vueuse/core';
 import DOMPurify from 'dompurify';
 import { createMarkdownExit } from 'markdown-exit';
-import taskList from './markdown-it-plugins/task-list';
 import { joinRelativeURL, parseURL } from 'ufo';
 import { effect, shallowRef, triggerRef, type HTMLAttributes } from 'vue';
-
-import { useRouteState } from '@/stores/useRouteState';
 import { useRouter } from 'vue-router';
+
+import { getApiUrl } from '@/lib/api';
+import { useRouteState } from '@/stores/useRouteState';
+
+import taskList from './markdown-it-plugins/task-list';
 
 const props = defineProps<{ input: string; class?: HTMLAttributes['class'] }>();
 
@@ -50,7 +51,7 @@ sanitizer.addHook('afterSanitizeElements', (node) => {
         const routeLink = router.resolve({
             name: 'viewer',
             params: { path },
-            hash: '#' + filename
+            hash: '#' + filename,
         });
         anchor.href = routeLink.href;
         anchor.onclick = (e) => {
@@ -81,7 +82,7 @@ effect(async () => {
     parser.value.use(
         fromHighlighter(shiki, {
             theme: dark ? 'horizon' : 'one-light',
-            fallbackLanguage: 'text' as any
+            fallbackLanguage: 'text' as any,
         })
     );
     triggerRef(parser);
@@ -93,7 +94,7 @@ const renderedHtml = computedAsync(async () => {
 
     return sanitizer.sanitize(rendered, {
         USE_PROFILES: { html: true },
-        ADD_ATTR: (attr, elem) => attr === 'target' && elem === 'a'
+        ADD_ATTR: (attr, elem) => attr === 'target' && elem === 'a',
     });
 }, '');
 </script>

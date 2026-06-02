@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { TableCell, TableCellGeneric, TableRow } from '@shadcn/table';
+import { type Row } from '@tanstack/vue-table';
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+
 import { getApiUrl } from '@/lib/api.ts';
 import { canView, FileClassification } from '@/lib/classifyExt.ts';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
@@ -7,10 +12,7 @@ import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { dedupedComputed, getTableCellFormat, TableCellFormat } from '@/lib/utils.ts';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings.ts';
-import { TableCell, TableCellGeneric, TableRow } from '@shadcn/table';
-import { type Row } from '@tanstack/vue-table';
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
+
 import FileListRowOptions from './FileListRowOptions.vue';
 
 const router = useRouter();
@@ -32,7 +34,7 @@ function onDoubleClick() {
         router.push({
             name: 'viewer',
             params: { path: routeState.dir.concat('') },
-            hash: '#' + entry.name
+            hash: '#' + entry.name,
         });
     } else {
         location.href = getApiUrl(entry.fullPath);
@@ -67,7 +69,7 @@ function onDoubleClick() {
                         :to="{
                             name: 'viewer',
                             params: { path: routeState.dir.concat('') },
-                            hash: '#' + entry.name
+                            hash: '#' + entry.name,
                         }"
                         @click.stop
                     >

@@ -1,8 +1,9 @@
-import type { ButtonVariants } from '@/components/ui/button';
 import { useConfirmDialog } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import type { FileMap, FileOrDirMap } from 'up2k';
 import type { MaybeRefOrGetter } from 'vue';
+
+import type { ButtonVariants } from '@/components/ui/button';
 
 export interface ConfirmDialogPayload {
     title: MaybeRefOrGetter<string>;

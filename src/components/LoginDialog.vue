@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useShortcutGuard } from '@/lib/keyboard';
-import { useAuth, type LoginDialogPayload } from '@/stores/useAuth';
 import { Alert, AlertDescription, AlertTitle } from '@shadcn/alert';
 import { Button } from '@shadcn/button';
 import {
@@ -9,7 +7,7 @@ import {
     DialogDescription,
     DialogFooter,
     DialogHeader,
-    DialogTitle
+    DialogTitle,
 } from '@shadcn/dialog';
 import { FieldError } from '@shadcn/field';
 import { FormControl, FormField, FormItem, FormLabel } from '@shadcn/form';
@@ -21,6 +19,9 @@ import * as v from 'valibot';
 import { useForm } from 'vee-validate';
 import { computed, ref, shallowRef } from 'vue';
 import { RouterLink } from 'vue-router';
+
+import { useShortcutGuard } from '@/lib/keyboard';
+import { useAuth, type LoginDialogPayload } from '@/stores/useAuth';
 
 const authStore = useAuth();
 const loginDialog = authStore.loginDialog;
@@ -34,11 +35,11 @@ const validationSchema = computed(() =>
         authStore.usernameRequired
             ? v.object({
                   username: v.pipe(v.string(), v.minLength(1)),
-                  password: v.pipe(v.string(), v.minLength(1))
+                  password: v.pipe(v.string(), v.minLength(1)),
               })
             : v.object({
                   username: v.optional(v.string()),
-                  password: v.pipe(v.string(), v.minLength(1))
+                  password: v.pipe(v.string(), v.minLength(1)),
               })
     )
 );
@@ -46,9 +47,9 @@ const validationSchema = computed(() =>
 const form = useForm({
     initialValues: {
         username: undefined,
-        password: ''
+        password: '',
     },
-    validationSchema
+    validationSchema,
 });
 
 const failedLogin = ref(false);
@@ -96,7 +97,7 @@ useShortcutGuard('login-dialog', () => loginDialog.isRevealed && !!data);
                             <RouterLink
                                 :to="{
                                     name: 'viewer',
-                                    params: { path: dir.concat('') }
+                                    params: { path: dir.concat('') },
                                 }"
                                 @click="loginDialog.cancel()"
                             >

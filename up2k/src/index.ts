@@ -1,4 +1,5 @@
 import { defu } from 'defu';
+
 import { getChunksize } from './hasher';
 import { Up2KTaskPool } from './taskPool';
 import {
@@ -7,7 +8,7 @@ import {
     rdFlatten,
     sleep,
     vsplit,
-    type PartialExcept
+    type PartialExcept,
 } from './utils';
 
 interface Up2KOptions {
@@ -59,7 +60,7 @@ export class Up2K {
             uploadConcurrency: 4,
             turbo: false,
             u2rand: false,
-            fsearch: false
+            fsearch: false,
         });
     }
 
@@ -253,7 +254,7 @@ export class Up2K {
             files: indexed,
             hashConcurrency: this.options.hashConcurrency,
             uploadConcurrency: this.options.uploadConcurrency,
-            baseUrl: this.options.baseUrl
+            baseUrl: this.options.baseUrl,
         });
         await pool.execute();
     }
@@ -261,7 +262,7 @@ export class Up2K {
         return Array.from(files.entries()).map(([file, name]) => ({
             file,
             name,
-            chunkSize: getChunksize(file.size)
+            chunkSize: getChunksize(file.size),
         }));
     }
 }

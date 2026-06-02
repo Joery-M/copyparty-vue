@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useShortcutGuard } from '@/lib/keyboard';
 import { X } from 'lucide-vue-next';
 import { FocusScope, VisuallyHidden } from 'reka-ui';
 import {
@@ -8,8 +7,10 @@ import {
     DrawerOverlay,
     DrawerPortal,
     DrawerRoot,
-    DrawerTitle
+    DrawerTitle,
 } from 'vaul-vue';
+
+import { useShortcutGuard } from '@/lib/keyboard';
 
 const props = defineProps<{ title: string; description: string }>();
 const isOpen = defineModel<boolean>('open', { required: true });

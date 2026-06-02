@@ -1,11 +1,12 @@
-import { API } from '@/lib/api';
-import { pathToParts } from '@/lib/utils';
 import { useQuery, useQueryCache } from '@pinia/colada';
 import { useConfirmDialog, whenever } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
+
+import { API } from '@/lib/api';
+import { pathToParts } from '@/lib/utils';
 
 export type LoginReason = 'unauthorized' | 'not found';
 
@@ -53,7 +54,7 @@ export const useAuth = defineStore('auth', () => {
                 .then((uname) => {
                     toast(() => i18n.t('toast.logged_in', [uname]), {
                         dismissible: true,
-                        position: 'bottom-right'
+                        position: 'bottom-right',
                     });
                     return true;
                 })
@@ -62,7 +63,7 @@ export const useAuth = defineStore('auth', () => {
                         description: () =>
                             err instanceof API.ApiError
                                 ? i18n.t('error.api', err.cause)
-                                : i18n.t('error.api_unknown')
+                                : i18n.t('error.api_unknown'),
                     });
                     return false;
                 })
@@ -84,7 +85,7 @@ export const useAuth = defineStore('auth', () => {
                                 ? i18n.t('error.api', err.cause)
                                 : i18n.t('error.api_unknown'),
                         dismissible: true,
-                        position: 'bottom-right'
+                        position: 'bottom-right',
                     });
                 })
                 .finally(() => {
@@ -92,6 +93,6 @@ export const useAuth = defineStore('auth', () => {
                     queryCache.invalidateQueries({ key: ['tree'] }, true);
                     queryCache.invalidateQueries({ key: ['full-tree'] }, true);
                     queryCache.invalidateQueries({ key: ['hello'] }, true);
-                })
+                }),
     };
 });

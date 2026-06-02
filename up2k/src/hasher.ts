@@ -1,4 +1,5 @@
 import EventEmitter from 'eventemitter3';
+
 import type { IndexedFile } from '.';
 import type { HashWorkerMessage, HashWorkerPayload, WorkerMessageResponse } from './hash.worker';
 
@@ -46,7 +47,7 @@ export class Hasher {
                     start,
                     end,
                     chunkSize,
-                    chunkCount
+                    chunkCount,
                 })
                 .finally(() => this.workerDone(worker));
         });
@@ -137,7 +138,7 @@ class HashWorkerWrapper {
 
             this.worker.postMessage({
                 type: 'init',
-                tid
+                tid,
             } satisfies HashWorkerMessage);
         });
     }
@@ -160,7 +161,7 @@ class HashWorkerWrapper {
             this.worker.postMessage({
                 type: 'work',
                 tid,
-                ...p
+                ...p,
             } satisfies HashWorkerMessage);
         });
     }

@@ -1,15 +1,16 @@
 <script setup lang="ts">
+import { Card, CardTitle } from '@shadcn/card';
+import { computedAsync } from '@vueuse/core';
+import { extname } from 'pathe';
+import { computed, ref, toRaw } from 'vue';
+import { useRouter } from 'vue-router';
+
 import { API, getApiUrl } from '@/lib/api';
 import { canView, FileClassification } from '@/lib/classifyExt';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { Directory, type AnyDirectoryEntry } from '@/lib/interop';
 import { HSVtoRGB, seededRandom } from '@/lib/utils';
 import { useFileSelection } from '@/pages/Files.vue';
-import { Card, CardTitle } from '@shadcn/card';
-import { computedAsync } from '@vueuse/core';
-import { extname } from 'pathe';
-import { computed, ref, toRaw } from 'vue';
-import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const fileSelection = useFileSelection();
@@ -21,7 +22,7 @@ const isSelected = computed(() => fileSelection.selectedFiles.has(toRaw(props.en
 const imageUrls = computed(() => ({
     webp: getApiUrl(props.entry.fullPath, { th: 'w', no_fallback: '', cache: '' }),
     jxl: getApiUrl(props.entry.fullPath, { th: 'x', no_fallback: '', cache: '' }),
-    jpeg: getApiUrl(props.entry.fullPath, { th: 'j', no_fallback: '', cache: '' })
+    jpeg: getApiUrl(props.entry.fullPath, { th: 'j', no_fallback: '', cache: '' }),
 }));
 
 const ext = computed(() => extname(props.entry.name));
@@ -43,7 +44,7 @@ function onDoubleClick() {
         router.push({
             name: 'viewer',
             params: { path: props.dir.concat('') },
-            hash: '#' + props.entry.name
+            hash: '#' + props.entry.name,
         });
     } else {
         location.href = getApiUrl(props.entry.fullPath);
@@ -55,7 +56,7 @@ const openNewTab = () => {
         props.entry.classification === FileClassification.Directory
             ? router.resolve({
                   name: 'viewer',
-                  params: { path: props.entry.fullPath.concat('') }
+                  params: { path: props.entry.fullPath.concat('') },
               }).href
             : getApiUrl(props.entry.fullPath);
     const aTag = document.createElement('a');
@@ -93,7 +94,7 @@ const openNewTab = () => {
                     aria-labelledby="filename"
                     :style="{
                         backgroundColor: `rgb(${fallbackBg})`,
-                        opacity: hasLoaded ? 0 : 1
+                        opacity: hasLoaded ? 0 : 1,
                     }"
                     :aria-hidden="hasLoaded"
                 >

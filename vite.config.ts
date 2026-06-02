@@ -10,24 +10,24 @@ export default defineConfig((env) => ({
         VueI18nPlugin({ include: './src/localization/**/*.json' }),
         tailwind(),
         vue(),
-        customJinjaElementsInjector(process.env.FORCE_JINJA === 'true')
+        customJinjaElementsInjector(process.env.FORCE_JINJA === 'true'),
     ],
     resolve: {
-        tsconfigPaths: true
+        tsconfigPaths: true,
     },
     define: {
         __DEV__: env.mode !== 'production',
-        __PROD__: env.mode === 'production'
+        __PROD__: env.mode === 'production',
     },
     server: {
         proxy: {
             '/api': {
                 target: loadEnv('', '').VITE_COPYPARTY_HOST!,
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api/, '')
-            }
-        }
-    }
+                rewrite: (path) => path.replace(/^\/api/, ''),
+            },
+        },
+    },
 }));
 
 /**
@@ -44,7 +44,7 @@ function customJinjaElementsInjector(force: boolean) {
             };
         </script>
         {%- endif %}`,
-        'html-head': `{{ html_head }}`
+        'html-head': `{{ html_head }}`,
     };
     let isDev = false;
     return {
@@ -63,8 +63,8 @@ function customJinjaElementsInjector(force: boolean) {
             }
             return {
                 html,
-                tags: []
+                tags: [],
             };
-        }
+        },
     } satisfies Plugin;
 }

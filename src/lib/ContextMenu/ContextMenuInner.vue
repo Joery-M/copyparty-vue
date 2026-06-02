@@ -6,10 +6,11 @@ import {
     injectContextMenuRootContext,
     useForwardPropsEmits,
     type ContextMenuContentEmits,
-    type ContextMenuContentProps
+    type ContextMenuContentProps,
 } from 'reka-ui';
 import { injectPopperRootContext } from 'reka-ui/internal';
 import { readonly, shallowRef, type HTMLAttributes } from 'vue';
+
 import { cn } from '../utils';
 import { provideCustomContextMenuRootContext } from './ContextMenuRoot.vue';
 
@@ -37,12 +38,12 @@ provideCustomContextMenuRootContext({
                     left: point.x,
                     right: point.x,
                     top: point.y,
-                    bottom: point.y
-                }) as DOMRect
+                    bottom: point.y,
+                }) as DOMRect,
         };
         curData.value = data;
         originalRootContext.onOpenChange(true);
-    }
+    },
 });
 </script>
 

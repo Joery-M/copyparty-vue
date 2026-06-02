@@ -1,6 +1,7 @@
 import defu from 'defu';
 import { basename, dirname } from 'pathe';
 import { withoutLeadingSlash } from 'ufo';
+
 import type { IndexedFile } from '.';
 import type { PartialExcept } from './utils';
 
@@ -139,15 +140,15 @@ export class Uploader {
         return fetch(new URL(dir, this.options.baseUrl), {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 name: fileName,
                 hash: entry.hashes,
                 lmod: entry.file.lastModified / 1000,
                 size: entry.file.size,
-                life: 0
-            } satisfies HandshakeReq)
+                life: 0,
+            } satisfies HandshakeReq),
         }).then(async (res): Promise<HandshakeAnyRes> => {
             if (res.status === 422) {
                 const content = (await res.text()).split('\n');
@@ -178,9 +179,9 @@ export class Uploader {
             headers: {
                 'X-Up2k-Hash': hashes,
                 'X-Up2k-Wark': wark,
-                'Content-Type': 'application/octet-stream'
+                'Content-Type': 'application/octet-stream',
             },
-            body: entry.file.slice(start, end)
+            body: entry.file.slice(start, end),
         });
     }
 }

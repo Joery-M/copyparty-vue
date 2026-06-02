@@ -13,7 +13,7 @@ import {
     TooltipRoot,
     TooltipTrigger,
     useForwardProps,
-    type TooltipRootProps
+    type TooltipRootProps,
 } from 'reka-ui';
 import { shallowRef } from 'vue';
 

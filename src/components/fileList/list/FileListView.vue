@@ -1,12 +1,4 @@
 <script lang="ts" setup>
-import ColumnOptions from '@/components/fileList/list/ColumnOptions.vue';
-import SortableHeader from '@/components/fileList/list/SortableHeader.vue';
-import { useLoadingState } from '@/lib/api';
-import { type AnyDirectoryEntry } from '@/lib/interop';
-import { dedupedComputed } from '@/lib/utils';
-import { useFileSelection, useListDirQuery } from '@/pages/Files.vue';
-import { getDirFromRouteParams } from '@/stores/useRouteState';
-import { useSettings } from '@/stores/useSettings';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@shadcn/table';
 import { valueUpdater } from '@shadcn/table/utils';
 import {
@@ -18,13 +10,23 @@ import {
     type Column,
     type ColumnDef,
     type RowSelectionState,
-    type SortingState
+    type SortingState,
 } from '@tanstack/vue-table';
 import { isEqual } from '@ver0/deep-equal';
 import { watchImmediate, whenever } from '@vueuse/core';
 import { computed, h, ref, watch, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate } from 'vue-router';
+
+import ColumnOptions from '@/components/fileList/list/ColumnOptions.vue';
+import SortableHeader from '@/components/fileList/list/SortableHeader.vue';
+import { useLoadingState } from '@/lib/api';
+import { type AnyDirectoryEntry } from '@/lib/interop';
+import { dedupedComputed } from '@/lib/utils';
+import { useFileSelection, useListDirQuery } from '@/pages/Files.vue';
+import { getDirFromRouteParams } from '@/stores/useRouteState';
+import { useSettings } from '@/stores/useSettings';
+
 import Paginator from '../Paginator.vue';
 import FileListRow from './FileListRow.vue';
 import LoadingTable from './LoadingTable.vue';
@@ -50,7 +52,7 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
             tag: column.id,
             text,
             column,
-            onResetSort: () => resetSorting()
+            onResetSort: () => resetSorting(),
         });
 
     return [
@@ -58,31 +60,31 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
             id: 'prefix',
             size: 32,
             maxSize: 21,
-            header: () => h(ColumnOptions)
+            header: () => h(ColumnOptions),
         },
         {
             id: 'href',
             accessorKey: 'name',
             minSize: 300,
-            header: ({ column }) => getSortableHeader(i18n.t('filename'), column)
+            header: ({ column }) => getSortableHeader(i18n.t('filename'), column),
         },
         {
             id: 'sz',
             accessorKey: 'size',
-            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.sz'), column)
+            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.sz'), column),
         },
         {
             id: 'ts',
             accessorKey: 'created',
-            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.ts'), column)
+            header: ({ column }) => getSortableHeader(i18n.t('filelist.tags.ts'), column),
         },
         ...tags.value.map((tag) => {
             return {
                 id: tag,
                 accessorFn: (v) => v.tags.get(tag),
-                header: ({ column }) => getSortableHeader(tagHeaders.value[tag] ?? tag, column)
+                header: ({ column }) => getSortableHeader(tagHeaders.value[tag] ?? tag, column),
             } satisfies ColumnDef<AnyDirectoryEntry>;
-        })
+        }),
     ];
 });
 
@@ -111,7 +113,7 @@ const rowSelectionDeduped = dedupedComputed(() =>
 );
 const rowSelection = computed<RowSelectionState>({
     get: () => rowSelectionDeduped.value,
-    set: (v) => fileSelection.setSelectedNames(Object.keys(v))
+    set: (v) => fileSelection.setSelectedNames(Object.keys(v)),
 });
 
 const data = dedupedComputed(() => listDirQuery.data.value?.entries ?? null);
@@ -120,7 +122,7 @@ const table = computed(() =>
         data: computed(() => data.value ?? []),
         state: {
             sorting: sorting.value,
-            rowSelection: rowSelection.value
+            rowSelection: rowSelection.value,
         },
         columns: columns.value,
         getCoreRowModel: getCoreRowModel(),
@@ -133,7 +135,7 @@ const table = computed(() =>
         onRowSelectionChange: (u) => {
             console.log(typeof u === 'function' ? u(rowSelection.value) : u);
             valueUpdater(u, rowSelection);
-        }
+        },
     })
 );
 

@@ -1,5 +1,6 @@
-import { pathToParts } from '@/lib/utils';
 import { createRouter, createWebHistory } from 'vue-router';
+
+import { pathToParts } from '@/lib/utils';
 
 export const router = createRouter({
     history: createWebHistory(),
@@ -18,13 +19,13 @@ export const router = createRouter({
                     const split = pathToParts(dir);
                     return {
                         params: {
-                            path: split.concat('')
+                            path: split.concat(''),
                         },
                         hash: `#${preview}`,
-                        replace: true
+                        replace: true,
                     };
                 }
-            }
-        }
-    ]
+            },
+        },
+    ],
 });

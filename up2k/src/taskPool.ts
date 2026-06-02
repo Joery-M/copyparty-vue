@@ -1,4 +1,5 @@
 import EventEmitter from 'eventemitter3';
+
 import type { IndexedFile } from '.';
 import { Hasher } from './hasher';
 import { Uploader } from './uploader';

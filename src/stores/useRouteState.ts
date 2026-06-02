@@ -7,7 +7,7 @@ export const useRouteState = defineStore('route-state', () => {
 
     return {
         dir: computed(() => getDirFromRouteParams(route.params)),
-        file: computed(() => (route.hash.startsWith('#') ? route.hash.slice(1) : null))
+        file: computed(() => (route.hash.startsWith('#') ? route.hash.slice(1) : null)),
     };
 });
 

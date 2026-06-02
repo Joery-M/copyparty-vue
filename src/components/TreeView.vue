@@ -1,17 +1,19 @@
 <script lang="ts" setup>
-import { cn } from '@/lib/utils';
-import { useRouteState } from '@/stores/useRouteState';
-import { useTreeView } from '@/stores/useTreeView';
 import {
     Sidebar,
     SidebarContent,
     SidebarHeader,
     SidebarInset,
     SidebarMenu,
-    SidebarProvider
+    SidebarProvider,
 } from '@shadcn/sidebar';
 import { useEventBus, watchImmediate, whenever } from '@vueuse/core';
 import { ref, useTemplateRef, type HTMLAttributes } from 'vue';
+
+import { cn } from '@/lib/utils';
+import { useRouteState } from '@/stores/useRouteState';
+import { useTreeView } from '@/stores/useTreeView';
+
 import TreeViewList from './TreeViewList.vue';
 
 const sidebar = useTemplateRef('sidebar');

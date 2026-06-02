@@ -141,7 +141,6 @@
     }
 }
 
-
-[data-sonner-toast][data-styled="true"] [data-description] {
+[data-sonner-toast][data-styled='true'] [data-description] {
     color: unset !important;
 }

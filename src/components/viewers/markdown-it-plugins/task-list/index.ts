@@ -4,6 +4,7 @@
 // https://github.com/blog/1825-task-lists-in-all-markdown-documents
 
 import type { PluginWithOptions } from 'markdown-exit';
+
 import type { Options, State, StateToken, Token } from './types';
 
 let options: Options = {
@@ -14,7 +15,7 @@ let options: Options = {
     containerClass: 'task-list',
     itemClass: 'task-list__item',
     labelClass: 'task-list__label',
-    inputClass: 'task-list__input'
+    inputClass: 'task-list__input',
 };
 
 const MarkdownItTasks: PluginWithOptions<Options> = (md, opts) => {

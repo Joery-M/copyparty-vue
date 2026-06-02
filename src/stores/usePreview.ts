@@ -1,11 +1,12 @@
-import type { FileClassification } from '@/lib/classifyExt';
-import { File } from '@/lib/interop';
-import { useRouteState } from '@/stores/useRouteState';
 import { whenever } from '@vueuse/core';
 import { basename, extname } from 'pathe';
 import { defineStore } from 'pinia';
 import { computed, shallowRef } from 'vue';
 import { useRouter } from 'vue-router';
+
+import type { FileClassification } from '@/lib/classifyExt';
+import { File } from '@/lib/interop';
+import { useRouteState } from '@/stores/useRouteState';
 
 export const usePreview = defineStore('preview', () => {
     const routeState = useRouteState();
@@ -15,7 +16,7 @@ export const usePreview = defineStore('preview', () => {
             return new File(routeState.dir, {
                 ext: extname(routeState.file),
                 // Slightly stupid since @vueuse/router decodes, then we encode, and then decode again in the constructor, but idc really
-                href: encodeURIComponent(basename(routeState.file))
+                href: encodeURIComponent(basename(routeState.file)),
             });
         } else {
             return null;
@@ -44,6 +45,6 @@ export const usePreview = defineStore('preview', () => {
                     elem.remove();
                 }
             }
-        }
+        },
     };
 });

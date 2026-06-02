@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import { computedAsync, whenever } from '@vueuse/core';
+import { computed, shallowRef } from 'vue';
+import { useI18n } from 'vue-i18n';
+
 import { FileClassification } from '@/lib/classifyExt';
 import type { File } from '@/lib/interop';
 import { usePreview } from '@/stores/usePreview';
 import { useRouteState } from '@/stores/useRouteState';
-import { computedAsync, whenever } from '@vueuse/core';
-import { computed, shallowRef } from 'vue';
-import DrawerViewer from './DrawerViewer.vue';
 
-import { useI18n } from 'vue-i18n';
 import DialogViewer from './DialogViewer.vue';
+import DrawerViewer from './DrawerViewer.vue';
 
 const routeState = useRouteState();
 const previewStore = usePreview();

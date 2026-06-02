@@ -1,4 +1,9 @@
 <script lang="ts">
+import { isEqual } from '@ver0/deep-equal';
+import { defineStore } from 'pinia';
+import { onBeforeRouteUpdate } from 'vue-router';
+import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
+
 import { API } from '@/lib/api';
 import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
@@ -6,10 +11,6 @@ import type { AnyDirectoryEntry } from '@/lib/interop';
 import { useShortcut } from '@/lib/keyboard.ts';
 import { useAuth } from '@/stores/useAuth';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
-import { isEqual } from '@ver0/deep-equal';
-import { defineStore } from 'pinia';
-import { onBeforeRouteUpdate } from 'vue-router';
-import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
 export const useListDirQuery = defineColadaLoader({
     key: (to) => ['ls', ...getDirFromRouteParams(to.params)],
@@ -17,7 +18,7 @@ export const useListDirQuery = defineColadaLoader({
     refetchOnWindowFocus: false,
     staleTime: 30_000,
     errors: true,
-    lazy: true
+    lazy: true,
 });
 
 export const useFileSelection = defineStore('file-selection', () => {
@@ -52,12 +53,16 @@ export const useFileSelection = defineStore('file-selection', () => {
                 ? selectedFiles.value.delete(entry)
                 : selectedFiles.value.add(entry);
             triggerRef(selectedFiles); // Dont ask, idk
-        }
+        },
     };
 });
 </script>
 
 <script setup lang="ts">
+import { Separator } from '@shadcn/separator';
+import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
+import { computed, defineAsyncComponent, shallowRef, triggerRef } from 'vue';
+
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import FileViewContextMenu from '@/components/fileList/FileViewContextMenu.vue';
 import FileGridView from '@/components/fileList/grid/FileGridView.vue';
@@ -71,9 +76,7 @@ import FileViewer from '@/components/viewers/FileViewer.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
-import { Separator } from '@shadcn/separator';
-import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
-import { computed, defineAsyncComponent, shallowRef, triggerRef } from 'vue';
+
 import TreeView from '../components/TreeView.vue';
 
 const settings = useSettings();
@@ -93,7 +96,7 @@ const dropzone = useDropZone(document.body, {
     onDrop(files, event) {
         const f = event.dataTransfer?.items ?? files;
         if (f && f.length > 0) uploader.upload(f, routeState.dir);
-    }
+    },
 });
 useEventListener(document, 'paste', (ev) => {
     const f = ev.clipboardData?.items;
@@ -114,13 +117,13 @@ whenever(listDirQuery.error, (err) => {
             authStore.loginDialog.reveal({
                 path: routeState.dir,
                 reason: 'unauthorized',
-                canCancel: false
+                canCancel: false,
             });
         } else if (err.cause.code === 404) {
             authStore.loginDialog.reveal({
                 path: routeState.dir,
                 reason: 'not found',
-                canCancel: false
+                canCancel: false,
             });
         }
     }

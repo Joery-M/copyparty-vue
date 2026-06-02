@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ContextMenuRoot } from 'reka-ui';
+
 import ContextMenuInner from './ContextMenuInner.vue';
 
 defineOptions({ inheritAttrs: false });

@@ -1,20 +1,21 @@
 <script setup lang="ts">
+import { Button } from '@shadcn/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@shadcn/dropdown-menu';
+import { useEventBus, useFileDialog, useMediaQuery } from '@vueuse/core';
+import { ArrowUp, Menu, User2 } from 'lucide-vue-next';
+import { computed } from 'vue';
+
 import Tooltip from '@/components/Tooltip.vue';
 import { sidebarBusKey } from '@/components/TreeView.vue';
 import { useListDirQuery } from '@/pages/Files.vue';
 import { useAuth } from '@/stores/useAuth';
 import { useRouteState } from '@/stores/useRouteState';
 import { useUploader } from '@/stores/useUploader';
-import { Button } from '@shadcn/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
-} from '@shadcn/dropdown-menu';
-import { useEventBus, useFileDialog, useMediaQuery } from '@vueuse/core';
-import { ArrowUp, Menu, User2 } from 'lucide-vue-next';
-import { computed } from 'vue';
 
 const auth = useAuth();
 const routeState = useRouteState();

@@ -3,6 +3,7 @@ import { dedupedComputed } from '@/lib/utils';
 import { useListDirQuery } from '@/pages/Files.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
+
 import FileGridEntry from './FileGridEntry.vue';
 
 const settings = useSettings();
