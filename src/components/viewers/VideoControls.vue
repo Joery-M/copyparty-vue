@@ -3,7 +3,7 @@ import { formatTimeNoMs } from '@/lib/format';
 import { computedWithExternalSetter } from '@/lib/utils';
 import { Button } from '@shadcn/button';
 import { Slider } from '@shadcn/slider';
-import { onKeyStroke, useEventListener, useMounted, watchThrottled } from '@vueuse/core';
+import { onKeyStroke, useEventListener, watchThrottled } from '@vueuse/core';
 import { Pause, Play, Volume, Volume1, Volume2, VolumeOff } from 'lucide-vue-next';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watchEffect, type HTMLAttributes } from 'vue';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@shadcn/hover-card';

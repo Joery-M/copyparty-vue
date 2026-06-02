@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { whenever } from '@vueuse/core';
 import { X } from 'lucide-vue-next';
 import { VisuallyHidden } from 'reka-ui';
 import {
@@ -9,6 +10,7 @@ import {
     DrawerRoot,
     DrawerTitle
 } from 'vaul-vue';
+import { useTemplateRef } from 'vue';
 
 const props = defineProps<{ title: string; description: string }>();
 const isOpen = defineModel<boolean>('open', { required: true });
@@ -18,6 +20,9 @@ function closed() {
     if (isOpen.value) return;
     emits('closed');
 }
+
+const focusTarget = useTemplateRef('focus-target');
+whenever(focusTarget, (v) => v.focus());
 </script>
 
 <template>
@@ -40,7 +45,7 @@ function closed() {
                 <VisuallyHidden>
                     <DrawerDescription>{{ description }}</DrawerDescription>
                 </VisuallyHidden>
-                <div class="p-4 rounded-t-[10px] flex-1 h-0">
+                <div class="p-4 rounded-t-[10px] flex-1 h-0 focus-visible:outline-none" tabindex="-1" ref="focus-target">
                     <button
                         class="z-10 fixed right-0 top-0 size-13 flex justify-center items-center opacity-70 hover:opacity-100 cursor-pointer"
                         @click="isOpen = false"
