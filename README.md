@@ -15,7 +15,7 @@ Missing features:
 
 - Markdown editor
 - Audio playback (you just download the file atm)
-- Moving, copying and pasting files
+- Moving, ~~copying~~ and pasting files
 - upget/recent uploads
 - Grid view sorting and pagination
 
