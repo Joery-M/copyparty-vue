@@ -93,7 +93,7 @@ function onClick(event: MouseEvent) {
 </script>
 
 <template>
-    <ContextMenuTarget :data="entry">
+    <ContextMenuTarget :data="entry" @open="fileSelection.setEntry(entry, true)">
         <Card
             @pointerup.middle="openNewTab()"
             @dblclick.prevent="onDoubleClick()"
@@ -163,8 +163,7 @@ function onClick(event: MouseEvent) {
     &[data-state='selected'] {
         @apply bg-muted ring-3 ring-ring/80;
     }
-    &[data-active='active'],
-    &[data-context-menu='open'] {
+    &[data-active='active'] {
         @apply ring-3 ring-primary;
     }
 

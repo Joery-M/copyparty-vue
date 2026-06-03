@@ -167,11 +167,9 @@ tr {
     &[data-state='selected'] {
         @apply bg-muted;
     }
-    &[data-context-menu='open'],
     &[data-active='active'] {
         @apply outline-none ring-1 border-b-transparent;
     }
-    &:has(+ tr[data-context-menu='open']),
     &:has(+ tr[data-active='active']) {
         @apply border-b-transparent;
     }
