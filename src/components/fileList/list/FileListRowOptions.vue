@@ -29,7 +29,7 @@ function handleClick(el: HTMLButtonElement) {
         ref="btn"
         size="icon"
         variant="ghost"
-        @click.stop="handleClick($el)"
+        @click="handleClick($el)"
         class="h-8 w-full px-2 rounded-none min-h-full"
     >
         <MoreHorizontal />

@@ -91,7 +91,6 @@ function onClick(event: MouseEvent) {
                     <RouterLink
                         v-if="entry.classification === FileClassification.Directory"
                         :to="{ name: 'viewer', params: { path: entry.fullPath.concat('') } }"
-                        @click.stop
                     >
                         {{ entry.name }}
                     </RouterLink>
@@ -102,7 +101,6 @@ function onClick(event: MouseEvent) {
                             params: { path: routeState.dir.concat('') },
                             hash: '#' + entry.name,
                         }"
-                        @click.stop
                     >
                         {{ entry.name }}
                     </RouterLink>
@@ -111,7 +109,6 @@ function onClick(event: MouseEvent) {
                         :href="getApiUrl(entry.fullPath)"
                         :download="entry.name"
                         target="_blank"
-                        @click.stop
                     >
                         {{ entry.name }}
                     </a>
