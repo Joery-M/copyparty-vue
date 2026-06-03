@@ -45,7 +45,8 @@
     "api": "Server responded with code {code}, please check the server logs",
     "api_unknown": "Please check the server logs",
     "cant_upload": "You are unable to upload to this folder",
-    "no_options": "No options available"
+    "no_options": "No options available",
+    "couldnt_copy": "Was not able to copy file, see the browser console for more info|Was not able to copy files, see the browser console for more info"
   },
   "validation": {
     "required": "{0} is required"
@@ -114,6 +115,7 @@
   "toast": {
     "error": "An error occurred",
     "logged_out": "Successfully logged out",
-    "logged_in": "Logged in as {0}"
+    "logged_in": "Logged in as {0}",
+    "copied": "Copied file | Copied {n} files"
   }
 }

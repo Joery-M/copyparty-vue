@@ -8,6 +8,7 @@ import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { useShortcut } from '@/lib/keyboard.ts';
 import { useAuth } from '@/stores/useAuth';
+import { useHandlers } from '@/stores/useHandlers.ts';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 
 export const useListDirQuery = defineColadaLoader({
@@ -48,6 +49,7 @@ const uploader = useUploader();
 const routeState = useRouteState();
 const authStore = useAuth();
 const fileSelection = useFileSelection();
+const handlers = useHandlers();
 
 const listDirQuery = useListDirQuery();
 
@@ -115,13 +117,26 @@ useShortcut(
     (e) => e.key === 'i' && e.ctrlKey,
     (e) => (e.preventDefault(), fileSelection.invertSelection())
 );
+
+async function onCopy(event: ClipboardEvent) {
+    // If there is text selected, let nature do its thing
+    if (
+        !window.getSelection()?.isCollapsed ||
+        fileSelection.selectedFiles.size === 0 ||
+        !event.clipboardData
+    )
+        return;
+    event.preventDefault();
+    await handlers.copyEntriesToClipboard(Array.from(fileSelection.selectedFiles));
+    console.log('Copied');
+}
 </script>
 
 <template>
     <Toolbar />
     <div class="flex flex-col flex-1 mb-[env(safe-area-inset-bottom)]">
         <Separator class="mb-2" />
-        <TreeView wrapper-class="inline-flex flex-1" class="flex flex-col gap-3">
+        <TreeView wrapper-class="inline-flex flex-1" class="flex flex-col gap-3" @copy="onCopy">
             <ContextMenuRoot>
                 <ContextMenuTarget :data="undefined">
                     <div class="flex flex-col gap-3 p-6" :class="{ 'min-h-full': !readmes.length }">

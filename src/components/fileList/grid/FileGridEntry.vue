@@ -10,7 +10,7 @@ import { API, getApiUrl } from '@/lib/api';
 import { canView, FileClassification } from '@/lib/classifyExt';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { Directory } from '@/lib/interop';
-import { HSVtoRGB, seededRandom } from '@/lib/utils';
+import { deselectAll, HSVtoRGB, seededRandom } from '@/lib/utils';
 import { useListDirQuery } from '@/pages/Files.vue';
 import { useFileSelection } from '@/stores/useFileSelection';
 
@@ -83,7 +83,7 @@ function onClick(event: MouseEvent) {
             const upperBound = Math.max(lastSelectedIndex, curIndex);
             fileSelection.selectedFiles = new Set(rows.slice(lowerBound, upperBound + 1));
             fileSelection.lastSelected = props.entry;
-            window.getSelection()?.empty();
+            deselectAll();
         }
     } else {
         fileSelection.selectNone();

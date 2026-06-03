@@ -4,6 +4,7 @@ import { useQueryCache } from '@pinia/colada';
 import { defineStore } from 'pinia';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import { toast } from 'vue-sonner';
 
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
@@ -112,6 +113,91 @@ export const useHandlers = defineStore('handlers', () => {
                 queryCache.invalidateQueries({ key: ['ls', ...parentPath] }, true);
             }
             queryCache.invalidateQueries({ key: ['full-tree'] }, true);
+        },
+        // async addEntriesToDataTransfer(entries: AnyDirectoryEntry[], dt: DataTransfer) {
+        //     dt.clearData();
+        //     // dt.items.add(entries.map((v) => getApiUrl(v.fullPath)).join('\n'), 'text/plain');
+        //     // dt.items.add(entries.map((v) => getApiUrl(v.fullPath)).join('\n'), 'text/uri-list');
+        //     // console.log(dt.items);
+
+        //     const prom$ = entries.map(async (entry) => {
+        //         const [contentType, blob] = await fetch(getApiUrl(entry.fullPath, { dl: '' }), {
+        //             headers: { Accept: '*/*' },
+        //         }).then(async (r) => [r.headers.get('content-type'), await r.blob()] as const);
+
+        //         dt.items.add(
+        //             new File([blob], entry.name, {
+        //                 lastModified: entry.created?.getTime(),
+        //                 type: contentType ?? undefined,
+        //             })
+        //         );
+        //     });
+        //     await Promise.all(prom$).catch((err) => {
+        //         console.error(err);
+        //         toast.error(() => i18n.t('toast.error'), {
+        //             description: () => i18n.t('error.couldnt_copy'),
+        //         });
+        //     });
+        // },
+        async copyEntriesToClipboard(entries: AnyDirectoryEntry[]) {
+            // This really sucks but ATM Firefox and Chromium don't support copying multiple clipboard items
+            if (entries.length > 1) {
+                const text = entries.map((v) => getApiUrl(v.fullPath)).join('\n');
+                return await navigator.clipboard
+                    .writeText(text)
+                    .then(() => toast(() => i18n.t('toast.copied', entries.length)))
+                    .catch((err) => {
+                        console.error(err);
+                        toast.error(() => i18n.t('toast.error'), {
+                            description: () => i18n.t('error.couldnt_copy', 1),
+                        });
+                    });
+            }
+
+            const entry = entries[0];
+
+            // Fetch to get content type and potentially the body
+            let fetched;
+            if (entry.classification !== FileClassification.Directory) {
+                fetched = await fetch(getApiUrl(entry.fullPath, { dl: '' })).then((r) => {
+                    const type = (r.headers.get('content-type') ?? '').split(';')[0];
+
+                    // Only continue with body if the browser supports copying the file type
+                    const supported = ClipboardItem.supports(type);
+                    if (!supported) {
+                        void r.body?.cancel();
+                        return undefined;
+                    }
+
+                    const file = r.blob().then(
+                        (b) =>
+                            new File([b], entry.name, {
+                                type,
+                                lastModified: entry.created?.getTime(),
+                            })
+                    );
+
+                    return { type, file };
+                });
+            }
+
+            // By default, add the path to the file itself
+            const options: Record<string, any> = {
+                'text/plain': getApiUrl(entry.fullPath),
+            };
+            if (fetched) options[fetched.type] = fetched.file;
+
+            const clipItem = new ClipboardItem(options);
+
+            navigator.clipboard
+                .write([clipItem])
+                .then(() => toast(() => i18n.t('toast.copied', entries.length)))
+                .catch((err) => {
+                    console.error(err);
+                    toast.error(() => i18n.t('toast.error'), {
+                        description: () => i18n.t('error.couldnt_copy', entries.length),
+                    });
+                });
         },
     };
 });

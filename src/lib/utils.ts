@@ -154,3 +154,8 @@ export function getTableCellFormat(tag: string) {
             return TableCellFormat.Other;
     }
 }
+
+export function deselectAll() {
+    window.getSelection()?.removeAllRanges();
+    document.getSelection()?.empty();
+}

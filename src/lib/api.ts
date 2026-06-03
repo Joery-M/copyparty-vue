@@ -3,7 +3,7 @@ import type { QueryObject } from 'ufo';
 import type { MaybeRefOrGetter } from 'vue';
 
 import { defineQueryOptions } from '@pinia/colada';
-import { useBrowserLocation, useTimeoutFn } from '@vueuse/core';
+import { useTimeoutFn } from '@vueuse/core';
 import { parseURL, resolveURL, stringifyParsedURL, withQuery } from 'ufo';
 import { readonly, ref, toRef, watch } from 'vue';
 
@@ -11,13 +11,14 @@ import type { AnyDirectoryEntry } from './interop';
 
 import { Directory as DirectoryEntry, File as FileEntry } from './interop';
 
-const baseUrl = stringifyParsedURL(
-    parseURL(
+const baseUrl = stringifyParsedURL({
+    ...parseURL(location.origin),
+    ...parseURL(
         __DEV__ || import.meta.env.VITE_FORCE_HOST_OVERRIDE == 'true'
-            ? import.meta.env.VITE_API_HOST || useBrowserLocation().value.origin
-            : useBrowserLocation().value.origin
-    )
-);
+            ? import.meta.env.VITE_API_HOST || location.origin
+            : location.origin
+    ),
+});
 
 export function getApiUrl(strings: string[], params?: QueryObject, noEncode = false): string {
     const parts = Array.isArray(strings) ? strings : [strings];

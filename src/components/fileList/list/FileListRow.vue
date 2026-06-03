@@ -11,7 +11,7 @@ import { canView, FileClassification } from '@/lib/classifyExt.ts';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { formatFileSize, formatTime } from '@/lib/format.ts';
 import { Directory } from '@/lib/interop';
-import { dedupedComputed, getTableCellFormat, TableCellFormat } from '@/lib/utils.ts';
+import { dedupedComputed, deselectAll, getTableCellFormat, TableCellFormat } from '@/lib/utils.ts';
 import { useFileSelection } from '@/stores/useFileSelection.ts';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings.ts';
@@ -30,7 +30,7 @@ const props = defineProps<{ row: Row<AnyDirectoryEntry>; table: Table<AnyDirecto
 const entry = computed(() => props.row.original);
 
 function onDoubleClick() {
-    window.getSelection()?.empty();
+    deselectAll();
     const entry = props.row.original;
     if (entry instanceof Directory || entry.classification === FileClassification.Directory) {
         router.push({ name: 'viewer', params: { path: entry.fullPath.concat('') } });
@@ -63,7 +63,7 @@ function onClick(event: MouseEvent) {
                 rows.slice(lowerBound, upperBound + 1).map((v) => v.original)
             );
             fileSelection.lastSelected = props.row.original;
-            window.getSelection()?.empty();
+            deselectAll();
         }
     } else {
         fileSelection.selectNone();
