@@ -2,16 +2,7 @@ import type { KeyFilter, OnKeyStrokeOptions } from '@vueuse/core';
 import type { InjectionKey, MaybeRefOrGetter } from 'vue';
 
 import { onKeyStroke } from '@vueuse/core';
-import {
-    hasInjectionContext,
-    inject,
-    onScopeDispose,
-    provide,
-    ref,
-    toRaw,
-    toRef,
-    watchEffect,
-} from 'vue';
+import { hasInjectionContext, inject, onScopeDispose, provide, ref, toRef, watchEffect } from 'vue';
 
 const GuardStack = ref<string[]>([]);
 const CurrentGuard = Symbol('CurrentGuard') as InjectionKey<string>;
@@ -43,17 +34,25 @@ export function useShortcut(
 }
 
 /**
- * Use this on a component to define a guard
+ * Define a guard so only instances of `useShortcut` inside this guard will be
+ * enabled, any `useShortcut` calls outside this guard will be ignored
  */
 export function useShortcutGuard(name: string, enabled: MaybeRefOrGetter<boolean> = true) {
     if (!hasInjectionContext())
         throw new Error('useShortcutGuard has to be used inside an injection context');
 
     const isEnabled = toRef(enabled);
-    const oldGuards = structuredClone(toRaw(GuardStack.value));
     provide(CurrentGuard, name);
-    watchEffect(() =>
-        isEnabled.value ? GuardStack.value.unshift(name) : (GuardStack.value = [...oldGuards])
-    );
-    onScopeDispose(() => (GuardStack.value = [...oldGuards]));
+    watchEffect(() => {
+        if (isEnabled.value) {
+            GuardStack.value.unshift(name);
+        } else if (GuardStack.value.at(-1) === name) {
+            GuardStack.value = GuardStack.value.slice(0, -1);
+        }
+    });
+    onScopeDispose(() => {
+        if (isEnabled.value && GuardStack.value.at(-1) === name) {
+            GuardStack.value = GuardStack.value.slice(0, -1);
+        }
+    });
 }
