@@ -11,11 +11,13 @@ import { canView, FileClassification } from '@/lib/classifyExt';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { Directory } from '@/lib/interop';
 import { HSVtoRGB, seededRandom } from '@/lib/utils';
+import { useListDirQuery } from '@/pages/Files.vue';
 import { useFileSelection } from '@/stores/useFileSelection';
 
 import { Card, CardTitle } from '@shadcn/card';
 
 const router = useRouter();
+const listDirQuery = useListDirQuery();
 const fileSelection = useFileSelection();
 
 const props = defineProps<{ entry: AnyDirectoryEntry; dir: string[]; perms: API.Permissions[] }>();
@@ -68,6 +70,26 @@ const openNewTab = () => {
     aTag.click();
     aTag.remove();
 };
+
+function onClick(event: MouseEvent) {
+    if (event.ctrlKey) {
+        fileSelection.toggleEntry(props.entry);
+    } else if (event.shiftKey && fileSelection.lastSelectedNonRange && listDirQuery.data.value) {
+        const rows = listDirQuery.data.value.entries;
+        const lastSelectedIndex = rows.indexOf(fileSelection.lastSelectedNonRange);
+        const curIndex = rows.indexOf(props.entry);
+        if (lastSelectedIndex >= 0 && curIndex >= 0 && lastSelectedIndex !== curIndex) {
+            const lowerBound = Math.min(lastSelectedIndex, curIndex);
+            const upperBound = Math.max(lastSelectedIndex, curIndex);
+            fileSelection.selectedFiles = new Set(rows.slice(lowerBound, upperBound + 1));
+            fileSelection.lastSelected = props.entry;
+            window.getSelection()?.empty();
+        }
+    } else {
+        fileSelection.selectNone();
+        fileSelection.setEntry(props.entry, true);
+    }
+}
 </script>
 
 <template>
@@ -75,9 +97,11 @@ const openNewTab = () => {
         <Card
             @pointerup.middle="openNewTab()"
             @dblclick.prevent="onDoubleClick()"
+            @click="onClick"
             role="gridcell"
-            @click="fileSelection.toggleEntry(entry)"
-            :class="{ isSelected }"
+            :data-state="isSelected ? 'selected' : undefined"
+            :data-active="fileSelection.lastSelected === entry ? 'active' : undefined"
+            class="gap-2 py-2 ring-0 ring-muted transition-all not-dark:outline hover:bg-muted"
         >
             <div class="thumbnail">
                 <picture :aria-hidden="!hasLoaded">
@@ -136,10 +160,12 @@ const openNewTab = () => {
 }
 
 [role='gridcell'] {
-    @apply gap-2 py-2 ring-0 ring-primary transition-all not-dark:outline;
-
-    &.isSelected {
-        @apply bg-input ring-3;
+    &[data-state='selected'] {
+        @apply bg-muted ring-3 ring-ring/80;
+    }
+    &[data-active='active'],
+    &[data-context-menu='open'] {
+        @apply ring-3 ring-primary;
     }
 
     [data-slot='card-title'] {

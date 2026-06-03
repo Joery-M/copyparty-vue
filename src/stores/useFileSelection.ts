@@ -1,3 +1,4 @@
+import { whenever } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { computed, shallowRef, triggerRef } from 'vue';
 
@@ -13,6 +14,23 @@ export const useFileSelection = defineStore('file-selection', () => {
     // Same as lastSelected but doesn't update after a range selection
     const lastSelectedNonRange = shallowRef<AnyDirectoryEntry | null>(null);
     const dirEntries = computed(() => listDirQuery.data.value?.entries ?? null);
+
+    // Whenever ls gets reloaded, try to keep the selection intact
+    whenever(
+        () => dirEntries.value,
+        (entries) => {
+            const newSelection = new Set<AnyDirectoryEntry>();
+            for (const entry of selectedFiles.value) {
+                const found = entries.find((v) => v.name === entry.name);
+                if (found) newSelection.add(found);
+            }
+            selectedFiles.value = newSelection;
+            lastSelected.value = entries.find((v) => v.name === lastSelected.value?.name) ?? null;
+            lastSelectedNonRange.value =
+                entries.find((v) => v.name === lastSelectedNonRange.value?.name) ?? null;
+        },
+        { flush: 'pre' }
+    );
 
     return {
         selectedFiles,

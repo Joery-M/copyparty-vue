@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { dedupedComputed } from '@/lib/utils';
+import { computed } from 'vue';
+
 import { useListDirQuery } from '@/pages/Files.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
@@ -10,7 +11,7 @@ const settings = useSettings();
 const listDirQuery = useListDirQuery();
 const routeState = useRouteState();
 
-const data = dedupedComputed(() => listDirQuery.data.value?.entries ?? null);
+const data = computed(() => listDirQuery.data.value?.entries ?? []);
 </script>
 
 <template>
@@ -29,7 +30,7 @@ const data = dedupedComputed(() => listDirQuery.data.value?.entries ?? null);
 @reference "@/style.css";
 
 .wrapper {
-    @apply grid gap-5 gap-x-8 transition-[grid-template-columns];
+    @apply grid gap-5 gap-x-8 transition-[grid-template-columns] max-lg:place-content-evenly;
     display: grid;
     grid-template-columns: repeat(
         auto-fill,

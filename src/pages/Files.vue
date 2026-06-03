@@ -147,7 +147,7 @@ useShortcut(
                 </template>
             </ContextMenuRoot>
             <template v-for="readme in readmes">
-                <MarkdownViewer :input="readme"></MarkdownViewer>
+                <MarkdownViewer class="p-6" :input="readme"></MarkdownViewer>
             </template>
         </TreeView>
     </div>

@@ -117,10 +117,10 @@ const rowSelection = computed<RowSelectionState>({
     set: (v) => fileSelection.setSelectedNames(Object.keys(v)),
 });
 
-const data = dedupedComputed(() => listDirQuery.data.value?.entries ?? null);
+const data = computed(() => listDirQuery.data.value?.entries ?? []);
 const table = computed(() =>
     useVueTable({
-        data: computed(() => data.value ?? []),
+        data,
         state: {
             sorting: sorting.value,
             rowSelection: rowSelection.value,
@@ -190,7 +190,7 @@ watch(
                 <FileListRow v-for="row in table.getRowModel().rows" :key="row.id" :row :table />
             </TableBody>
         </Table>
-        <div class="paginator" v-if="data != null && data.length > 50">
+        <div class="paginator" v-if="data.length > 50">
             <Paginator
                 v-model:page-index="pageIndex"
                 v-model:page-size="settings.fileView.pageSize"

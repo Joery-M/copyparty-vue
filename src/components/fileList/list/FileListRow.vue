@@ -165,7 +165,11 @@ td {
 }
 tr {
     @apply ring-primary ring-0 ring-inset transition-all duration-150 last:rounded-b
-            hover:bg-muted/50 data-[state=selected]:bg-muted border-b;
+            hover:bg-muted/50 border-b;
+
+    &[data-state='selected'] {
+        @apply bg-muted;
+    }
     &[data-context-menu='open'],
     &[data-active='active'] {
         @apply outline-none ring-1 border-b-transparent;
