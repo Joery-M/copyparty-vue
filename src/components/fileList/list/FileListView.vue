@@ -211,6 +211,9 @@ watch(
 th {
     @apply text-center not-last:border-r px-0;
 }
+table:has(tbody > tr:first-child[data-active='active']) thead > tr {
+    @apply border-b-transparent;
+}
 
 .paginator {
     @apply bg-muted/50 border-t font-medium [&>tr]:last:border-b-0 sticky left-0 w-full p-2;
