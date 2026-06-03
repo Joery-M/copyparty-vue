@@ -36,19 +36,16 @@ useShortcutGuard('viewer');
         <DrawerPortal>
             <DrawerOverlay class="fixed bg-black/40 inset-0 backdrop-blur-[1px]" />
             <DrawerContent
-                class="bg-background flex flex-col rounded-t-[10px] h-full mt-24 max-h-[90%] fixed bottom-0 left-0 right-0 outline-accent outline-2 overflow-y-auto"
+                class="bg-background flex flex-col rounded-t-[10px] h-full mt-24 max-h-[90%] fixed bottom-0 left-0 right-0 outline-accent outline-2"
             >
-                <FocusScope trapped>
+                <FocusScope trapped class="overflow-y-auto">
                     <DrawerTitle class="text-lg font-bold w-full text-center my-3">
                         {{ title }}
                     </DrawerTitle>
                     <VisuallyHidden>
                         <DrawerDescription>{{ description }}</DrawerDescription>
                     </VisuallyHidden>
-                    <div
-                        class="p-4 rounded-t-[10px] focus-visible:outline-none **:z-10"
-                        tabindex="-1"
-                    >
+                    <div class="p-4 rounded-t-[10px] focus-visible:outline-none **:z-10">
                         <button
                             class="z-10 fixed right-0 top-0 size-13 flex justify-center items-center opacity-70 hover:opacity-100 cursor-pointer"
                             @click="isOpen = false"
