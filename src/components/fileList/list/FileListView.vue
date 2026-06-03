@@ -21,7 +21,8 @@ import ColumnOptions from '@/components/fileList/list/ColumnOptions.vue';
 import SortableHeader from '@/components/fileList/list/SortableHeader.vue';
 import { useLoadingState } from '@/lib/api';
 import { dedupedComputed } from '@/lib/utils';
-import { useFileSelection, useListDirQuery } from '@/pages/Files.vue';
+import { useListDirQuery } from '@/pages/Files.vue';
+import { useFileSelection } from '@/stores/useFileSelection.ts';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 

@@ -12,7 +12,7 @@ import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { formatFileSize, formatTime } from '@/lib/format.ts';
 import { Directory } from '@/lib/interop';
 import { dedupedComputed, getTableCellFormat, TableCellFormat } from '@/lib/utils.ts';
-import { useFileSelection } from '@/pages/Files.vue';
+import { useFileSelection } from '@/stores/useFileSelection.ts';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings.ts';
 
@@ -55,7 +55,7 @@ function onClick(event: MouseEvent) {
         const lastSelectedIndex = rows.findIndex((v) =>
             Object.is(v.original, fileSelection.lastSelectedNonRange)
         );
-        const curIndex = props.row.index;
+        const curIndex = rows.indexOf(props.row);
         if (lastSelectedIndex >= 0 && curIndex >= 0 && lastSelectedIndex !== curIndex) {
             const lowerBound = Math.min(lastSelectedIndex, curIndex);
             const upperBound = Math.max(lastSelectedIndex, curIndex);

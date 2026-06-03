@@ -11,7 +11,7 @@ import { canView, FileClassification } from '@/lib/classifyExt';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { Directory } from '@/lib/interop';
 import { HSVtoRGB, seededRandom } from '@/lib/utils';
-import { useFileSelection } from '@/pages/Files.vue';
+import { useFileSelection } from '@/stores/useFileSelection';
 
 import { Card, CardTitle } from '@shadcn/card';
 

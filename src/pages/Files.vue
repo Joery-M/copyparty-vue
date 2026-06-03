@@ -1,10 +1,7 @@
 <script lang="ts">
 import { isEqual } from '@ver0/deep-equal';
-import { defineStore } from 'pinia';
 import { onBeforeRouteUpdate } from 'vue-router';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
-
-import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { API } from '@/lib/api';
 import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
@@ -21,75 +18,11 @@ export const useListDirQuery = defineColadaLoader({
     errors: true,
     lazy: true,
 });
-
-export const useFileSelection = defineStore('file-selection', () => {
-    const listDirQuery = useListDirQuery();
-
-    const selectedFiles = shallowRef(new Set<AnyDirectoryEntry>());
-    const lastSelected = shallowRef<AnyDirectoryEntry | null>(null);
-    // Same as lastSelected but doesn't update after a range selection
-    const lastSelectedNonRange = shallowRef<AnyDirectoryEntry | null>(null);
-    const dirEntries = computed(() => listDirQuery.data.value?.entries ?? null);
-
-    return {
-        selectedFiles,
-        lastSelected,
-        lastSelectedNonRange,
-        invertSelection() {
-            if (!dirEntries.value) return;
-            const newSelection = new Set(dirEntries.value);
-            selectedFiles.value.forEach((f) => newSelection.delete(f));
-            selectedFiles.value = newSelection;
-        },
-        selectAll() {
-            if (!dirEntries.value) return;
-            selectedFiles.value = new Set(dirEntries.value);
-        },
-        selectNone() {
-            lastSelected.value = null;
-            lastSelectedNonRange.value = lastSelected.value;
-            selectedFiles.value = new Set();
-        },
-        setSelectedNames(names: string[]) {
-            if (!dirEntries.value) return;
-            selectedFiles.value = new Set(
-                dirEntries.value.filter(({ name }) => names.includes(name))
-            );
-        },
-        toggleEntry(entry: AnyDirectoryEntry) {
-            selectedFiles.value.has(entry)
-                ? selectedFiles.value.delete(entry)
-                : selectedFiles.value.add(entry);
-            triggerRef(selectedFiles);
-            lastSelected.value = selectedFiles.value.size === 0 ? null : entry;
-            lastSelectedNonRange.value = lastSelected.value;
-        },
-        setEntry(entry: AnyDirectoryEntry, selected: boolean) {
-            if (selected) {
-                if (!selectedFiles.value.has(entry)) {
-                    selectedFiles.value.add(entry);
-                    triggerRef(selectedFiles);
-                    lastSelected.value = entry;
-                    lastSelectedNonRange.value = lastSelected.value;
-                }
-            } else {
-                if (selectedFiles.value.has(entry)) {
-                    selectedFiles.value.delete(entry);
-                    triggerRef(selectedFiles);
-                    if (selectedFiles.value.size === 0) {
-                        lastSelected.value = null;
-                        lastSelectedNonRange.value = lastSelected.value;
-                    }
-                }
-            }
-        },
-    };
-});
 </script>
 
 <script setup lang="ts">
 import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
-import { computed, defineAsyncComponent, shallowRef, triggerRef } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import FileViewContextMenu from '@/components/fileList/FileViewContextMenu.vue';
@@ -101,6 +34,7 @@ import LoginDialog from '@/components/LoginDialog.vue';
 import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
+import { useFileSelection } from '@/stores/useFileSelection.ts';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
