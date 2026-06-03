@@ -26,10 +26,15 @@ export const useFileSelection = defineStore('file-selection', () => {
     const listDirQuery = useListDirQuery();
 
     const selectedFiles = shallowRef(new Set<AnyDirectoryEntry>());
+    const lastSelected = shallowRef<AnyDirectoryEntry | null>(null);
+    // Same as lastSelected but doesn't update after a range selection
+    const lastSelectedNonRange = shallowRef<AnyDirectoryEntry | null>(null);
     const dirEntries = computed(() => listDirQuery.data.value?.entries ?? null);
 
     return {
         selectedFiles,
+        lastSelected,
+        lastSelectedNonRange,
         invertSelection() {
             if (!dirEntries.value) return;
             const newSelection = new Set(dirEntries.value);
@@ -41,6 +46,8 @@ export const useFileSelection = defineStore('file-selection', () => {
             selectedFiles.value = new Set(dirEntries.value);
         },
         selectNone() {
+            lastSelected.value = null;
+            lastSelectedNonRange.value = lastSelected.value;
             selectedFiles.value = new Set();
         },
         setSelectedNames(names: string[]) {
@@ -53,7 +60,28 @@ export const useFileSelection = defineStore('file-selection', () => {
             selectedFiles.value.has(entry)
                 ? selectedFiles.value.delete(entry)
                 : selectedFiles.value.add(entry);
-            triggerRef(selectedFiles); // Dont ask, idk
+            triggerRef(selectedFiles);
+            lastSelected.value = selectedFiles.value.size === 0 ? null : entry;
+            lastSelectedNonRange.value = lastSelected.value;
+        },
+        setEntry(entry: AnyDirectoryEntry, selected: boolean) {
+            if (selected) {
+                if (!selectedFiles.value.has(entry)) {
+                    selectedFiles.value.add(entry);
+                    triggerRef(selectedFiles);
+                    lastSelected.value = entry;
+                    lastSelectedNonRange.value = lastSelected.value;
+                }
+            } else {
+                if (selectedFiles.value.has(entry)) {
+                    selectedFiles.value.delete(entry);
+                    triggerRef(selectedFiles);
+                    if (selectedFiles.value.size === 0) {
+                        lastSelected.value = null;
+                        lastSelectedNonRange.value = lastSelected.value;
+                    }
+                }
+            }
         },
     };
 });

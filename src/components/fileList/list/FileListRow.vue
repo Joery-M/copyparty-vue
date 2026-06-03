@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Row } from '@tanstack/vue-table';
+import type { Row, Table } from '@tanstack/vue-table';
 
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -12,19 +12,21 @@ import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { formatFileSize, formatTime } from '@/lib/format.ts';
 import { Directory } from '@/lib/interop';
 import { dedupedComputed, getTableCellFormat, TableCellFormat } from '@/lib/utils.ts';
+import { useFileSelection } from '@/pages/Files.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings.ts';
 
 import FileListRowOptions from './FileListRowOptions.vue';
 
-import { TableCell, TableCellGeneric, TableRow } from '@shadcn/table';
+import { TableCell, TableCellGeneric } from '@shadcn/table';
 
 const router = useRouter();
 const routeState = useRouteState();
+const fileSelection = useFileSelection();
 const settings = useSettings();
 const sizeFormat = dedupedComputed(() => settings.format.fileSizes);
 
-const props = defineProps<{ row: Row<AnyDirectoryEntry> }>();
+const props = defineProps<{ row: Row<AnyDirectoryEntry>; table: Table<AnyDirectoryEntry> }>();
 const entry = computed(() => props.row.original);
 
 function onDoubleClick() {
@@ -44,14 +46,39 @@ function onDoubleClick() {
         location.href = getApiUrl(entry.fullPath);
     }
 }
+
+function onClick(event: MouseEvent) {
+    if (event.ctrlKey) {
+        fileSelection.toggleEntry(entry.value);
+    } else if (event.shiftKey && fileSelection.lastSelectedNonRange) {
+        const rows = props.table.getRowModel().rows;
+        const lastSelectedIndex = rows.findIndex((v) =>
+            Object.is(v.original, fileSelection.lastSelectedNonRange)
+        );
+        const curIndex = props.row.index;
+        if (lastSelectedIndex >= 0 && curIndex >= 0 && lastSelectedIndex !== curIndex) {
+            const lowerBound = Math.min(lastSelectedIndex, curIndex);
+            const upperBound = Math.max(lastSelectedIndex, curIndex);
+            fileSelection.selectedFiles = new Set(
+                rows.slice(lowerBound, upperBound + 1).map((v) => v.original)
+            );
+            fileSelection.lastSelected = props.row.original;
+            window.getSelection()?.empty();
+        }
+    } else {
+        fileSelection.selectNone();
+        fileSelection.setEntry(entry.value, true);
+    }
+}
 </script>
 
 <template>
-    <ContextMenuTarget :data="entry" @open="row.toggleSelected(true)">
-        <TableRow
-            tabindex="-1"
+    <ContextMenuTarget :data="entry" @open="fileSelection.setEntry(entry, true)">
+        <tr
+            tabindex="0"
             :data-state="row.getIsSelected() ? 'selected' : undefined"
-            @click="row.toggleSelected()"
+            :data-active="fileSelection.lastSelected === entry ? 'active' : undefined"
+            @click="onClick"
             @dblclick.prevent="onDoubleClick()"
         >
             <template v-for="cell in row.getVisibleCells()" :key="cell.id" v-once>
@@ -122,7 +149,7 @@ function onDoubleClick() {
                     {{ value }}
                 </TableCellGeneric>
             </template>
-        </TableRow>
+        </tr>
     </ContextMenuTarget>
 </template>
 
@@ -137,13 +164,14 @@ td {
     }
 }
 tr {
-    @apply ring-primary ring-0 ring-inset transition-all last:rounded-b;
-    &:focus,
-    &:focus-visible {
+    @apply ring-primary ring-0 ring-inset transition-all duration-150 last:rounded-b
+            hover:bg-muted/50 data-[state=selected]:bg-muted border-b;
+    &[data-context-menu='open'],
+    &[data-active='active'] {
         @apply outline-none ring-1 border-b-transparent;
     }
-    &:has(+ tr:focus),
-    &:has(+ tr:focus-visible) {
+    &:has(+ tr[data-context-menu='open']),
+    &:has(+ tr[data-active='active']) {
         @apply border-b-transparent;
     }
 }

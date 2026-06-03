@@ -29,6 +29,7 @@ export interface Point {
 }
 type ContextMenuRootContext = {
     data: DeepReadonly<ShallowRef<any>>;
+    isOpen: DeepReadonly<ShallowRef<boolean>>;
     open(data: any, point: Point, elem: HTMLElement): void;
 };
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Slot, useForwardExpose } from 'reka-ui';
-import { nextTick, ref, toRefs } from 'vue';
+import { computed, nextTick, ref, toRaw, toRefs } from 'vue';
 
 import { injectCustomContextMenuRootContext } from './ContextMenuRoot.vue';
 
@@ -17,6 +17,9 @@ const emit = defineEmits<{ open: [] }>();
 const { forwardRef, currentElement } = useForwardExpose();
 const props = defineProps<{ data: any; disabled?: boolean }>();
 const { disabled } = toRefs(props);
+const isOpen = computed(
+    () => toRaw(rootContext.data.value) === props.data && rootContext.isOpen.value
+);
 
 const rootContext = injectCustomContextMenuRootContext();
 
@@ -75,6 +78,7 @@ async function handlePointerEvent(event: PointerEvent) {
             WebkitTouchCallout: 'none',
             pointerEvents: 'auto',
         }"
+        :data-context-menu="isOpen ? 'open' : undefined"
     >
         <slot />
     </Slot>

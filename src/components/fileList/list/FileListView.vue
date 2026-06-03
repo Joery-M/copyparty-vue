@@ -186,7 +186,7 @@ watch(
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <FileListRow v-for="row in table.getRowModel().rows" :key="row.id" :row />
+                <FileListRow v-for="row in table.getRowModel().rows" :key="row.id" :row :table />
             </TableBody>
         </Table>
         <div class="paginator" v-if="data != null && data.length > 50">

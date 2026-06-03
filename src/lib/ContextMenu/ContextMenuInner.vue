@@ -29,6 +29,7 @@ const curData = shallowRef<any>();
 
 provideCustomContextMenuRootContext({
     data: readonly(curData),
+    isOpen: readonly(originalRootContext.open),
     open(data, point, elem) {
         originalRootContext.triggerElement.value = elem;
         popperRootContext.anchor.value = {
