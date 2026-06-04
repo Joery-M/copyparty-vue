@@ -2,9 +2,9 @@
 import type { _JSONPrimitive } from '@pinia/colada';
 import type { HTMLAttributes } from 'vue';
 
+import { Pause, Play, Volume, Volume1, Volume2, VolumeOff } from '@lucide/vue';
 import { useQueryCache } from '@pinia/colada';
 import { useEventListener, watchThrottled } from '@vueuse/core';
-import { Pause, Play, Volume, Volume1, Volume2, VolumeOff } from 'lucide-vue-next';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watchEffect } from 'vue';
 
 import type { File } from '@/lib/interop';

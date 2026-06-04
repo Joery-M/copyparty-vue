@@ -2,6 +2,16 @@
 import type { ComponentPublicInstance } from 'vue';
 
 import {
+    Fullscreen,
+    Maximize,
+    Minimize,
+    PaintBucket,
+    RotateCcw,
+    RotateCw,
+    ZoomIn,
+    ZoomOut,
+} from '@lucide/vue';
+import {
     refDebounced,
     refWithControl,
     useElementBounding,
@@ -14,16 +24,6 @@ import {
     useTimeoutFn,
     whenever,
 } from '@vueuse/core';
-import {
-    Fullscreen,
-    Maximize,
-    Minimize,
-    PaintBucket,
-    RotateCcw,
-    RotateCw,
-    ZoomIn,
-    ZoomOut,
-} from 'lucide-vue-next';
 import { computed, ref, useTemplateRef, watchEffect } from 'vue';
 
 import type { File } from '@/lib/interop';

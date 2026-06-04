@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Upload } from '@lucide/vue';
 import { useFileDialog } from '@vueuse/core';
-import { Upload } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
 import {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Settings, Undo2 } from 'lucide-vue-next';
+import { Settings, Undo2 } from '@lucide/vue';
 import { TagsInputItemText } from 'reka-ui';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
+import { ChevronRight } from '@lucide/vue';
 import { useQueryState } from '@pinia/colada';
-import { ChevronRight } from 'lucide-vue-next';
 import { watch } from 'vue';
 
 import { useLoadingState } from '@/lib/api';

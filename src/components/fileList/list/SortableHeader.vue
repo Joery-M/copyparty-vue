@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Column } from '@tanstack/vue-table';
 
-import { SortAsc, SortDesc } from 'lucide-vue-next';
+import { SortAsc, SortDesc } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { AnyDirectoryEntry } from '@/lib/interop';

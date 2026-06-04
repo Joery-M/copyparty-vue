@@ -3,7 +3,7 @@ import type { ContextMenuRadioItemEmits, ContextMenuRadioItemProps } from 'reka-
 
 import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
-import { CheckIcon } from 'lucide-vue-next'
+import { CheckIcon } from '@lucide/vue'
 import {
   ContextMenuItemIndicator,
   ContextMenuRadioItem,

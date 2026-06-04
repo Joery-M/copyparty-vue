@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Row } from '@tanstack/vue-table';
 
+import { MoreHorizontal } from '@lucide/vue';
 import { unrefElement } from '@vueuse/core';
-import { MoreHorizontal } from 'lucide-vue-next';
 import { useTemplateRef } from 'vue';
 
 import type { AnyDirectoryEntry } from '@/lib/interop';

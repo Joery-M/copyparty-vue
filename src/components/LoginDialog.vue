@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Lock } from '@lucide/vue';
 import { toTypedSchema } from '@vee-validate/valibot';
-import { Lock } from 'lucide-vue-next';
 import { VisuallyHidden } from 'reka-ui';
 import * as v from 'valibot';
 import { useForm } from 'vee-validate';

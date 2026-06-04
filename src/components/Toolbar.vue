@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { ArrowUp, Menu, User2 } from '@lucide/vue';
 import { useEventBus, useFileDialog, useMediaQuery } from '@vueuse/core';
-import { ArrowUp, Menu, User2 } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 import Tooltip from '@/components/Tooltip.vue';

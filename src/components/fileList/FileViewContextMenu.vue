@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Download, ExternalLink, FileVideo, Image, TextInitial } from '@lucide/vue';
 import { useFileDialog } from '@vueuse/core';
-import { Download, ExternalLink, FileVideo, Image, TextInitial } from 'lucide-vue-next';
 import { injectMenuContext } from 'reka-ui/internal';
 import { computed } from 'vue';
 

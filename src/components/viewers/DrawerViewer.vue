@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { X } from 'lucide-vue-next';
+import { X } from '@lucide/vue';
 import { FocusScope, VisuallyHidden } from 'reka-ui';
 import {
     DrawerContent,

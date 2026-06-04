@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Grid2X2, List } from '@lucide/vue';
 import { usePreferredReducedMotion } from '@vueuse/core';
-import { Grid2X2, List } from 'lucide-vue-next';
 
 import { refWithInit } from '@/lib/utils';
 import { useSettings } from '@/stores/useSettings';
