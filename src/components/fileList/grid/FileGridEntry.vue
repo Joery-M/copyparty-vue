@@ -8,7 +8,6 @@ import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { getApiUrl } from '@/lib/api';
 import { canView, FileClassification } from '@/lib/classifyExt';
-import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { Directory } from '@/lib/interop';
 import { deselectAll, HSVtoRGB, seededRandom } from '@/lib/utils';
 import { useFileSelection } from '@/stores/useFileSelection';
@@ -94,52 +93,47 @@ function onClick(event: MouseEvent) {
 </script>
 
 <template>
-    <ContextMenuTarget :data="entry" @open="fileSelection.setEntry(entry, true)">
-        <div
-            @pointerup.middle="openNewTab()"
-            @dblclick.prevent="onDoubleClick()"
-            @click="onClick"
-            role="gridcell"
-            :data-state="isSelected ? 'selected' : undefined"
-            :data-active="fileSelection.lastSelected === entry ? 'active' : undefined"
-            class="entry group/card"
-        >
-            <div class="thumbnail">
-                <picture :aria-hidden="!hasLoaded">
-                    <source :srcset="imageUrls.webp" type="image/webp" />
-                    <source :srcset="imageUrls.jxl" type="image/jxl" />
-                    <img
-                        :src="imageUrls.jpeg"
-                        aria-labelledby="filename"
-                        loading="lazy"
-                        fetchpriority="low"
-                        @load="hasLoaded = true"
-                    />
-                </picture>
-                <div
-                    class="fallback"
-                    role="image"
+    <div
+        @pointerup.middle="openNewTab()"
+        @dblclick.prevent="onDoubleClick()"
+        @click="onClick"
+        role="gridcell"
+        :data-state="isSelected ? 'selected' : undefined"
+        :data-active="fileSelection.lastSelected === entry ? 'active' : undefined"
+        class="entry group/card"
+        v-context-menu="{ data: entry, onOpen: () => fileSelection.setEntry(entry, true) }"
+    >
+        <div class="thumbnail">
+            <picture :aria-hidden="!hasLoaded">
+                <source :srcset="imageUrls.webp" type="image/webp" />
+                <source :srcset="imageUrls.jxl" type="image/jxl" />
+                <img
+                    :src="imageUrls.jpeg"
                     aria-labelledby="filename"
-                    :style="{
-                        backgroundColor: `rgb(${fallbackBg})`,
-                        opacity: hasLoaded ? 0 : 1,
-                    }"
-                    :aria-hidden="hasLoaded"
-                >
-                    <p aria-hidden="true" :style="{ color: `rgb(${fallbackText})` }">
-                        {{
-                            entry.classification === FileClassification.Directory
-                                ? $t('folder')
-                                : ext
-                        }}
-                    </p>
-                </div>
-            </div>
-            <div class="entry-title">
-                <label id="filename">{{ entry.tags.get('title') || entry.name }}</label>
+                    loading="lazy"
+                    fetchpriority="low"
+                    @load="hasLoaded = true"
+                />
+            </picture>
+            <div
+                class="fallback"
+                role="image"
+                aria-labelledby="filename"
+                :style="{
+                    backgroundColor: `rgb(${fallbackBg})`,
+                    opacity: hasLoaded ? 0 : 1,
+                }"
+                :aria-hidden="hasLoaded"
+            >
+                <p aria-hidden="true" :style="{ color: `rgb(${fallbackText})` }">
+                    {{ entry.classification === FileClassification.Directory ? $t('folder') : ext }}
+                </p>
             </div>
         </div>
-    </ContextMenuTarget>
+        <div class="entry-title">
+            <label id="filename">{{ entry.tags.get('title') || entry.name }}</label>
+        </div>
+    </div>
 </template>
 
 <style scoped>

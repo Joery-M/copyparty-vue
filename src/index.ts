@@ -7,6 +7,7 @@ import { createI18n } from 'vue-i18n';
 import { DataLoaderPlugin } from 'vue-router/experimental';
 
 import App from './App.vue';
+import { vContextMenu } from './lib/ContextMenu/ContextMenuDirective.ts';
 import { router } from './router';
 
 const pinia = createPinia();
@@ -23,4 +24,5 @@ createApp(App)
     .use(PiniaColada)
     .use(DataLoaderPlugin, { router })
     .use(router)
+    .directive('context-menu', vContextMenu)
     .mount('#app');

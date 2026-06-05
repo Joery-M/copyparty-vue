@@ -144,3 +144,8 @@
 [data-sonner-toast][data-styled='true'] [data-description] {
     color: unset !important;
 }
+
+[data-context-menu] {
+    -webkit-touch-callout: none;
+    pointer-events: auto;
+}

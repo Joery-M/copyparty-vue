@@ -5,7 +5,6 @@ import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
 import { API } from '@/lib/api';
 import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
-import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { useShortcut } from '@/lib/keyboard.ts';
 import { useAuth } from '@/stores/useAuth';
 import { useHandlers } from '@/stores/useHandlers.ts';
@@ -138,21 +137,19 @@ async function onCopy(event: ClipboardEvent) {
         <Separator class="mb-2" />
         <TreeView wrapper-class="inline-flex flex-1" class="flex flex-col gap-3" @copy="onCopy">
             <ContextMenuRoot>
-                <ContextMenuTarget :data="undefined">
-                    <div class="flex flex-col gap-3 p-6" :class="{ 'min-h-full': !readmes.length }">
-                        <div class="flex sm:items-center sm:h-7 max-sm:flex-col max-sm:gap-2">
-                            <RouteBreadCrumb class="flex-1" />
-                            <ViewSelector v-if="!canOnlyUpload" />
-                        </div>
-                        <OnlyUploadCard
-                            v-if="canOnlyUpload"
-                            :file-over="dropzone.isOverDropZone.value"
-                        />
-                        <FileListView v-else-if="settings.fileView.type === 'list'" />
-                        <FileGridView v-else-if="settings.fileView.type === 'grid'" />
-                        <Separator v-if="readmes.length" class="my-5" />
+                <div class="flex flex-col gap-3 p-6" :class="{ 'min-h-full': !readmes.length }">
+                    <div class="flex sm:items-center sm:h-7 max-sm:flex-col max-sm:gap-2">
+                        <RouteBreadCrumb class="flex-1" />
+                        <ViewSelector v-if="!canOnlyUpload" />
                     </div>
-                </ContextMenuTarget>
+                    <OnlyUploadCard
+                        v-if="canOnlyUpload"
+                        :file-over="dropzone.isOverDropZone.value"
+                    />
+                    <FileListView v-else-if="settings.fileView.type === 'list'" />
+                    <FileGridView v-else-if="settings.fileView.type === 'grid'" />
+                    <Separator v-if="readmes.length" class="my-5" />
+                </div>
                 <template v-slot:menu="{ data }">
                     <FileViewContextMenu
                         :dir="routeState.dir"

@@ -17,22 +17,3 @@ defineOptions({ inheritAttrs: false });
         </ContextMenuInner>
     </ContextMenuRoot>
 </template>
-
-<script lang="ts">
-import type { DeepReadonly, ShallowRef } from 'vue';
-
-import { createContext } from 'reka-ui';
-
-export interface Point {
-    x: number;
-    y: number;
-}
-type ContextMenuRootContext = {
-    data: DeepReadonly<ShallowRef<any>>;
-    isOpen: DeepReadonly<ShallowRef<boolean>>;
-    open(data: any, point: Point, elem: HTMLElement): void;
-};
-
-export const [injectCustomContextMenuRootContext, provideCustomContextMenuRootContext] =
-    createContext<ContextMenuRootContext>('CustomContextMenuRoot');
-</script>

@@ -7,7 +7,7 @@ import { useTemplateRef } from 'vue';
 
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
-import { injectCustomContextMenuRootContext } from '@/lib/ContextMenu/ContextMenuRoot.vue';
+import { injectCustomContextMenuRootContext } from '@/lib/ContextMenu/utils';
 
 import { Button } from '@shadcn/button';
 
@@ -19,7 +19,11 @@ const rootContext = injectCustomContextMenuRootContext();
 function handleClick(el: HTMLButtonElement) {
     const bounds = unrefElement(btn)?.getBoundingClientRect();
     if (!bounds) return;
-    rootContext.open(props.row.original, { x: bounds.x + 5, y: bounds.y + bounds.height + 5 }, el);
+    rootContext.open(
+        { data: props.row.original },
+        { x: bounds.x + 5, y: bounds.y + bounds.height + 5 },
+        el
+    );
     props.row.toggleSelected(true);
 }
 </script>
