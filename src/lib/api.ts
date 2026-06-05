@@ -151,27 +151,27 @@ export namespace API {
         dir?: string | null;
     }
 
-    export function getListDirectory(path: string[], signal?: AbortSignal) {
+    export function getListDirectory(
+        path: string[],
+        signal?: AbortSignal
+    ): Promise<ListDirectoryParsedResponse> {
         return fetch(getApiUrl(path, { ls: '' }), {
             signal,
             headers: { Accept: 'application/json' },
         })
             .then((r) => extractError(r))
             .then((r) => jsonResponse<ListDirectoryResponse>(r))
-            .then(
-                (res) =>
-                    ({
-                        entries: [
-                            res.dirs.map((entry) => new DirectoryEntry(path, entry)),
-                            res.files.map((entry) => new FileEntry(path, entry)),
-                        ].flat() as AnyDirectoryEntry[],
-                        perms: res.perms as Permissions[],
-                        readmes: res.readmes,
-                        tags: res.taglist,
-                        sort: res.cfg?.dsort,
-                        dir: res.dir,
-                    }) satisfies ListDirectoryParsedResponse
-            );
+            .then((res) => ({
+                entries: [
+                    res.dirs.map((entry) => new DirectoryEntry(path, entry)),
+                    res.files.map((entry) => new FileEntry(path, entry)),
+                ].flat() as AnyDirectoryEntry[],
+                perms: res.perms as Permissions[],
+                readmes: res.readmes,
+                tags: res.taglist,
+                sort: res.cfg?.dsort,
+                dir: res.dir,
+            }));
     }
 
     export const getListDirectoryQuery = defineQueryOptions((dir: string[]) => ({

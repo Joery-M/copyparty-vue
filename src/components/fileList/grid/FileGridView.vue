@@ -19,9 +19,9 @@ const data = computed(() => listDirQuery.data.value?.entries ?? []);
         <FileGridEntry
             v-for="entry in data"
             :key="entry.name"
-            :entry
             :dir="routeState.dir"
-            :perms="listDirQuery.data.value?.perms ?? []"
+            :data="() => data"
+            :entry
         />
     </div>
 </template>

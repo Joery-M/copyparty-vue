@@ -6,21 +6,21 @@ import { useRouter } from 'vue-router';
 
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
-import { API, getApiUrl } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 import { canView, FileClassification } from '@/lib/classifyExt';
 import ContextMenuTarget from '@/lib/ContextMenu/ContextMenuTarget.vue';
 import { Directory } from '@/lib/interop';
 import { deselectAll, HSVtoRGB, seededRandom } from '@/lib/utils';
-import { useListDirQuery } from '@/pages/Files.vue';
 import { useFileSelection } from '@/stores/useFileSelection';
 
-import { Card, CardTitle } from '@shadcn/card';
-
 const router = useRouter();
-const listDirQuery = useListDirQuery();
 const fileSelection = useFileSelection();
 
-const props = defineProps<{ entry: AnyDirectoryEntry; dir: string[]; perms: API.Permissions[] }>();
+const props = defineProps<{
+    entry: AnyDirectoryEntry;
+    dir: string[];
+    data: () => AnyDirectoryEntry[];
+}>();
 
 const isSelected = computed(() => fileSelection.selectedFiles.has(toRaw(props.entry)));
 
@@ -74,8 +74,9 @@ const openNewTab = () => {
 function onClick(event: MouseEvent) {
     if (event.ctrlKey) {
         fileSelection.toggleEntry(props.entry);
-    } else if (event.shiftKey && fileSelection.lastSelectedNonRange && listDirQuery.data.value) {
-        const rows = listDirQuery.data.value.entries;
+    } else if (event.shiftKey && fileSelection.lastSelectedNonRange) {
+        // Not so fancy inject
+        const rows = props.data();
         const lastSelectedIndex = rows.indexOf(fileSelection.lastSelectedNonRange);
         const curIndex = rows.indexOf(props.entry);
         if (lastSelectedIndex >= 0 && curIndex >= 0 && lastSelectedIndex !== curIndex) {
@@ -94,14 +95,14 @@ function onClick(event: MouseEvent) {
 
 <template>
     <ContextMenuTarget :data="entry" @open="fileSelection.setEntry(entry, true)">
-        <Card
+        <div
             @pointerup.middle="openNewTab()"
             @dblclick.prevent="onDoubleClick()"
             @click="onClick"
             role="gridcell"
             :data-state="isSelected ? 'selected' : undefined"
             :data-active="fileSelection.lastSelected === entry ? 'active' : undefined"
-            class="gap-2 py-2 ring-0 ring-muted transition-all not-dark:outline hover:bg-muted"
+            class="entry group/card"
         >
             <div class="thumbnail">
                 <picture :aria-hidden="!hasLoaded">
@@ -134,10 +135,10 @@ function onClick(event: MouseEvent) {
                     </p>
                 </div>
             </div>
-            <CardTitle>
+            <div class="entry-title">
                 <label id="filename">{{ entry.tags.get('title') || entry.name }}</label>
-            </CardTitle>
-        </Card>
+            </div>
+        </div>
     </ContextMenuTarget>
 </template>
 
@@ -159,7 +160,9 @@ function onClick(event: MouseEvent) {
     }
 }
 
-[role='gridcell'] {
+.entry {
+    @apply bg-card text-card-foreground overflow-hidden rounded-lg text-xs/relaxed has-[>img:first-child]:pt-0 has-[>.thumbnail:first-child]:pt-0 *:[img:first-child]:rounded-t-lg *:[img:last-child]:rounded-b-lg flex flex-col gap-2 py-2 ring-0 ring-muted transition-all not-dark:outline hover:bg-muted;
+
     &[data-state='selected'] {
         @apply bg-muted ring-3 ring-ring/80;
     }
@@ -167,8 +170,8 @@ function onClick(event: MouseEvent) {
         @apply ring-3 ring-primary;
     }
 
-    [data-slot='card-title'] {
-        @apply flex-1 grid place-items-center w-full;
+    .entry-title {
+        @apply text-sm font-medium flex-1 grid place-items-center w-full;
         > label {
             @apply line-clamp-2 px-2 text-center text-base;
             word-break: break-word;
