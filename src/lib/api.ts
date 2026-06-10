@@ -22,7 +22,7 @@ const baseUrl = stringifyParsedURL({
 
 export function getApiUrl(strings: string[], params?: QueryObject, noEncode = false): string {
     const parts = Array.isArray(strings) ? strings : [strings];
-    const resolved = resolveURL(baseUrl, ...(noEncode ? parts.map(encodeURIComponent) : parts));
+    const resolved = resolveURL(baseUrl, ...(noEncode ? parts : parts.map(encodeURIComponent)));
     if (params) {
         return withQuery(resolved, params);
     } else {

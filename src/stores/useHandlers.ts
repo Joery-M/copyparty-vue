@@ -4,7 +4,6 @@ import { useQueryCache } from '@pinia/colada';
 import { defineStore } from 'pinia';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { toast } from 'vue-sonner';
 
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
@@ -114,44 +113,22 @@ export const useHandlers = defineStore('handlers', () => {
             }
             queryCache.invalidateQueries({ key: ['full-tree'] }, true);
         },
-        // async addEntriesToDataTransfer(entries: AnyDirectoryEntry[], dt: DataTransfer) {
-        //     dt.clearData();
-        //     // dt.items.add(entries.map((v) => getApiUrl(v.fullPath)).join('\n'), 'text/plain');
-        //     // dt.items.add(entries.map((v) => getApiUrl(v.fullPath)).join('\n'), 'text/uri-list');
-        //     // console.log(dt.items);
-
-        //     const prom$ = entries.map(async (entry) => {
-        //         const [contentType, blob] = await fetch(getApiUrl(entry.fullPath, { dl: '' }), {
-        //             headers: { Accept: '*/*' },
-        //         }).then(async (r) => [r.headers.get('content-type'), await r.blob()] as const);
-
-        //         dt.items.add(
-        //             new File([blob], entry.name, {
-        //                 lastModified: entry.created?.getTime(),
-        //                 type: contentType ?? undefined,
-        //             })
-        //         );
-        //     });
-        //     await Promise.all(prom$).catch((err) => {
-        //         console.error(err);
-        //         toast.error(() => i18n.t('toast.error'), {
-        //             description: () => i18n.t('error.couldnt_copy'),
-        //         });
-        //     });
-        // },
-        async copyEntriesToClipboard(entries: AnyDirectoryEntry[]) {
+        async addEntriesToDataTransfer(dt: DataTransfer, entries: AnyDirectoryEntry[]) {
             // This really sucks but ATM Firefox and Chromium don't support copying multiple clipboard items
+            const entryPaths = entries.map((v) => getApiUrl(v.fullPath));
+            const list = document.createElement('ul');
+            list.setAttribute('data-source', location.origin);
+            for (const entry of entries) {
+                const listItem = document.createElement('li');
+                listItem.innerText = getApiUrl(entry.fullPath);
+                listItem.setAttribute('data-path', JSON.stringify(entry.fullPath));
+                list.appendChild(listItem);
+            }
+
             if (entries.length > 1) {
-                const text = entries.map((v) => getApiUrl(v.fullPath)).join('\n');
-                return await navigator.clipboard
-                    .writeText(text)
-                    .then(() => toast(() => i18n.t('toast.copied', entries.length)))
-                    .catch((err) => {
-                        console.error(err);
-                        toast.error(() => i18n.t('toast.error'), {
-                            description: () => i18n.t('error.couldnt_copy', 1),
-                        });
-                    });
+                dt.setData('text/plain', entryPaths.join('\n'));
+                dt.setData('text/html', list.outerHTML);
+                return;
             }
 
             const entry = entries[0];
@@ -183,21 +160,14 @@ export const useHandlers = defineStore('handlers', () => {
 
             // By default, add the path to the file itself
             const options: Record<string, any> = {
-                'text/plain': getApiUrl(entry.fullPath),
+                'text/plain': entryPaths.join('\n'),
+                'text/html': list.outerHTML,
             };
             if (fetched) options[fetched.type] = fetched.file;
 
             const clipItem = new ClipboardItem(options);
 
-            navigator.clipboard
-                .write([clipItem])
-                .then(() => toast(() => i18n.t('toast.copied', entries.length)))
-                .catch((err) => {
-                    console.error(err);
-                    toast.error(() => i18n.t('toast.error'), {
-                        description: () => i18n.t('error.couldnt_copy', entries.length),
-                    });
-                });
+            await navigator.clipboard.write([clipItem]);
         },
     };
 });

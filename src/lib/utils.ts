@@ -156,6 +156,7 @@ export function getTableCellFormat(tag: string) {
 }
 
 export function deselectAll() {
-    window.getSelection()?.removeAllRanges();
-    document.getSelection()?.empty();
+    // Remove selection ranges, but keep active node
+    const selection = window.getSelection() ?? document.getSelection();
+    selection?.setPosition(selection.anchorNode, selection.anchorOffset);
 }

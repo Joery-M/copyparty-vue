@@ -8,6 +8,7 @@ import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { API } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
+import { useShortcutGuard } from '@/lib/keyboard.ts';
 import { useHandlers } from '@/stores/useHandlers';
 import { useUploader } from '@/stores/useUploader.ts';
 
@@ -54,6 +55,8 @@ const canDownload = computed(
 const cantDoAnything = computed(() => !props.file && !canWrite.value);
 
 const rootContext = injectMenuContext();
+
+useShortcutGuard('context-menu');
 </script>
 
 <template>

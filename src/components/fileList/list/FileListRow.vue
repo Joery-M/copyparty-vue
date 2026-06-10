@@ -62,11 +62,13 @@ function onClick(event: MouseEvent) {
                 rows.slice(lowerBound, upperBound + 1).map((v) => v.original)
             );
             fileSelection.lastSelected = props.row.original;
-            deselectAll();
         }
     } else {
         fileSelection.selectNone();
         fileSelection.setEntry(entry.value, true);
+    }
+    if (event.shiftKey || event.ctrlKey) {
+        deselectAll();
     }
 }
 </script>

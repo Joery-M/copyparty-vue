@@ -1,13 +1,7 @@
 <script lang="ts">
-import { isEqual } from '@ver0/deep-equal';
-import { onBeforeRouteUpdate } from 'vue-router';
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
 import { API } from '@/lib/api';
-import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
-import { useShortcut } from '@/lib/keyboard.ts';
-import { useAuth } from '@/stores/useAuth';
-import { useHandlers } from '@/stores/useHandlers.ts';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 
 export const useListDirQuery = defineColadaLoader({
@@ -21,8 +15,12 @@ export const useListDirQuery = defineColadaLoader({
 </script>
 
 <script setup lang="ts">
+import { isEqual } from '@ver0/deep-equal';
 import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
 import { computed, defineAsyncComponent } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { onBeforeRouteUpdate } from 'vue-router';
+import { toast } from 'vue-sonner';
 
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import FileViewContextMenu from '@/components/fileList/FileViewContextMenu.vue';
@@ -34,7 +32,11 @@ import LoginDialog from '@/components/LoginDialog.vue';
 import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
+import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
+import { useShortcut } from '@/lib/keyboard.ts';
+import { useAuth } from '@/stores/useAuth';
 import { useFileSelection } from '@/stores/useFileSelection.ts';
+import { useHandlers } from '@/stores/useHandlers.ts';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
@@ -49,6 +51,7 @@ const routeState = useRouteState();
 const authStore = useAuth();
 const fileSelection = useFileSelection();
 const handlers = useHandlers();
+const i18n = useI18n();
 
 const listDirQuery = useListDirQuery();
 
@@ -63,8 +66,14 @@ const dropzone = useDropZone(document.body, {
         if (f && f.length > 0) uploader.upload(f, routeState.dir);
     },
 });
-useEventListener(document, 'paste', (ev) => {
+useEventListener('paste', (ev) => {
     const f = ev.clipboardData?.items;
+    console.log(ev.clipboardData?.items);
+    ev.clipboardData?.items[0].getAsString((r) => {
+        console.log(r);
+    });
+    console.log(ev.clipboardData?.types);
+    console.log(ev.clipboardData?.files);
     if (f && f.length > 0) uploader.upload(ev.clipboardData.items, routeState.dir);
 });
 
@@ -117,17 +126,26 @@ useShortcut(
     (e) => (e.preventDefault(), fileSelection.invertSelection())
 );
 
-async function onCopy(event: ClipboardEvent) {
-    // If there is text selected, let nature do its thing
+    async function onCopy(event: ClipboardEvent) {
     if (
         !window.getSelection()?.isCollapsed ||
         fileSelection.selectedFiles.size === 0 ||
         !event.clipboardData
     )
         return;
-    event.preventDefault();
-    await handlers.copyEntriesToClipboard(Array.from(fileSelection.selectedFiles));
-    console.log('Copied');
+
+    try {
+        event.preventDefault();
+        event.clipboardData.clearData();
+        const entries = Array.from(fileSelection.selectedFiles);
+        await handlers.addEntriesToDataTransfer(event.clipboardData, entries);
+        toast(() => i18n.t('toast.copied', entries.length));
+    } catch (error) {
+        console.error(error);
+        toast.error(() => i18n.t('toast.error'), {
+            description: () => i18n.t('error.couldnt_copy', 1),
+        });
+    }
 }
 </script>
 
