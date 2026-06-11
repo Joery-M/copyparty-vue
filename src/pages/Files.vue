@@ -149,7 +149,7 @@ function onCopy(event: ClipboardEvent) {
         <Separator class="mb-2" />
         <TreeView wrapper-class="inline-flex flex-1" class="flex flex-col gap-3" @copy="onCopy">
             <ContextMenuRoot>
-                <div class="flex flex-col gap-3 p-6" :class="{ 'min-h-full': !readmes.length }">
+                <div class="flex flex-col gap-3 p-6" :class="{ grow: !readmes.length }">
                     <div class="flex sm:items-center sm:h-7 max-sm:flex-col max-sm:gap-2">
                         <RouteBreadCrumb class="flex-1" />
                         <ViewSelector v-if="!canOnlyUpload" />
@@ -160,7 +160,7 @@ function onCopy(event: ClipboardEvent) {
                     />
                     <FileListView v-else-if="settings.fileView.type === 'list'" />
                     <FileGridView v-else-if="settings.fileView.type === 'grid'" />
-                    <Separator v-if="readmes.length" class="my-5" />
+                    <Separator v-if="readmes.length" class="mt-5" />
                 </div>
                 <template v-slot:menu="{ data }">
                     <FileViewContextMenu
@@ -171,8 +171,25 @@ function onCopy(event: ClipboardEvent) {
                 </template>
             </ContextMenuRoot>
             <template v-for="readme in readmes">
-                <MarkdownViewer class="p-6" :input="readme"></MarkdownViewer>
+                <MarkdownViewer class="p-6 pt-0 grow" :input="readme"></MarkdownViewer>
             </template>
+            <footer>
+                <p class="text-xs text-neutral-600 text-right px-6 mb-1">
+                    <a
+                        class="transition-colors hover:underline hover:text-foreground"
+                        href="https://github.com/9001/copyparty"
+                        target="_blank"
+                        >copyparty</a
+                    >
+                    -
+                    <a
+                        class="transition-colors hover:underline hover:text-foreground"
+                        href="https://github.com/Joery-M/copyparty-vue"
+                        target="_blank"
+                        >frontend</a
+                    >
+                </p>
+            </footer>
         </TreeView>
     </div>
 
