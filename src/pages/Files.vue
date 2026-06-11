@@ -126,26 +126,20 @@ useShortcut(
     (e) => (e.preventDefault(), fileSelection.invertSelection())
 );
 
-    async function onCopy(event: ClipboardEvent) {
-    if (
-        !window.getSelection()?.isCollapsed ||
-        fileSelection.selectedFiles.size === 0 ||
-        !event.clipboardData
-    )
-        return;
+function onCopy(event: ClipboardEvent) {
+    if (!window.getSelection()?.isCollapsed || fileSelection.selectedFiles.size === 0) return;
+    event.preventDefault();
 
-    try {
-        event.preventDefault();
-        event.clipboardData.clearData();
-        const entries = Array.from(fileSelection.selectedFiles);
-        await handlers.addEntriesToDataTransfer(event.clipboardData, entries);
-        toast(() => i18n.t('toast.copied', entries.length));
-    } catch (error) {
-        console.error(error);
-        toast.error(() => i18n.t('toast.error'), {
-            description: () => i18n.t('error.couldnt_copy', 1),
+    const entries = Array.from(fileSelection.selectedFiles);
+    handlers
+        .copyEntriesToClipboard(entries)
+        .then(() => toast(() => i18n.t('toast.copied', entries.length)))
+        .catch((error) => {
+            console.error(error);
+            toast.error(() => i18n.t('toast.error'), {
+                description: () => i18n.t('error.couldnt_copy', 1),
+            });
         });
-    }
 }
 </script>
 

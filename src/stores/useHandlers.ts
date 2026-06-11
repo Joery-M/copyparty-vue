@@ -113,60 +113,64 @@ export const useHandlers = defineStore('handlers', () => {
             }
             queryCache.invalidateQueries({ key: ['full-tree'] }, true);
         },
-        async addEntriesToDataTransfer(dt: DataTransfer, entries: AnyDirectoryEntry[]) {
-            // This really sucks but ATM Firefox and Chromium don't support copying multiple clipboard items
+        async copyEntriesToClipboard(entries: AnyDirectoryEntry[]) {
             const entryPaths = entries.map((v) => getApiUrl(v.fullPath));
+
             const list = document.createElement('ul');
-            list.setAttribute('data-source', location.origin);
             for (const entry of entries) {
                 const listItem = document.createElement('li');
-                listItem.innerText = getApiUrl(entry.fullPath);
-                listItem.setAttribute('data-path', JSON.stringify(entry.fullPath));
+                const anchor = document.createElement('a');
+                anchor.href = getApiUrl(entry.fullPath);
+                anchor.innerText = entry.fullPath.join('/');
+                listItem.appendChild(anchor);
                 list.appendChild(listItem);
             }
+            const meta = document.createElement('meta');
+            meta.name = 'copyparty-copied-files';
+            meta.content = JSON.stringify({
+                origin: location.origin,
+                entries: entries.map((v) => v.fullPath),
+            });
+            const html = meta.outerHTML + list.outerHTML;
 
-            if (entries.length > 1) {
-                dt.setData('text/plain', entryPaths.join('\n'));
-                dt.setData('text/html', list.outerHTML);
-                return;
-            }
-
-            const entry = entries[0];
-
-            // Fetch to get content type and potentially the body
-            let fetched;
-            if (entry.classification !== FileClassification.Directory) {
-                fetched = await fetch(getApiUrl(entry.fullPath, { dl: '' })).then((r) => {
-                    const type = (r.headers.get('content-type') ?? '').split(';')[0];
-
-                    // Only continue with body if the browser supports copying the file type
-                    const supported = ClipboardItem.supports(type);
-                    if (!supported) {
-                        void r.body?.cancel();
-                        return undefined;
-                    }
-
-                    const file = r.blob().then(
-                        (b) =>
-                            new File([b], entry.name, {
-                                type,
-                                lastModified: entry.created?.getTime(),
-                            })
-                    );
-
-                    return { type, file };
-                });
-            }
-
-            // By default, add the path to the file itself
-            const options: Record<string, any> = {
+            const itemTypes: Record<string, any> = {
                 'text/plain': entryPaths.join('\n'),
-                'text/html': list.outerHTML,
+                'text/html': html,
             };
-            if (fetched) options[fetched.type] = fetched.file;
 
-            const clipItem = new ClipboardItem(options);
+            // This really sucks but ATM Firefox and Chromium don't support copying multiple clipboard items
+            if (entries.length === 1) {
+                const entry = entries[0];
 
+                // Fetch to get content type and potentially the body
+                let fetched;
+                if (entry.classification !== FileClassification.Directory) {
+                    fetched = await fetch(getApiUrl(entry.fullPath, { dl: '' })).then((r) => {
+                        const type = (r.headers.get('content-type') ?? '').split(';')[0];
+
+                        // Only continue with body if the browser supports copying the file type
+                        const supported = ClipboardItem.supports(type);
+                        if (!supported) {
+                            void r.body?.cancel();
+                            return undefined;
+                        }
+
+                        const file = r.blob().then(
+                            (b) =>
+                                new File([b], entry.name, {
+                                    type,
+                                    lastModified: entry.created?.getTime(),
+                                })
+                        );
+
+                        return { type, file };
+                    });
+                }
+
+                if (fetched) itemTypes[fetched.type] = fetched.file;
+            }
+
+            const clipItem = new ClipboardItem(itemTypes);
             await navigator.clipboard.write([clipItem]);
         },
     };
