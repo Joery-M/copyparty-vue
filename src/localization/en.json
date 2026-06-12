@@ -27,6 +27,10 @@
       "fmt": "Format",
       "res": "Resolution",
       ".fps": "FPS",
+      "W": "Upload ID",
+      "up_by": "Uploaded by",
+      "up_ip": "Upload ip-address",
+      "up_at": "Uploaded at",
       "descript.ion": "Description"
     },
     "hidden_cols": "Hidden columns",
@@ -99,18 +103,18 @@
     "view": "View",
     "open_new_tab": "Open in new tab",
     "download": "Download",
-    "archive_options": "Archive options",
     "archive": {
-      "pax": "Download as .tar (pax format) | Download {n} files as .tar (pax format)",
-      "tar": "Download as .tar | Download {n} files as .tar",
-      "tgz": "Download as .tgz | Download {n} files as .tgz",
-      "txz": "Download as .txz | Download {n} files as .txz",
-      "zip_crc": "Download as .zip (with CRC) | Download {n} files as .zip (with CRC)",
-      "zip_dos": "Download as .zip (for DOS) | Download {n} files as .zip (for DOS)",
-      "zip": "Download as .zip | Download {n} files as .zip"
+      "pax": "as .tar (pax format)",
+      "tar": "as .tar",
+      "tgz": "as .tgz",
+      "txz": "as .txz",
+      "zip_crc": "as .zip (with CRC)",
+      "zip_dos": "as .zip (for DOS)",
+      "zip": "as .zip",
+      "zip_long": "Download as .zip | Download {n} as .zip"
     },
     "new_folder": "New folder",
-    "delete": "Delete"
+    "delete": "Delete | Delete selected"
   },
   "toast": {
     "error": "An error occurred",

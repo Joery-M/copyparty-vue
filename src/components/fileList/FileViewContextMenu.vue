@@ -118,31 +118,32 @@ const downloadArchive = (params: QueryObject) =>
     <!-- Archive options -->
     <template v-if="selection.size > 0">
         <ContextMenuSeparator v-if="file" />
-        <ContextMenuItem @click="downloadArchive({ zip: '' })">
-            {{ $t('actions.archive.zip') }}
-        </ContextMenuItem>
         <ContextMenuSub>
-            <ContextMenuSubTrigger>
-                {{ $t('actions.archive_options') }}
-            </ContextMenuSubTrigger>
+            <ContextMenuItem
+                @click="downloadArchive({ zip: '' })"
+                class="float-left rounded-r-none"
+            >
+                {{ $t('actions.archive.zip_long', selection.size) }}
+            </ContextMenuItem>
+            <ContextMenuSubTrigger class="rounded-l-none" />
             <ContextMenuSubContent>
                 <ContextMenuItem @click="downloadArchive({ tar: '' })">
-                    {{ $t('actions.archive.tar', selection.size) }}
+                    {{ $t('actions.archive.tar') }}
                 </ContextMenuItem>
                 <ContextMenuItem @click="downloadArchive({ tar: 'gz' })">
-                    {{ $t('actions.archive.tgz', selection.size) }}
+                    {{ $t('actions.archive.tgz') }}
                 </ContextMenuItem>
                 <ContextMenuItem @click="downloadArchive({ tar: 'xz' })">
-                    {{ $t('actions.archive.txz', selection.size) }}
+                    {{ $t('actions.archive.txz') }}
                 </ContextMenuItem>
                 <ContextMenuItem @click="downloadArchive({ tar: 'pax' })">
-                    {{ $t('actions.archive.pax', selection.size) }}
+                    {{ $t('actions.archive.pax') }}
                 </ContextMenuItem>
                 <ContextMenuItem @click="downloadArchive({ zip: 'dos' })">
-                    {{ $t('actions.archive.zip_dos', selection.size) }}
+                    {{ $t('actions.archive.zip_dos') }}
                 </ContextMenuItem>
                 <ContextMenuItem @click="downloadArchive({ zip: 'crc' })">
-                    {{ $t('actions.archive.zip_crc', selection.size) }}
+                    {{ $t('actions.archive.zip_crc') }}
                 </ContextMenuItem>
             </ContextMenuSubContent>
         </ContextMenuSub>
@@ -166,9 +167,9 @@ const downloadArchive = (params: QueryObject) =>
             </ContextMenuSubContent>
         </ContextMenuSub>
     </template>
-    <template v-if="canDelete && file">
+    <template v-if="canDelete && selection.size > 0">
         <ContextMenuSeparator />
-        <ContextMenuItem @click="handlers.delete([file.fullPath])">
+        <ContextMenuItem @click="handlers.delete(Array.from(selection).map((v) => v.fullPath))">
             {{ $t('actions.delete') }}
         </ContextMenuItem>
     </template>
