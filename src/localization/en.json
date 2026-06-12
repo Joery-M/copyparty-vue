@@ -101,13 +101,13 @@
     "download": "Download",
     "archive_options": "Archive options",
     "archive": {
-      "pax": "Download as .pax",
-      "tar": "Download as .tar",
-      "tgz": "Download as .tgz",
-      "txz": "Download as .txz",
-      "zip_crc": "Download as .zip (with CRC)",
-      "zip_dos": "Download as .zip (for DOS)",
-      "zip": "Download as .zip"
+      "pax": "Download as .tar (pax format) | Download {n} files as .tar (pax format)",
+      "tar": "Download as .tar | Download {n} files as .tar",
+      "tgz": "Download as .tgz | Download {n} files as .tgz",
+      "txz": "Download as .txz | Download {n} files as .txz",
+      "zip_crc": "Download as .zip (with CRC) | Download {n} files as .zip (with CRC)",
+      "zip_dos": "Download as .zip (for DOS) | Download {n} files as .zip (for DOS)",
+      "zip": "Download as .zip | Download {n} files as .zip"
     },
     "new_folder": "New folder",
     "delete": "Delete"

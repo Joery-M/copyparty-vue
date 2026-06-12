@@ -36,41 +36,28 @@ export const useHandlers = defineStore('handlers', () => {
             aTag.click();
             aTag.remove();
         },
-        downloadArchive(file: AnyDirectoryEntry, params: QueryObject, ext: string) {
-            if (file.classification === FileClassification.Directory) {
-                const a = document.createElement('a');
-                try {
-                    a.href = getApiUrl(file.fullPath, params);
-                    a.download = file.name + (ext ? `.${ext}` : '');
-                    a.target = '_blank';
-                    a.click();
-                } finally {
-                    a.remove();
-                }
-            } else {
-                // Form submit to get data
-                // Not checked since I still have CORS errors (womp womp)
-                const form = new FormData();
-                form.set('act', ext);
-                form.set('files', encodeURIComponent(file.name));
-                fetch(getApiUrl(file.fullPath.slice(0, -1).concat(''), params), {
-                    method: 'POST',
-                    body: form,
-                })
-                    .then(API.extractError)
-                    .then((res) => res.blob())
-                    .then((blob) => {
-                        const a = document.createElement('a');
-                        try {
-                            a.href = URL.createObjectURL(blob);
-                            a.download = file.name;
-                            a.target = '_blank';
-                            a.click();
-                        } finally {
-                            a.remove();
-                        }
-                    });
-            }
+        downloadArchive(dir: string[], files: AnyDirectoryEntry[], params: QueryObject) {
+            const form = document.createElement('form');
+            form.action = getApiUrl(dir, params);
+            form.method = 'post';
+            form.target = '_blank';
+            form.enctype = 'multipart/form-data';
+
+            const act = document.createElement('input');
+            act.name = 'act';
+            act.value = 'zip';
+            const filesInput = document.createElement('input');
+            filesInput.name = 'files';
+            filesInput.value = files.map((v) => encodeURIComponent(v.name)).join('\n');
+
+            form.appendChild(act);
+            form.appendChild(filesInput);
+
+            form.style.display = 'none';
+            document.body.appendChild(form);
+
+            form.submit();
+            form.remove();
         },
         openNewTab(file: AnyDirectoryEntry) {
             const url =

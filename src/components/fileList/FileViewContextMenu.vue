@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { QueryObject } from 'ufo';
+
 import { Download, ExternalLink, FileVideo, Image, TextInitial } from '@lucide/vue';
 import { useFileDialog } from '@vueuse/core';
 import { injectMenuContext } from 'reka-ui/internal';
@@ -9,6 +11,7 @@ import type { AnyDirectoryEntry } from '@/lib/interop';
 import { API } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { useShortcutGuard } from '@/lib/keyboard.ts';
+import { useFileSelection } from '@/stores/useFileSelection.ts';
 import { useHandlers } from '@/stores/useHandlers';
 import { useUploader } from '@/stores/useUploader.ts';
 
@@ -25,6 +28,7 @@ import {
 
 const handlers = useHandlers();
 const uploader = useUploader();
+const fileSelection = useFileSelection();
 
 const fileDialog = useFileDialog({ reset: true });
 
@@ -52,11 +56,16 @@ const canDownload = computed(
 );
 
 // True if there are no options visible
-const cantDoAnything = computed(() => !props.file && !canWrite.value);
+const cantDoAnything = computed(() => !props.file && !canWrite.value && selection.value.size == 0);
 
 const rootContext = injectMenuContext();
 
 useShortcutGuard('context-menu');
+
+const selection = computed(() => fileSelection.selectedFiles);
+
+const downloadArchive = (params: QueryObject) =>
+    handlers.downloadArchive(props.dir, Array.from(selection.value), params);
 </script>
 
 <template>
@@ -107,9 +116,9 @@ useShortcutGuard('context-menu');
     </div>
 
     <!-- Archive options -->
-    <template v-if="file">
-        <ContextMenuSeparator />
-        <ContextMenuItem @click="handlers.downloadArchive(file, { zip: '' }, 'zip')">
+    <template v-if="selection.size > 0">
+        <ContextMenuSeparator v-if="file" />
+        <ContextMenuItem @click="downloadArchive({ zip: '' })">
             {{ $t('actions.archive.zip') }}
         </ContextMenuItem>
         <ContextMenuSub>
@@ -117,23 +126,23 @@ useShortcutGuard('context-menu');
                 {{ $t('actions.archive_options') }}
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
-                <ContextMenuItem @click="handlers.downloadArchive(file, { tar: '' }, 'tar')">
-                    {{ $t('actions.archive.tar') }}
+                <ContextMenuItem @click="downloadArchive({ tar: '' })">
+                    {{ $t('actions.archive.tar', selection.size) }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive(file, { tar: 'gz:1' }, 'tgz')">
-                    {{ $t('actions.archive.tgz') }}
+                <ContextMenuItem @click="downloadArchive({ tar: 'gz' })">
+                    {{ $t('actions.archive.tgz', selection.size) }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive(file, { tar: 'xz:1' }, 'txz')">
-                    {{ $t('actions.archive.txz') }}
+                <ContextMenuItem @click="downloadArchive({ tar: 'xz' })">
+                    {{ $t('actions.archive.txz', selection.size) }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive(file, { tar: 'pax' }, 'pax')">
-                    {{ $t('actions.archive.pax') }}
+                <ContextMenuItem @click="downloadArchive({ tar: 'pax' })">
+                    {{ $t('actions.archive.pax', selection.size) }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive(file, { zip: 'dos' }, 'zip')">
-                    {{ $t('actions.archive.zip_dos') }}
+                <ContextMenuItem @click="downloadArchive({ zip: 'dos' })">
+                    {{ $t('actions.archive.zip_dos', selection.size) }}
                 </ContextMenuItem>
-                <ContextMenuItem @click="handlers.downloadArchive(file, { zip: 'crc' }, 'zip')">
-                    {{ $t('actions.archive.zip_crc') }}
+                <ContextMenuItem @click="downloadArchive({ zip: 'crc' })">
+                    {{ $t('actions.archive.zip_crc', selection.size) }}
                 </ContextMenuItem>
             </ContextMenuSubContent>
         </ContextMenuSub>

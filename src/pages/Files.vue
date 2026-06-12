@@ -125,6 +125,10 @@ useShortcut(
     (e) => e.key === 'i' && e.ctrlKey,
     (e) => (e.preventDefault(), fileSelection.invertSelection())
 );
+useShortcut(
+    (e) => e.key === 'a' && e.ctrlKey,
+    (e) => (e.preventDefault(), fileSelection.selectAll())
+);
 
 function onCopy(event: ClipboardEvent) {
     if (!window.getSelection()?.isCollapsed || fileSelection.selectedFiles.size === 0) return;
