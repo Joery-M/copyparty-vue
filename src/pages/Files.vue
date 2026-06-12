@@ -67,14 +67,18 @@ const dropzone = useDropZone(document.body, {
     },
 });
 useEventListener('paste', (ev) => {
-    const f = ev.clipboardData?.items;
-    console.log(ev.clipboardData?.items);
-    ev.clipboardData?.items[0].getAsString((r) => {
-        console.log(r);
-    });
-    console.log(ev.clipboardData?.types);
-    console.log(ev.clipboardData?.files);
-    if (f && f.length > 0) uploader.upload(ev.clipboardData.items, routeState.dir);
+    if (!ev.clipboardData) return;
+    const items = ev.clipboardData.items;
+    console.log(items.length);
+    if (items.length > 0) uploader.upload(items, routeState.dir);
+
+    if (ev.clipboardData.getData('text/html')) {
+        const html = ev.clipboardData.getData('text/html');
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const metaTag = doc.querySelector<HTMLMetaElement>('meta[name="copyparty-copied-files"]');
+        if (!metaTag) return;
+        console.log(metaTag.content);
+    }
 });
 
 useTitle(() => {
