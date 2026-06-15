@@ -29,6 +29,7 @@ import FileListView from '@/components/fileList/list/FileListView.vue';
 import OnlyUploadCard from '@/components/fileList/OnlyUploadCard.vue';
 import ViewSelector from '@/components/fileList/ViewSelector.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
+import PromptDialog from '@/components/PromptDialog.vue';
 import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
@@ -204,6 +205,7 @@ function onCopy(event: ClipboardEvent) {
     <!-- Overlays -->
     <FileViewer />
     <ConfirmDialog />
+    <PromptDialog />
     <!-- Only show login dialog if there is no preview open -->
     <LoginDialog v-if="!routeState.file" />
 </template>

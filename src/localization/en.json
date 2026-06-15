@@ -6,6 +6,7 @@
   "accessible_volumes": "You can access the following volume: | You can access the following volumes:",
   "cancel": "Cancel",
   "continue": "Continue",
+  "submit": "Submit",
   "and_more": "And {n} more",
   "list": "List",
   "list_view": "List view",
@@ -50,7 +51,8 @@
     "api_unknown": "Please check the server logs",
     "cant_upload": "You are unable to upload to this folder",
     "no_options": "No options available",
-    "couldnt_copy": "Was not able to copy file, see the browser console for more info|Was not able to copy files, see the browser console for more info"
+    "couldnt_copy": "Was not able to copy file, see the browser console for more info|Was not able to copy files, see the browser console for more info",
+    "folder_create": "Couldn't create folder, please check the server logs"
   },
   "validation": {
     "required": "{0} is required"
@@ -77,6 +79,10 @@
     "confirm_delete": {
       "title": "Confirm files to delete",
       "description": "Are you sure you want to delete these files/folders?"
+    },
+    "prompt_new_dir": {
+      "title": "New folder name",
+      "description": "Enter a name for the new folder, folder should not already exist."
     }
   },
   "viewer": {

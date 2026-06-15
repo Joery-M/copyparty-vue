@@ -2,9 +2,19 @@ import type { KeyFilter, OnKeyStrokeOptions } from '@vueuse/core';
 import type { InjectionKey, MaybeRefOrGetter } from 'vue';
 
 import { onKeyStroke } from '@vueuse/core';
-import { hasInjectionContext, inject, onScopeDispose, provide, ref, toRef, watchEffect } from 'vue';
+import {
+    hasInjectionContext,
+    inject,
+    onScopeDispose,
+    provide,
+    shallowReactive,
+    shallowRef,
+    toRef,
+    watchEffect,
+} from 'vue';
 
-const GuardStack = ref<string[]>([]);
+const AllGuards = /* @__PURE__ */ shallowReactive(new Set<string>());
+const GuardStack = shallowRef<string[]>([]);
 const CurrentGuard = Symbol('CurrentGuard') as InjectionKey<string>;
 
 // Taken from @vueuse/core/onKeyStroke
@@ -40,19 +50,30 @@ export function useShortcut(
 export function useShortcutGuard(name: string, enabled: MaybeRefOrGetter<boolean> = true) {
     if (!hasInjectionContext())
         throw new Error('useShortcutGuard has to be used inside an injection context');
+    if (__DEV__ && AllGuards.has(name)) {
+        console.warn('2 shortcut guards are using the same name:', name);
+    }
 
+    /* @__PURE__ */ AllGuards.add(name);
     const isEnabled = toRef(enabled);
     provide(CurrentGuard, name);
+    let isOnStack = false;
     watchEffect(() => {
         if (isEnabled.value) {
-            GuardStack.value.unshift(name);
-        } else if (GuardStack.value.at(-1) === name) {
-            GuardStack.value = GuardStack.value.slice(0, -1);
+            if (!isOnStack) {
+                GuardStack.value = [name, ...GuardStack.value];
+                isOnStack = true;
+            }
+        } else if (isOnStack) {
+            GuardStack.value = GuardStack.value.filter((v) => name !== v);
+            isOnStack = false;
         }
     });
     onScopeDispose(() => {
-        if (isEnabled.value && GuardStack.value.at(-1) === name) {
-            GuardStack.value = GuardStack.value.slice(0, -1);
+        /* @__PURE__ */ AllGuards.delete(name);
+        if (isOnStack) {
+            GuardStack.value = GuardStack.value.filter((v) => name !== v);
+            isOnStack = false;
         }
     });
 }

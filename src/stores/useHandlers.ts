@@ -4,12 +4,14 @@ import { useQueryCache } from '@pinia/colada';
 import { defineStore } from 'pinia';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import { toast } from 'vue-sonner';
 
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { API, getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { useConfirm } from '@/stores/useConfirm';
+import { usePrompt } from '@/stores/usePrompt';
 
 /**
  * Handlers for various actions that might be called from multiple locations
@@ -20,6 +22,7 @@ export const useHandlers = defineStore('handlers', () => {
 
     const i18n = useI18n();
     const dialog = useConfirm();
+    const prompt = usePrompt();
 
     return {
         view(dir: string[], fileName: string) {
@@ -74,10 +77,17 @@ export const useHandlers = defineStore('handlers', () => {
             aTag.remove();
         },
         async mkdir(baseDir: string[]) {
-            // TODO: Make not shit
-            const newDir = prompt('New folder name');
-            if (!newDir) return;
-            await API.mkdir(baseDir, newDir);
+            const newDir = await prompt.reveal({
+                title: () => i18n.t('dialogs.prompt_new_dir.title'),
+                description: () => i18n.t('dialogs.prompt_new_dir.description'),
+            });
+            if (!newDir.data) return;
+            await API.mkdir(baseDir, newDir.data).catch((error) => {
+                console.error(error);
+                toast.error(() => i18n.t('toast.error'), {
+                    description: () => i18n.t('error.folder_create'),
+                });
+            });
             queryCache.invalidateQueries({ key: ['tree', ...baseDir] }, true);
             queryCache.invalidateQueries({ key: ['full-tree'] }, true);
             queryCache.invalidateQueries({ key: ['ls', ...baseDir] }, true);
