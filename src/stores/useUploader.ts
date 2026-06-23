@@ -2,8 +2,11 @@ import { useQueryCache } from '@pinia/colada';
 import { defineStore } from 'pinia';
 import { withTrailingSlash } from 'ufo';
 import { Up2K } from 'up2k';
+import { markRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { toast } from 'vue-sonner';
 
+import UploadStatus from '@/components/UploadStatus.vue';
 import { getApiUrl } from '@/lib/api';
 import { useConfirm } from '@/stores/useConfirm';
 
@@ -16,9 +19,8 @@ export const useUploader = defineStore('uploader', () => {
     return {
         upload: async (files: DataTransferItemList | FileList | File[] | File, dir: string[]) => {
             const start = performance.now();
-            const up2k = new Up2K({
-                baseUrl: new URL(withTrailingSlash(getApiUrl(dir))),
-            });
+            const baseUrl = new URL(withTrailingSlash(getApiUrl(dir)));
+            const up2k = new Up2K({ baseUrl });
             const allFiles = await up2k.collectInput(files);
             const totalFiles =
                 allFiles.bad.size + allFiles.good.size + allFiles.junk.size + allFiles.nil.size;
@@ -50,8 +52,29 @@ export const useUploader = defineStore('uploader', () => {
                 if (!canContinue.data) return;
             }
 
-            console.log(acceptedFiles);
-            await up2k.uploadFiles(new Map(acceptedFiles));
+            const fileMap = new Map(acceptedFiles);
+            const pool = up2k.createTaskPool(fileMap);
+
+            pool.events.on('hash-progress', (entry, transferred) => {
+                console.log('hash', entry.name, transferred);
+            });
+            pool.events.on('upload-progress', (entry, transferred) => {
+                console.log('upload', entry.name, transferred);
+            });
+
+            toast(() => i18n.t('upload'), {
+                description: markRaw(UploadStatus),
+                componentProps: {
+                    pool,
+                    files: acceptedFiles.map(([f]) => f),
+                },
+                classes: {
+                    content: 'w-full',
+                },
+                // This is real
+                duration: Infinity,
+            });
+            await pool.execute();
             console.log('Done', performance.now() - start);
 
             queryCache.invalidateQueries({ key: ['ls', ...dir] });

@@ -1,9 +1,10 @@
 import { defu } from 'defu';
 
+import type { Uploader } from './uploader';
 import type { PartialExcept } from './utils';
 
-import { getChunksize } from './hasher';
-import { Up2KTaskPool } from './taskPool';
+import { getChunksize, Hasher } from './hasher';
+import { TaskPool } from './taskPool';
 import { isDirectoryEntry, isFileEntry, rdFlatten, sleep, vsplit } from './utils';
 
 interface Up2KOptions {
@@ -242,16 +243,16 @@ export class Up2K {
         return junk;
     }
 
-    // TODO: Before this, ask for confirmation of upload
-    async uploadFiles(files: FileMap) {
+    createTaskPool(files: FileMap, hasher?: Hasher, uploader?: Uploader) {
         const indexed = this.indexFiles(files);
-        const pool = new Up2KTaskPool({
+        return new TaskPool({
+            hasher,
+            uploader,
             files: indexed,
             hashConcurrency: this.options.hashConcurrency,
             uploadConcurrency: this.options.uploadConcurrency,
             baseUrl: this.options.baseUrl,
         });
-        await pool.execute();
     }
     private indexFiles(files: FileMap): IndexedFile[] {
         return Array.from(files.entries()).map(([file, name]) => ({
@@ -262,6 +263,6 @@ export class Up2K {
     }
 }
 
-export { Hasher } from './hasher';
-export { Up2KTaskPool } from './taskPool';
-export { Uploader } from './uploader';
+export { Hasher, type HasherEvents } from './hasher';
+export * from './taskPool';
+export * from './uploader';

@@ -3,8 +3,10 @@ import EventEmitter from 'eventemitter3';
 import type { IndexedFile } from '.';
 import type { HashWorkerMessage, HashWorkerPayload, WorkerMessageResponse } from './hash.worker';
 
-interface HasherEvents {
+export interface HasherEvents {
+    /** @internal Internal event used to queue new tasks */
     workerIdle: [];
+    progress: [file: IndexedFile<false>, bytes: number];
 }
 
 export class Hasher {
@@ -34,6 +36,7 @@ export class Hasher {
         } else {
             sections = [[0, entry.file.size]];
         }
+        let hashedBytes = 0;
         const results = sections.map(async ([start, end]) => {
             const worker = await this.waitForWorkerToBeReady();
 
@@ -46,6 +49,11 @@ export class Hasher {
                     end,
                     chunkSize,
                     chunkCount,
+                })
+                .then((res) => {
+                    hashedBytes += end - start;
+                    this.events.emit('progress', entry, hashedBytes);
+                    return res;
                 })
                 .finally(() => this.workerDone(worker));
         });

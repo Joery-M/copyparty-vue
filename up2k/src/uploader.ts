@@ -1,4 +1,5 @@
 import defu from 'defu';
+import EventEmitter from 'eventemitter3';
 import { basename, dirname } from 'pathe';
 import { withoutLeadingSlash } from 'ufo';
 
@@ -70,8 +71,17 @@ interface HandshakeReq {
     life: number;
 }
 
+export interface UploaderEvents {
+    progress: [entry: IndexedFile<true>, transferred: number];
+    done: [entry: IndexedFile<true>];
+}
+
 export class Uploader {
     private options: UploaderOptions;
+
+    private transferredMap = new WeakMap<IndexedFile<true>, number>();
+    events = new EventEmitter<UploaderEvents>();
+
     constructor(options: PartialExcept<UploaderOptions, 'baseUrl'>) {
         this.options = defu(options, { stitchedChunkSizeMiB: 64 });
     }
@@ -90,7 +100,11 @@ export class Uploader {
             if (secondHandshake.type === 'handshake' && secondHandshake.hash.length > 0) {
                 await this.doUpload(entry, secondHandshake);
             }
+        } else {
+            // No hashes required
+            this.events.emit('progress', entry, entry.file.size);
         }
+        this.events.emit('done', entry);
     }
 
     /**
@@ -102,6 +116,10 @@ export class Uploader {
         const stitchSize = Math.ceil(
             entry.file.size / (this.options.stitchedChunkSizeMiB * 1024 * 1024)
         );
+        const hashesAlreadyDone = handshake.hash.length - entry.hashes.length;
+        const bytesAlreadyDone = entry.chunkSize * hashesAlreadyDone;
+        this.events.emit('progress', entry, bytesAlreadyDone);
+        this.transferredMap.set(entry, bytesAlreadyDone);
 
         const missingHashes = new Set(handshake.hash);
         for (let i = 0; i < entry.hashes.length; ) {
@@ -171,10 +189,10 @@ export class Uploader {
         wark: string
     ) {
         const start = entry.chunkSize * startI;
-        const end = entry.chunkSize * endI;
+        const end = Math.min(entry.chunkSize * endI, entry.file.size);
 
         const dir = withoutLeadingSlash(dirname(entry.name));
-        return fetch(new URL(dir, this.options.baseUrl), {
+        await fetch(new URL(dir, this.options.baseUrl), {
             method: 'POST',
             headers: {
                 'X-Up2k-Hash': hashes,
@@ -183,5 +201,8 @@ export class Uploader {
             },
             body: entry.file.slice(start, end),
         });
+        const transferred = (this.transferredMap.get(entry) ?? 0) + (end - start);
+        this.events.emit('progress', entry, transferred);
+        this.transferredMap.set(entry, transferred);
     }
 }

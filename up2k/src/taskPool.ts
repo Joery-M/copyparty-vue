@@ -6,6 +6,8 @@ import { Hasher } from './hasher';
 import { Uploader } from './uploader';
 
 export interface TaskPoolOptions {
+    hasher?: Hasher;
+    uploader?: Uploader;
     files: IndexedFile[];
     hashConcurrency: number;
     uploadConcurrency: number;
@@ -13,10 +15,16 @@ export interface TaskPoolOptions {
 }
 
 export interface TaskPoolEvents {
+    'file-error': [file: IndexedFile, error: Error, step: 'hash' | 'upload'];
+
+    'upload-progress': [file: IndexedFile<true>, bytes: number];
+    'hash-progress': [file: IndexedFile<false>, bytes: number];
+
+    /** @internal Internal event used to queue new tasks */
     'task-completed': [];
 }
 
-export class Up2KTaskPool {
+export class TaskPool {
     events = new EventEmitter<TaskPoolEvents>();
 
     private queuedFiles;
@@ -25,6 +33,9 @@ export class Up2KTaskPool {
     private uploadPool = new Set<IndexedFile<true>>();
     private donePool = new Set<IndexedFile<true>>();
     private failedPool = new Set<IndexedFile>();
+
+    private hasher: Hasher;
+    private uploader: Uploader;
 
     constructor(private options: TaskPoolOptions) {
         let largeFirst = true;
@@ -37,6 +48,9 @@ export class Up2KTaskPool {
             )
         );
         this.queuedFiles = new Set(sortedFiles);
+
+        this.hasher = options.hasher ?? new Hasher(options.hashConcurrency);
+        this.uploader = options.uploader ?? new Uploader({ baseUrl: options.baseUrl });
     }
 
     /**
@@ -47,11 +61,10 @@ export class Up2KTaskPool {
      *      - If there is a file in the first queue, hash it, then add the file to the queued uploads pool
      *      - Wait for a task to finish and repeat
      */
-    async execute(
-        hasher = new Hasher(this.options.hashConcurrency),
-        uploader = new Uploader({ baseUrl: this.options.baseUrl })
-    ) {
-        hasher.events.on('workerIdle', () => this.events.emit('task-completed'));
+    async execute() {
+        this.hasher.events.on('workerIdle', () => this.events.emit('task-completed'));
+        this.uploader.events.on('progress', (...a) => this.events.emit('upload-progress', ...a));
+        this.hasher.events.on('progress', (...a) => this.events.emit('hash-progress', ...a));
 
         const activeTasks = new Set<Promise<void>>();
         while (
@@ -68,7 +81,7 @@ export class Up2KTaskPool {
                 if (entry) {
                     this.uploadPool.add(entry);
                     this.queuedUploadPool.delete(entry);
-                    const task = uploader
+                    const task = this.uploader
                         .uploadFile(entry)
                         .then(() => {
                             this.uploadPool.delete(entry);
@@ -76,6 +89,7 @@ export class Up2KTaskPool {
                         })
                         .catch((err) => {
                             console.error(err);
+                            this.events.emit('file-error', entry, err, 'hash');
                             this.uploadPool.delete(entry);
                             this.failedPool.add(entry);
                         })
@@ -93,7 +107,7 @@ export class Up2KTaskPool {
                 if (entry) {
                     this.hashPool.add(entry);
                     this.queuedFiles.delete(entry);
-                    const task = hasher
+                    const task = this.hasher
                         .hashFile(entry)
                         .then((hashes) => {
                             this.queuedUploadPool.add({ ...entry, hashes });
@@ -101,6 +115,7 @@ export class Up2KTaskPool {
                         })
                         .catch((err) => {
                             console.error(err);
+                            this.events.emit('file-error', entry, err, 'upload');
                             this.hashPool.delete(entry);
                             this.failedPool.add(entry);
                         })
