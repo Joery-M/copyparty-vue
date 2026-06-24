@@ -20,7 +20,7 @@ export const useUploader = defineStore('uploader', () => {
         upload: async (files: DataTransferItemList | FileList | File[] | File, dir: string[]) => {
             const start = performance.now();
             const baseUrl = new URL(withTrailingSlash(getApiUrl(dir)));
-            const up2k = new Up2K({ baseUrl });
+            const up2k = new Up2K({ baseUrl, hashConcurrency: 1 });
             const allFiles = await up2k.collectInput(files);
             const totalFiles =
                 allFiles.bad.size + allFiles.good.size + allFiles.junk.size + allFiles.nil.size;
@@ -54,13 +54,6 @@ export const useUploader = defineStore('uploader', () => {
 
             const fileMap = new Map(acceptedFiles);
             const pool = up2k.createTaskPool(fileMap);
-
-            pool.events.on('hash-progress', (entry, transferred) => {
-                console.log('hash', entry.name, transferred);
-            });
-            pool.events.on('upload-progress', (entry, transferred) => {
-                console.log('upload', entry.name, transferred);
-            });
 
             toast(() => i18n.t('upload'), {
                 description: markRaw(UploadStatus),

@@ -120,7 +120,14 @@ onBeforeRouteUpdate((to, from) => {
     }
 });
 
-useShortcut('Escape', () => fileSelection.selectNone());
+useShortcut('Escape', () => {
+    if (fileSelection.selectedFiles.size) {
+        fileSelection.selectNone();
+    } else {
+        // Dismiss all toasts if escape is pressed and no files are selected
+        toast.dismiss();
+    }
+});
 useShortcut('g', () =>
     settings.fileView.type === 'grid'
         ? (settings.fileView.type = 'list')

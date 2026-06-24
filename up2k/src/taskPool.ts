@@ -19,6 +19,7 @@ export interface TaskPoolEvents {
 
     'upload-progress': [file: IndexedFile<true>, bytes: number];
     'hash-progress': [file: IndexedFile<false>, bytes: number];
+    'upload-done': [file: IndexedFile<false>];
 
     /** @internal Internal event used to queue new tasks */
     'task-completed': [];
@@ -64,6 +65,7 @@ export class TaskPool {
     async execute() {
         this.hasher.events.on('workerIdle', () => this.events.emit('task-completed'));
         this.uploader.events.on('progress', (...a) => this.events.emit('upload-progress', ...a));
+        this.uploader.events.on('done', (...a) => this.events.emit('upload-done', ...a));
         this.hasher.events.on('progress', (...a) => this.events.emit('hash-progress', ...a));
 
         const activeTasks = new Set<Promise<void>>();

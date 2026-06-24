@@ -1,6 +1,6 @@
 import defu from 'defu';
 import EventEmitter from 'eventemitter3';
-import { basename, dirname } from 'pathe';
+import { basename, dirname, resolve } from 'pathe';
 import { withoutLeadingSlash } from 'ufo';
 
 import type { IndexedFile } from '.';
@@ -116,10 +116,6 @@ export class Uploader {
         const stitchSize = Math.ceil(
             entry.file.size / (this.options.stitchedChunkSizeMiB * 1024 * 1024)
         );
-        const hashesAlreadyDone = handshake.hash.length - entry.hashes.length;
-        const bytesAlreadyDone = entry.chunkSize * hashesAlreadyDone;
-        this.events.emit('progress', entry, bytesAlreadyDone);
-        this.transferredMap.set(entry, bytesAlreadyDone);
 
         const missingHashes = new Set(handshake.hash);
         for (let i = 0; i < entry.hashes.length; ) {
@@ -138,7 +134,6 @@ export class Uploader {
                 if (!missingHashes.has(toStitch)) break;
 
                 hashesToStitch++;
-                missingHashes.delete(toStitch);
                 combinedHashes.push(toStitch.slice(0, 9));
             }
 
@@ -149,12 +144,18 @@ export class Uploader {
             performance.mark(`Upload ${entry.name}`, { startTime });
 
             i += hashesToStitch;
+
+            const bytesAlreadyDone = Math.min(entry.chunkSize * i, entry.file.size);
+            this.events.emit('progress', entry, bytesAlreadyDone);
+            this.transferredMap.set(entry, bytesAlreadyDone);
         }
     }
 
     private async doHandshake(entry: IndexedFile<true>, nameOverride?: string) {
         const fileName = basename(entry.name);
-        const dir = withoutLeadingSlash(dirname(nameOverride ?? entry.name));
+        const dir = withoutLeadingSlash(
+            dirname(nameOverride ? resolve(entry.name, '../', nameOverride) : entry.name)
+        );
         return fetch(new URL(dir, this.options.baseUrl), {
             method: 'POST',
             headers: {
@@ -190,7 +191,6 @@ export class Uploader {
     ) {
         const start = entry.chunkSize * startI;
         const end = Math.min(entry.chunkSize * endI, entry.file.size);
-
         const dir = withoutLeadingSlash(dirname(entry.name));
         await fetch(new URL(dir, this.options.baseUrl), {
             method: 'POST',
@@ -201,8 +201,5 @@ export class Uploader {
             },
             body: entry.file.slice(start, end),
         });
-        const transferred = (this.transferredMap.get(entry) ?? 0) + (end - start);
-        this.events.emit('progress', entry, transferred);
-        this.transferredMap.set(entry, transferred);
     }
 }
