@@ -44,24 +44,17 @@ const canUpload = computed(
             <Menu />
         </Button>
         <div class="spacer" />
-        <DropdownMenu>
-            <DropdownMenuTrigger :disabled="!canUpload">
-                <Button v-if="canUpload" size="lg">
-                    {{ $t('upload') }}
-                    <ArrowUp />
-                </Button>
-                <Tooltip v-else :content="$t('error.cant_upload')">
-                    <Button
-                        size="lg"
-                        disabled
-                        variant="accent"
-                        class="disabled:pointer-events-auto"
-                        aria-haspopup
-                    >
-                        {{ $t('upload') }}
-                        <ArrowUp />
-                    </Button>
-                </Tooltip>
+
+        <Tooltip v-if="!canUpload" :content="$t('error.cant_upload')">
+            <Button variant="accent" disabled size="lg" class="disabled:pointer-events-auto">
+                {{ $t('upload') }}
+                <ArrowUp />
+            </Button>
+        </Tooltip>
+        <DropdownMenu v-else>
+            <DropdownMenuTrigger size="lg" :as="Button">
+                {{ $t('upload') }}
+                <ArrowUp />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem @click="fileDialog.open()">
@@ -84,7 +77,7 @@ const canUpload = computed(
             <User2 />
         </Button>
         <DropdownMenu v-else>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger as-child>
                 <Button size="lg" variant="outline">
                     {{ auth.username ?? $t('user.login') }}
                     <User2 />

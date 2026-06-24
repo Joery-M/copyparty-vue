@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import type { UseTransitionOptions } from '@vueuse/core';
 
-import { TransitionPresets, useThrottleFn, useTransition } from '@vueuse/core';
+import {
+    TransitionPresets,
+    useIntervalFn,
+    useThrottleFn,
+    useTransition,
+    whenever,
+} from '@vueuse/core';
 import { TaskPool } from 'up2k';
 import { computed, shallowRef, triggerRef } from 'vue';
 
@@ -15,6 +21,7 @@ const props = defineProps<{
 }>();
 
 const totalSize = props.files.reduce((s, f) => s + f.size, 0);
+const totalSizeFormatted = formatFileSize(totalSize);
 
 interface FileStatus {
     hashed: number;
@@ -30,16 +37,22 @@ const fileStatus = shallowRef(new Map<File, FileStatus>());
 const updateSpeed = 100;
 const updater = useThrottleFn(() => triggerRef(fileStatus), updateSpeed, true, true);
 
+// This is a counter that collects the amount of bytes uploaded and gets reset in an interval
+let uploadTally = 0;
+let hashTally = 0;
+
 props.pool.events.on('hash-progress', (file, hashed) => {
     const status = fileStatus.value.get(file.file) ?? { hashed: 0, uploaded: 0, done: false };
     status.hashed = hashed;
     fileStatus.value.set(file.file, status);
+    hashTally += hashed;
     updater();
 });
 props.pool.events.on('upload-progress', (file, uploaded) => {
     const status = fileStatus.value.get(file.file) ?? { hashed: 0, uploaded: 0, done: false };
     status.uploaded = uploaded;
     fileStatus.value.set(file.file, status);
+    uploadTally += uploaded;
     updater();
 });
 props.pool.events.on('file-error', (file, error) => {
@@ -63,14 +76,17 @@ updater();
 const totalStatus = computed(() => {
     let h = 0;
     let u = 0;
-    for (const { hashed, uploaded } of fileStatus.value.values()) {
+    let d = 0;
+    for (const { hashed, uploaded, done, error } of fileStatus.value.values()) {
         h += hashed;
         u += uploaded;
+        if (done || error) d++;
     }
-    return [h, u] as const;
+    return [h, u, d] as const;
 });
 const totalHashed = computed(() => totalStatus.value[0]);
 const totalUploaded = computed(() => totalStatus.value[1]);
+const totalDone = computed(() => totalStatus.value[2]);
 
 const transitionOptions: UseTransitionOptions<number> = {
     easing: TransitionPresets.easeOutCubic,
@@ -91,39 +107,89 @@ const topSorted = computed(() =>
         )
         .slice(0, 50)
 );
+
+let startUploadTime = performance.now();
+const uploadSpeed = shallowRef(0);
+let startHashTime = performance.now();
+const hashSpeed = shallowRef(0);
+
+// This one's pretty good to proof check https://www.omnicalculator.com/other/bandwidth
+function calculateUploadSpeed() {
+    const duration = (performance.now() - startUploadTime) / 1000;
+    const s = uploadTally / duration;
+    uploadSpeed.value = Number.isFinite(s) ? s : 0;
+}
+function calculateHashSpeed() {
+    const duration = (performance.now() - startHashTime) / 1000;
+    const s = hashTally / duration;
+    hashSpeed.value = Number.isFinite(s) ? s : 0;
+}
+const uploadSpeedInterval = useIntervalFn(() => calculateUploadSpeed(), 100, { immediate: false });
+const hashSpeedInterval = useIntervalFn(() => calculateHashSpeed(), 100, { immediate: false });
+whenever(
+    () => totalUploaded.value > 0 && totalUploaded.value < totalSize,
+    () => ((startUploadTime = performance.now()), uploadSpeedInterval.resume()),
+    { once: true }
+);
+whenever(
+    () => totalUploaded.value === totalSize,
+    () => (uploadSpeedInterval.pause(), calculateUploadSpeed()),
+    { once: true }
+);
+whenever(
+    () => totalHashed.value > 0 && totalHashed.value < totalSize,
+    () => ((startHashTime = performance.now()), hashSpeedInterval.resume()),
+    { once: true }
+);
+whenever(
+    () => totalHashed.value === totalSize,
+    () => (hashSpeedInterval.pause(), calculateHashSpeed()),
+    { once: true }
+);
 </script>
 
 <template>
+    <div class="section">
+        <label class="spaced-label">
+            <span> {{ $t('toast.hashed') }} </span>
+            <span> {{ formatFileSize(totalHashedSmooth) }} / {{ totalSizeFormatted }} </span>
+        </label>
+        <Progress :model-value="totalHashedPerc" />
+    </div>
+    <div class="section">
+        <label class="spaced-label">
+            <span> {{ $t('toast.uploaded') }} </span>
+            <span> {{ formatFileSize(totalUploadedSmooth) }} / {{ totalSizeFormatted }} </span>
+        </label>
+        <Progress :model-value="totalUploadedPerc" />
+    </div>
     <label class="spaced-label">
-        <span>Hashed</span>
-        <span> {{ formatFileSize(totalHashedSmooth) }} / {{ formatFileSize(totalSize) }} </span>
+        <span> {{ formatFileSize(hashSpeed, 'SI', true, true) }} </span>
+        <span> {{ formatFileSize(uploadSpeed, 'SI', true, true) }} </span>
     </label>
-    <Progress :model-value="totalHashedPerc" />
-    <label class="spaced-label">
-        <span>Uploaded</span>
-        <span> {{ formatFileSize(totalUploadedSmooth) }} / {{ formatFileSize(totalSize) }} </span>
-    </label>
-    <Progress :model-value="totalUploadedPerc" />
-    <label class="spaced-label">
-        Files
-        <span> {{ formatFileSize(totalUploadedSmooth) }} / {{ formatFileSize(totalSize) }} </span>
-    </label>
-    <ul class="file-list">
-        <li
-            v-for="[file, status] in topSorted"
-            class="spaced-label"
-            :class="{ error: status.error, done: status.done }"
-        >
-            <span>{{ file.name }}</span>
-            <span>
-                {{
-                    (status.uploaded / file.size).toLocaleString(undefined, {
-                        style: 'percent',
-                    })
-                }}
-            </span>
-        </li>
-    </ul>
+    <hr />
+    <div class="section">
+        <label class="spaced-label">
+            <span> {{ $t('toast.queue') }} </span>
+            <span> {{ totalDone.toLocaleString() }} / {{ files.length.toLocaleString() }} </span>
+        </label>
+        <ul class="file-list">
+            <li
+                v-for="[file, status] in topSorted"
+                class="spaced-label"
+                :class="{ error: status.error, done: status.done }"
+            >
+                <span>{{ file.name }}</span>
+                <span>
+                    {{
+                        (status.uploaded / file.size).toLocaleString(undefined, {
+                            style: 'percent',
+                        })
+                    }}
+                </span>
+            </li>
+        </ul>
+    </div>
 </template>
 
 <style scoped>
@@ -154,7 +220,10 @@ const topSorted = computed(() =>
     }
 }
 
-label.spaced-label {
+hr {
+    @apply mt-2;
+}
+.section {
     @apply mt-2;
 }
 </style>

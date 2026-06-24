@@ -126,6 +126,9 @@
     "error": "An error occurred",
     "logged_out": "Successfully logged out",
     "logged_in": "Logged in as {0}",
-    "copied": "Copied file | Copied {n} files"
+    "copied": "Copied file | Copied {n} files",
+    "hashed": "Hashed",
+    "uploaded": "Uploaded",
+    "queue": "Queue"
   }
 }

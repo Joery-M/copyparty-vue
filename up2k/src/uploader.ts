@@ -152,10 +152,8 @@ export class Uploader {
     }
 
     private async doHandshake(entry: IndexedFile<true>, nameOverride?: string) {
-        const fileName = basename(entry.name);
-        const dir = withoutLeadingSlash(
-            dirname(nameOverride ? resolve(entry.name, '../', nameOverride) : entry.name)
-        );
+        const fileName = nameOverride ?? basename(entry.name);
+        const dir = withoutLeadingSlash(dirname(entry.name));
         return fetch(new URL(dir, this.options.baseUrl), {
             method: 'POST',
             headers: {
