@@ -167,6 +167,9 @@ importers:
 
   up2k:
     dependencies:
+      birpc:
+        specifier: ^4.0.0
+        version: 4.0.0
       defu:
         specifier: ^6.1.7
         version: 6.1.7

@@ -1,29 +1,20 @@
-export interface HashWorkerPayload {
-    file: File;
-    start: number;
-    end: number;
-    chunkSize: number;
-    chunkCount: number;
-}
+import { createBirpc } from 'birpc';
 
-export type WorkerMessage<T extends string, O extends object = {}> = {
-    type: T;
-    /** Task ID */
-    tid: number;
-} & O;
-export type WorkerMessageResponse<D = undefined> = {
-    /** Task ID */
-    tid: number;
-    error?: Error;
-} & (D extends undefined
-    ? {
-          data?: D;
-      }
-    : {
-          data: D;
-      });
+import type { HashWorkerPayload, OrchestratorFunctions, WorkerFunctions } from './hash.internal';
 
-export type HashWorkerMessage = WorkerMessage<'work', HashWorkerPayload> | WorkerMessage<'init'>;
+const rpc = createBirpc<OrchestratorFunctions, WorkerFunctions>(
+    {
+        hashFile: hashFile,
+        init: async () => {
+            await getHasher();
+            getHashEncoder();
+        },
+    },
+    {
+        on: (fn) => (self.onmessage = (e) => fn(e.data)),
+        post: (data) => self.postMessage(data),
+    }
+);
 
 type Hasher = (d: ArrayBuffer) => Promise<Uint8Array>;
 
@@ -72,39 +63,40 @@ function getHashEncoder(): HashEncoder {
     }
 }
 
-async function hashFile({
-    file,
-    start,
-    end,
-    chunkCount,
-    chunkSize,
-}: HashWorkerPayload): Promise<string[]> {
+async function hashFile(payload: HashWorkerPayload): Promise<string[]> {
+    const file = payload.file.file;
+    const chunkSize = payload.file.chunkSize;
+
     if (!(file instanceof File)) throw new Error(`Expected blob, got ${file}`);
     const timeStart = performance.now();
 
-    let offset = start;
+    let offset = payload.start;
 
     await getHasher();
     getHashEncoder();
 
-    const hashChunks: string[] = Array.from({ length: chunkCount });
+    const hashChunks: string[] = Array.from({ length: payload.chunkCount });
     let hashI = 0;
 
     const reader = new FileReaderSync();
 
     const readChunk = async () => {
-        const sliceEnd = Math.min(offset + chunkSize, end);
+        const sliceEnd = Math.min(offset + chunkSize, payload.end);
         const result = reader.readAsArrayBuffer(file.slice(offset, sliceEnd));
 
         hashChunks[hashI++] = hashEncoder!(await hasher!(result));
+
+        // Don't wait for response
+        rpc.progress.asEvent(payload.id, sliceEnd - offset);
+
         offset = sliceEnd;
 
-        if (offset < end) {
+        if (offset < payload.end) {
             return readChunk();
         } else {
             performance.measure(`Hash ${file.name}`, {
                 start: timeStart,
-                detail: `${start}/${end}`,
+                detail: `${payload.start}/${payload.end}`,
             });
             return hashChunks;
         }
@@ -150,33 +142,3 @@ function buf2b64(src: Uint8Array, nbytes = src.byteLength) {
 
     return base64;
 }
-
-self.onmessage = async (ev: MessageEvent<HashWorkerMessage>) => {
-    try {
-        if (ev.data.type === 'init') {
-            try {
-                await getHasher();
-                getHashEncoder();
-                self.postMessage({
-                    tid: ev.data.tid,
-                } satisfies WorkerMessageResponse);
-            } catch (error) {
-                self.postMessage({
-                    tid: ev.data.tid,
-                    error: Error('Error initializing', { cause: error }),
-                } satisfies WorkerMessageResponse);
-            }
-        } else if (ev.data.type === 'work') {
-            const data = await hashFile(ev.data);
-            self.postMessage({
-                tid: ev.data.tid,
-                data,
-            } satisfies WorkerMessageResponse<string[]>);
-        }
-    } catch (error) {
-        self.postMessage({
-            tid: ev.data.tid,
-            error: Error('Error handling message', { cause: error }),
-        } satisfies WorkerMessageResponse);
-    }
-};

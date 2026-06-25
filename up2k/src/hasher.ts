@@ -1,12 +1,18 @@
+import { createBirpc } from 'birpc';
 import EventEmitter from 'eventemitter3';
 
 import type { IndexedFile } from '.';
-import type { HashWorkerMessage, HashWorkerPayload, WorkerMessageResponse } from './hash.worker';
+import type { HashWorkerPayload, OrchestratorFunctions, WorkerFunctions } from './hash.internal';
 
 export interface HasherEvents {
     /** @internal Internal event used to queue new tasks */
     workerIdle: [];
     progress: [file: IndexedFile<false>, bytes: number];
+}
+
+export interface HasherOptions {
+    concurrency: number;
+    signal?: AbortSignal;
 }
 
 export class Hasher {
@@ -15,39 +21,45 @@ export class Hasher {
     static get activeWorkerCount() {
         return this.workers.length - this.idleWorkers.length;
     }
+    private hashedMap = new Map<string, number>();
 
     events = new EventEmitter<HasherEvents>();
 
     private wantsWorkerQueue: ((w: HashWorkerWrapper) => void)[] = [];
 
-    constructor(concurrency: number) {
+    constructor(private options: HasherOptions) {
         if (!Hasher.workers) {
-            Hasher.workers = Array.from({ length: concurrency }).map(() => new HashWorkerWrapper());
+            Hasher.workers = Array.from({ length: options.concurrency }).map(
+                () => new HashWorkerWrapper((...args) => this.onHashProgress(...args))
+            );
             Hasher.idleWorkers = [...Hasher.workers];
         }
     }
 
     async hashFile(entry: IndexedFile) {
-        const chunkSize = entry.chunkSize;
         // If smaller than 1 KiB, don't split into multiple workers
         let sections: [number, number][];
         if (entry.file.size > 1024) {
-            sections = splitSections(entry.file.size, Hasher.workers.length, chunkSize);
+            sections = splitSections(entry.file.size, Hasher.workers.length, entry.chunkSize);
         } else {
             sections = [[0, entry.file.size]];
         }
         let hashedBytes = 0;
         const results = sections.map(async ([start, end]) => {
             const worker = await this.waitForWorkerToBeReady();
+            if (this.options.signal?.aborted) {
+                this.workerDone(worker);
+                return [];
+            }
 
-            const chunkCount = Math.ceil((end - start) / chunkSize);
+            const chunkCount = Math.ceil((end - start) / entry.chunkSize);
 
+            await worker.ready;
             return worker
                 .hashFile({
-                    file: entry.file,
+                    file: entry,
                     start,
                     end,
-                    chunkSize,
                     chunkCount,
                 })
                 .then((res) => {
@@ -74,6 +86,12 @@ export class Hasher {
         if (cb) cb(worker);
         else Hasher.idleWorkers.push(worker);
         this.events.emit('workerIdle');
+    }
+
+    private onHashProgress(entry: IndexedFile<false>, hashed: number) {
+        const bytesDone = (this.hashedMap.get(entry.name) ?? 0) + hashed;
+        this.events.emit('progress', entry, bytesDone);
+        this.hashedMap.set(entry.name, bytesDone);
     }
 }
 
@@ -121,54 +139,33 @@ export function getChunksize(filesize: number) {
 
 class HashWorkerWrapper {
     worker = new Worker(new URL('./hash.worker', import.meta.url), { type: 'module' });
-    private lastTid = 0;
 
-    constructor() {
-        void this.init();
+    private rpc;
+    public ready;
+    private index = 0;
+    private indexMap = new Map<number, IndexedFile<false>>();
+
+    constructor(progress: (entry: IndexedFile<false>, bytes: number) => void) {
+        this.rpc = createBirpc<WorkerFunctions, OrchestratorFunctions>(
+            {
+                progress: (id, bytes) => {
+                    const file = this.indexMap.get(id);
+                    if (!file) return;
+                    progress(file, bytes);
+                },
+            },
+            {
+                on: (fn) => (this.worker.onmessage = (e) => fn(e.data)),
+                post: (d) => this.worker.postMessage(d),
+            }
+        );
+
+        this.ready = this.rpc.init();
     }
 
-    init() {
-        return new Promise<void>((resolve, reject) => {
-            const tid = ++this.lastTid;
-            const handler = (ev: MessageEvent<WorkerMessageResponse>) => {
-                if (ev.data.tid === tid) {
-                    this.worker.removeEventListener('message', handler);
-                    if (ev.data.error) {
-                        return reject(ev.data.error);
-                    } else {
-                        return resolve(ev.data.data);
-                    }
-                }
-            };
-            this.worker.addEventListener('message', handler);
-
-            this.worker.postMessage({
-                type: 'init',
-                tid,
-            } satisfies HashWorkerMessage);
-        });
-    }
-
-    hashFile(p: HashWorkerPayload) {
-        return new Promise<string[]>((resolve, reject) => {
-            const tid = ++this.lastTid;
-            const handler = (ev: MessageEvent<WorkerMessageResponse<string[]>>) => {
-                if (ev.data.tid === tid) {
-                    this.worker.removeEventListener('message', handler);
-                    if (ev.data.error) {
-                        return reject(ev.data.error);
-                    } else {
-                        return resolve(ev.data.data);
-                    }
-                }
-            };
-            this.worker.addEventListener('message', handler);
-
-            this.worker.postMessage({
-                type: 'work',
-                tid,
-                ...p,
-            } satisfies HashWorkerMessage);
-        });
+    hashFile(p: Omit<HashWorkerPayload, 'id'>) {
+        const id = this.index++;
+        this.indexMap.set(id, p.file);
+        return this.rpc.hashFile({ id, ...p });
     }
 }

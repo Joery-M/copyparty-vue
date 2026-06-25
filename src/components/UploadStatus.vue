@@ -2,6 +2,7 @@
 import type { UseTransitionOptions } from '@vueuse/core';
 
 import {
+    clamp,
     TransitionPresets,
     useIntervalFn,
     useThrottleFn,
@@ -37,22 +38,16 @@ const fileStatus = shallowRef(new Map<File, FileStatus>());
 const updateSpeed = 100;
 const updater = useThrottleFn(() => triggerRef(fileStatus), updateSpeed, true, true);
 
-// This is a counter that collects the amount of bytes uploaded and gets reset in an interval
-let uploadTally = 0;
-let hashTally = 0;
-
 props.pool.events.on('hash-progress', (file, hashed) => {
     const status = fileStatus.value.get(file.file) ?? { hashed: 0, uploaded: 0, done: false };
     status.hashed = hashed;
     fileStatus.value.set(file.file, status);
-    hashTally += hashed;
     updater();
 });
 props.pool.events.on('upload-progress', (file, uploaded) => {
     const status = fileStatus.value.get(file.file) ?? { hashed: 0, uploaded: 0, done: false };
     status.uploaded = uploaded;
     fileStatus.value.set(file.file, status);
-    uploadTally += uploaded;
     updater();
 });
 props.pool.events.on('file-error', (file, error) => {
@@ -90,12 +85,12 @@ const totalDone = computed(() => totalStatus.value[2]);
 
 const transitionOptions: UseTransitionOptions<number> = {
     easing: TransitionPresets.easeOutCubic,
-    duration: updateSpeed * 2,
+    duration: updateSpeed,
 };
 const totalHashedSmooth = useTransition(totalHashed, transitionOptions);
 const totalUploadedSmooth = useTransition(totalUploaded, transitionOptions);
-const totalHashedPerc = computed(() => (totalHashedSmooth.value / totalSize) * 100);
-const totalUploadedPerc = computed(() => (totalUploadedSmooth.value / totalSize) * 100);
+const totalHashedPerc = computed(() => clamp(totalHashedSmooth.value / totalSize, 0, 1) * 100);
+const totalUploadedPerc = computed(() => clamp(totalUploadedSmooth.value / totalSize, 0, 1) * 100);
 
 const topSorted = computed(() =>
     Array.from(fileStatus.value.entries())
@@ -105,7 +100,7 @@ const topSorted = computed(() =>
                 +(statA.hashed > 0) - +(statB.hashed > 0) ||
                 fileA.name.localeCompare(fileB.name)
         )
-        .slice(0, 50)
+        .slice(0, 10)
 );
 
 let startUploadTime = performance.now();
@@ -116,12 +111,12 @@ const hashSpeed = shallowRef(0);
 // This one's pretty good to proof check https://www.omnicalculator.com/other/bandwidth
 function calculateUploadSpeed() {
     const duration = (performance.now() - startUploadTime) / 1000;
-    const s = uploadTally / duration;
+    const s = totalUploaded.value / duration;
     uploadSpeed.value = Number.isFinite(s) ? s : 0;
 }
 function calculateHashSpeed() {
     const duration = (performance.now() - startHashTime) / 1000;
-    const s = hashTally / duration;
+    const s = totalHashed.value / duration;
     hashSpeed.value = Number.isFinite(s) ? s : 0;
 }
 const uploadSpeedInterval = useIntervalFn(() => calculateUploadSpeed(), 100, { immediate: false });
@@ -188,6 +183,9 @@ whenever(
                     }}
                 </span>
             </li>
+            <li v-if="topSorted.length < fileStatus.size">
+                {{ $t('and_more', fileStatus.size - topSorted.length) }}
+            </li>
         </ul>
     </div>
 </template>
@@ -196,7 +194,7 @@ whenever(
 @reference "@/style.css";
 
 .file-list {
-    @apply font-mono mt-2;
+    @apply font-mono mt-2 overflow-y-auto scrollbar-thin max-h-48;
 
     .spaced-label {
         &.error {
@@ -211,7 +209,7 @@ whenever(
     }
 }
 .spaced-label {
-    @apply flex gap-4 overflow-y-scroll max-h-48;
+    @apply flex gap-4;
     > span {
         @apply text-nowrap;
         &:first-child {

@@ -52,11 +52,13 @@ export const useUploader = defineStore('uploader', () => {
                 if (!canContinue.data) return;
             }
 
+            const abort = new AbortController();
             const fileMap = new Map(acceptedFiles);
-            const pool = up2k.createTaskPool(fileMap);
+            const pool = up2k.createTaskPool(fileMap, { signal: abort.signal });
 
             toast(() => i18n.t('upload'), {
                 description: markRaw(UploadStatus),
+                onDismiss: () => abort.abort(),
                 componentProps: {
                     pool,
                     files: acceptedFiles.map(([f]) => f),

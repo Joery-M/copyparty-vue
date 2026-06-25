@@ -12,6 +12,7 @@ export interface TaskPoolOptions {
     hashConcurrency: number;
     uploadConcurrency: number;
     baseUrl: URL;
+    signal?: AbortSignal;
 }
 
 export interface TaskPoolEvents {
@@ -50,8 +51,11 @@ export class TaskPool {
         );
         this.queuedFiles = new Set(sortedFiles);
 
-        this.hasher = options.hasher ?? new Hasher(options.hashConcurrency);
-        this.uploader = options.uploader ?? new Uploader({ baseUrl: options.baseUrl });
+        this.hasher =
+            options.hasher ??
+            new Hasher({ concurrency: options.hashConcurrency, signal: options.signal });
+        this.uploader =
+            options.uploader ?? new Uploader({ baseUrl: options.baseUrl, signal: options.signal });
     }
 
     /**
@@ -127,9 +131,32 @@ export class TaskPool {
                     activeTasks.add(task);
                 }
             }
-            await new Promise<void>((r) => this.events.once('task-completed', r));
+            const goOn = await this.waitForTaskComplete();
+            if (!goOn) break;
         }
 
         await Promise.all(activeTasks);
+    }
+
+    private waitForTaskComplete() {
+        return new Promise<boolean>((resolve) => {
+            if (this.options.signal?.aborted) return resolve(false);
+
+            const resolveTrue = () => {
+                resolve(true);
+                // Remove event listeners
+                this.events.off('task-completed', resolveTrue);
+                this.options.signal?.removeEventListener('task-completed', resolveFalse);
+            };
+            const resolveFalse = () => {
+                resolve(false);
+                // Remove event listeners
+                this.events.off('task-completed', resolveTrue);
+                this.options.signal?.removeEventListener('task-completed', resolveFalse);
+            };
+
+            this.events.once('task-completed', resolveTrue);
+            this.options.signal?.addEventListener('abort', resolveFalse);
+        });
     }
 }

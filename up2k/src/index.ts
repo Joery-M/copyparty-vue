@@ -1,9 +1,9 @@
 import { defu } from 'defu';
 
-import type { Uploader } from './uploader';
+import type { TaskPoolOptions } from './taskPool';
 import type { PartialExcept } from './utils';
 
-import { getChunksize, Hasher } from './hasher';
+import { getChunksize } from './hasher';
 import { TaskPool } from './taskPool';
 import { isDirectoryEntry, isFileEntry, rdFlatten, sleep, vsplit } from './utils';
 
@@ -243,11 +243,12 @@ export class Up2K {
         return junk;
     }
 
-    createTaskPool(files: FileMap, hasher?: Hasher, uploader?: Uploader) {
+    createTaskPool(files: FileMap, opts?: Pick<TaskPoolOptions, 'hasher' | 'uploader' | 'signal'>) {
         const indexed = this.indexFiles(files);
         return new TaskPool({
-            hasher,
-            uploader,
+            hasher: opts?.hasher,
+            uploader: opts?.uploader,
+            signal: opts?.signal,
             files: indexed,
             hashConcurrency: this.options.hashConcurrency,
             uploadConcurrency: this.options.uploadConcurrency,

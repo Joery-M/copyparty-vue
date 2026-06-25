@@ -4,6 +4,7 @@
   "type": "module",
   "main": "./src/index.ts",
   "dependencies": {
+    "birpc": "^4.0.0",
     "defu": "^6.1.7",
     "eventemitter3": "^5.0.4",
     "hash-wasm": "^4.12.0",

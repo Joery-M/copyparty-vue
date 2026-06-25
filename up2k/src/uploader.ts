@@ -1,6 +1,6 @@
 import defu from 'defu';
 import EventEmitter from 'eventemitter3';
-import { basename, dirname, resolve } from 'pathe';
+import { basename, dirname } from 'pathe';
 import { withoutLeadingSlash } from 'ufo';
 
 import type { IndexedFile } from '.';
@@ -17,6 +17,7 @@ interface UploaderOptions {
      * @default 64
      */
     stitchedChunkSizeMiB: number;
+    signal?: AbortSignal;
 }
 
 type HandshakeAnyRes = HandshakeRes | HandshakeResDeferred;
@@ -119,6 +120,8 @@ export class Uploader {
 
         const missingHashes = new Set(handshake.hash);
         for (let i = 0; i < entry.hashes.length; ) {
+            if (this.options.signal?.aborted) return;
+
             const hash = entry.hashes[i];
             if (!missingHashes.has(hash)) {
                 i++;
@@ -198,6 +201,7 @@ export class Uploader {
                 'Content-Type': 'application/octet-stream',
             },
             body: entry.file.slice(start, end),
+            signal: this.options.signal,
         });
     }
 }
