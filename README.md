@@ -13,7 +13,7 @@ Anything else is a bonus.
 
 Missing features:
 
-- Markdown editor
+- ~~Markdown editor~~
 - Audio playback (you just download the file atm)
 - Moving, copying and pasting files (across tabs)
 - upget/recent uploads

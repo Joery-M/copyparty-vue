@@ -17,14 +17,17 @@ export const useUploader = defineStore('uploader', () => {
     const dialog = useConfirm();
 
     return {
-        upload: async (files: DataTransferItemList | FileList | File[] | File, dir: string[]) => {
+        upload: async (
+            files: DataTransferItemList | FileList | File[] | File,
+            dir: string[]
+        ): Promise<Map<string, File>> => {
             const start = performance.now();
             const baseUrl = new URL(withTrailingSlash(getApiUrl(dir)));
             const up2k = new Up2K({ baseUrl, hashConcurrency: 1 });
             const allFiles = await up2k.collectInput(files);
             const totalFiles =
                 allFiles.bad.size + allFiles.good.size + allFiles.junk.size + allFiles.nil.size;
-            if (totalFiles == 0) return;
+            if (totalFiles == 0) return new Map();
 
             const acceptedFiles: [File, string][] = [...allFiles.good];
             if (allFiles.bad.size > 0) {
@@ -33,7 +36,7 @@ export const useUploader = defineStore('uploader', () => {
                     description: () => i18n.t('dialogs.bad_files.description'),
                     files: allFiles.bad,
                 });
-                if (!continueAfterBad.data) return;
+                if (!continueAfterBad.data) return new Map();
             }
             if (allFiles.junk.size > 0) {
                 const uploadJunk = await dialog.reveal({
@@ -49,12 +52,14 @@ export const useUploader = defineStore('uploader', () => {
                     description: () => i18n.t('dialogs.confirm_upload.description'),
                     files: allFiles.good,
                 });
-                if (!canContinue.data) return;
+                if (!canContinue.data) return new Map();
             }
 
             const abort = new AbortController();
             const fileMap = new Map(acceptedFiles);
+            const successfulFiles = new Map<string, File>();
             const pool = up2k.createTaskPool(fileMap, { signal: abort.signal });
+            pool.events.on('upload-done', (entry) => successfulFiles.set(entry.name, entry.file));
 
             toast(() => i18n.t('upload'), {
                 description: markRaw(UploadStatus),
@@ -74,6 +79,7 @@ export const useUploader = defineStore('uploader', () => {
 
             queryCache.invalidateQueries({ key: ['ls', ...dir] });
             queryCache.invalidateQueries({ key: ['tree', ...dir] });
+            return successfulFiles;
         },
     };
 });

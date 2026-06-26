@@ -5,7 +5,7 @@ import type { FileEntry } from '@/lib/interop';
 
 import { getApiUrl } from '@/lib/api';
 
-import MarkdownViewer from './MarkdownViewer.vue';
+import MarkdownViewer from './markdown/MarkdownViewer.vue';
 
 const props = defineProps<{ file: FileEntry }>();
 

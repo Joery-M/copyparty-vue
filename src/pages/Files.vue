@@ -34,7 +34,7 @@ import RouteBreadCrumb from '@/components/RouteBreadCrumb.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import FileViewer from '@/components/viewers/FileViewer.vue';
 import ContextMenuRoot from '@/lib/ContextMenu/ContextMenuRoot.vue';
-import { useShortcut } from '@/lib/keyboard.ts';
+import { isCurrentGuardActive, useShortcut } from '@/lib/keyboard.ts';
 import { useAuth } from '@/stores/useAuth';
 import { useFileSelection } from '@/stores/useFileSelection.ts';
 import { useHandlers } from '@/stores/useHandlers.ts';
@@ -58,7 +58,7 @@ const listDirQuery = useListDirQuery();
 
 const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
 const MarkdownViewer = defineAsyncComponent(
-    () => import('@/components/viewers/MarkdownViewer.vue')
+    () => import('@/components/viewers/markdown/MarkdownViewer.vue')
 );
 
 const dropzone = useDropZone(document.body, {
@@ -67,8 +67,9 @@ const dropzone = useDropZone(document.body, {
         if (f && f.length > 0) uploader.upload(f, routeState.dir);
     },
 });
-useEventListener('paste', (ev) => {
-    if (!ev.clipboardData) return;
+const allowInteractions = isCurrentGuardActive();
+useEventListener('paste', async (ev) => {
+    if (!ev.clipboardData || !allowInteractions.value) return;
     const items = ev.clipboardData.items;
     console.log(items.length);
     if (items.length > 0) uploader.upload(items, routeState.dir);

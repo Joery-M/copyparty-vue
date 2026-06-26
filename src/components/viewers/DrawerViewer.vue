@@ -45,7 +45,7 @@ useShortcutGuard('viewer');
                     <VisuallyHidden>
                         <DrawerDescription>{{ description }}</DrawerDescription>
                     </VisuallyHidden>
-                    <div class="p-4 rounded-t-[10px] focus-visible:outline-none **:z-10">
+                    <div class="p-4 rounded-t-[10px] focus-visible:outline-none">
                         <button
                             class="z-10 fixed right-0 top-0 size-13 flex justify-center items-center opacity-70 hover:opacity-100 cursor-pointer"
                             @click="isOpen = false"

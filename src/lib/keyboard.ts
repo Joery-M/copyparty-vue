@@ -3,6 +3,7 @@ import type { InjectionKey, MaybeRefOrGetter } from 'vue';
 
 import { onKeyStroke } from '@vueuse/core';
 import {
+    computed,
     hasInjectionContext,
     inject,
     onScopeDispose,
@@ -40,6 +41,17 @@ export function useShortcut(
         onKeyStroke((event) => GuardStack.value[0] === guard && predicate(event), ...args);
     } else {
         onKeyStroke((event) => GuardStack.value.length === 0 && predicate(event), ...args);
+    }
+}
+
+export function isCurrentGuardActive() {
+    if (!hasInjectionContext())
+        throw new Error('isCurrentGuardActive has to be used inside an injection context');
+    const guard = inject(CurrentGuard, undefined);
+    if (guard) {
+        return computed(() => GuardStack.value[0] === guard);
+    } else {
+        return computed(() => GuardStack.value.length === 0);
     }
 }
 

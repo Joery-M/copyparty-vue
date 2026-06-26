@@ -3,7 +3,7 @@ import { computedAsync, whenever } from '@vueuse/core';
 import { computed, shallowRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import type { File } from '@/lib/interop';
+import type { FileEntry } from '@/lib/interop';
 
 import { FileClassification } from '@/lib/classifyExt';
 import { usePreview } from '@/stores/usePreview';
@@ -34,7 +34,7 @@ const currentEditor = computedAsync(async () => {
         case FileClassification.PlainText:
             return import('./PlainTextEditor.vue').then((r) => r.default);
         case FileClassification.RichText:
-            return import('./RichTextEditor.vue').then((r) => r.default);
+            return import('./markdown/MarkdownEditor.vue').then((r) => r.default);
         case FileClassification.RasterImage:
         case FileClassification.VectorImage:
         case FileClassification.Video:
