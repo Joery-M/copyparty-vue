@@ -2,7 +2,7 @@ import { API } from '@/lib/api';
 
 import { classifyExtension, FileClassification } from './classifyExt';
 
-export type AnyDirectoryEntry = Directory | File;
+export type AnyDirectoryEntry = Directory | FileEntry;
 
 class BaseDirectoryEntry {
     name: string;
@@ -32,7 +32,7 @@ export class Directory extends BaseDirectoryEntry {
     }
 }
 
-export class File extends BaseDirectoryEntry {
+export class FileEntry extends BaseDirectoryEntry {
     extension: string | null = null;
 
     constructor(cwd: string[], input: API.ListDirectoryEntry) {

@@ -9,7 +9,7 @@ import { readonly, ref, toRef, watch } from 'vue';
 
 import type { AnyDirectoryEntry } from './interop';
 
-import { Directory as DirectoryEntry, File as FileEntry } from './interop';
+import { Directory as DirectoryEntry, FileEntry } from './interop';
 
 const baseUrl = stringifyParsedURL({
     ...parseURL(location.origin),

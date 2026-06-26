@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { useQuery } from '@pinia/colada';
 
-import type { File } from '@/lib/interop';
+import type { FileEntry } from '@/lib/interop';
 
 import { getApiUrl } from '@/lib/api';
 
 import MarkdownViewer from './MarkdownViewer.vue';
 
-const props = defineProps<{ file: File }>();
+const props = defineProps<{ file: FileEntry }>();
 
 const fileData = useQuery({
     key: ['file', ...props.file.fullPath],

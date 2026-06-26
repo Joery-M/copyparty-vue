@@ -26,7 +26,7 @@ import {
 } from '@vueuse/core';
 import { computed, ref, useTemplateRef, watchEffect } from 'vue';
 
-import type { File } from '@/lib/interop';
+import type { FileEntry } from '@/lib/interop';
 
 import ImagePixelated from '@/assets/image-pixelated.svg?raw';
 import ImageSmooth from '@/assets/image-smooth.svg?raw';
@@ -43,7 +43,7 @@ import { Button } from '@shadcn/button';
 import { ButtonGroup } from '@shadcn/button-group';
 import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
 
-const props = defineProps<{ file: File }>();
+const props = defineProps<{ file: FileEntry }>();
 
 const mediaUrl = getApiUrl(props.file.fullPath, { cache: '', raw: '' });
 

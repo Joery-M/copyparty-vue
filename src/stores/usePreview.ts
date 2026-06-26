@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 
 import type { FileClassification } from '@/lib/classifyExt';
 
-import { File } from '@/lib/interop';
+import { FileEntry } from '@/lib/interop';
 import { useRouteState } from '@/stores/useRouteState';
 
 export const usePreview = defineStore('preview', () => {
@@ -14,7 +14,7 @@ export const usePreview = defineStore('preview', () => {
     const router = useRouter();
     const openedFile = computed(() => {
         if (routeState.file) {
-            return new File(routeState.dir, {
+            return new FileEntry(routeState.dir, {
                 ext: extname(routeState.file),
                 // Slightly stupid since @vueuse/router decodes, then we encode, and then decode again in the constructor, but idc really
                 href: encodeURIComponent(basename(routeState.file)),

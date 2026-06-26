@@ -3,12 +3,12 @@ import { useQuery } from '@pinia/colada';
 import { useTimeoutFn, whenever } from '@vueuse/core';
 import { effect, ref } from 'vue';
 
-import type { File } from '@/lib/interop';
+import type { FileEntry } from '@/lib/interop';
 
 import { getApiUrl } from '@/lib/api';
 import { fetchWithProgress } from '@/lib/utils';
 
-const props = defineProps<{ file: File }>();
+const props = defineProps<{ file: FileEntry }>();
 
 const showProgress = ref(true);
 const loadProgress = ref(0);

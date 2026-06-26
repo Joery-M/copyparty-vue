@@ -7,7 +7,7 @@ import { useQueryCache } from '@pinia/colada';
 import { useEventListener, watchThrottled } from '@vueuse/core';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watchEffect } from 'vue';
 
-import type { File } from '@/lib/interop';
+import type { FileEntry } from '@/lib/interop';
 
 import { API, getApiUrl } from '@/lib/api';
 import { formatTimeNoMs } from '@/lib/format';
@@ -22,7 +22,7 @@ import { Slider } from '@shadcn/slider';
 const props = defineProps<{
     video: HTMLVideoElement;
     class?: HTMLAttributes['class'];
-    file: File;
+    file: FileEntry;
 }>();
 
 const queryCache = useQueryCache();

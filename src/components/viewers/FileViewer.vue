@@ -42,7 +42,7 @@ const currentEditor = computedAsync(async () => {
     }
 });
 
-const lastFile = shallowRef<File | null>(null);
+const lastFile = shallowRef<FileEntry | null>(null);
 whenever(
     () => previewStore.openedFile,
     (f) => (lastFile.value = f),
