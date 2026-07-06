@@ -2,6 +2,7 @@
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
 import { API } from '@/lib/api';
+import { useDiskUsage } from '@/stores/useDiskUsage.ts';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 
 export const useListDirQuery = defineColadaLoader({
@@ -17,7 +18,7 @@ export const useListDirQuery = defineColadaLoader({
 <script setup lang="ts">
 import { isEqual } from '@ver0/deep-equal';
 import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
-import { computed, defineAsyncComponent } from 'vue';
+import { computed, defineAsyncComponent, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate } from 'vue-router';
 import { toast } from 'vue-sonner';
@@ -53,8 +54,16 @@ const authStore = useAuth();
 const fileSelection = useFileSelection();
 const handlers = useHandlers();
 const i18n = useI18n();
+const diskUsage = useDiskUsage();
 
 const listDirQuery = useListDirQuery();
+watch(
+    () => listDirQuery.data.value?.du ?? [],
+    ([free, total]) => {
+        diskUsage.free = free;
+        diskUsage.total = total;
+    }
+);
 
 const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
 const MarkdownViewer = defineAsyncComponent(

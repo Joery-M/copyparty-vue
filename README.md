@@ -43,6 +43,7 @@ Changes include:
 
 - Mounts page (`?h`) has a JSON version
 - Option to disable thumbnail fallback (where it would show text instead of the image, now it'll just respond with 404)
+- Respond with the raw numbers used in `srvinf`
 - (In [other branch](https://github.com/Joery-M/copyparty/tree/custom-frontend)) Changes to allow bundling this Vue version as the default frontend
 
 ## Performance

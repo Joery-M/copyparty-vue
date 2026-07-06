@@ -5,8 +5,10 @@ import { computed } from 'vue';
 
 import Tooltip from '@/components/Tooltip.vue';
 import { sidebarBusKey } from '@/components/TreeView.vue';
+import { formatFileSize } from '@/lib/format';
 import { useListDirQuery } from '@/pages/Files.vue';
 import { useAuth } from '@/stores/useAuth';
+import { useDiskUsage } from '@/stores/useDiskUsage';
 import { useRouteState } from '@/stores/useRouteState';
 import { useUploader } from '@/stores/useUploader';
 
@@ -17,11 +19,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@shadcn/dropdown-menu';
+import { Progress } from '@shadcn/progress';
 
 const auth = useAuth();
 const routeState = useRouteState();
 const uploader = useUploader();
 const listDirQuery = useListDirQuery();
+const diskUsage = useDiskUsage();
 
 const fileDialog = useFileDialog({ reset: true });
 
@@ -43,6 +47,14 @@ const canUpload = computed(
         <Button size="icon-lg" variant="outline" @click="bus.emit(true)" v-if="isMobile">
             <Menu />
         </Button>
+        <div v-if="diskUsage.free && diskUsage.total">
+            <p class="text-xs text-foreground/80 mb-1">
+                {{
+                    $t('free_of', [formatFileSize(diskUsage.free), formatFileSize(diskUsage.total)])
+                }}
+            </p>
+            <Progress :model-value="(diskUsage.free / diskUsage.total) * 100" />
+        </div>
         <div class="spacer" />
 
         <Tooltip v-if="!canUpload" :content="$t('error.cant_upload')">

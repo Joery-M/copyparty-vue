@@ -12,6 +12,7 @@
   "list_view": "List view",
   "grid": "Grid",
   "grid_view": "Grid view",
+  "free_of": "{0} free of {1}",
   "filelist": {
     "tags": {
       "sz": "Size",

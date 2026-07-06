@@ -122,6 +122,7 @@ export namespace API {
         files: ListDirectoryEntry[];
         taglist: string[];
         srvinf: string;
+        du: [number, number];
         dir?: string | null;
         acct: string;
         perms: string[];
@@ -147,6 +148,7 @@ export namespace API {
         perms: Permissions[];
         readmes: string[];
         tags: string[];
+        du: [number, number];
         sort: string | undefined;
         dir?: string | null;
     }
@@ -167,6 +169,7 @@ export namespace API {
                     res.files.map((entry) => new FileEntry(path, entry)),
                 ].flat() as AnyDirectoryEntry[],
                 perms: res.perms as Permissions[],
+                du: res.du,
                 readmes: res.readmes,
                 tags: res.taglist,
                 sort: res.cfg?.dsort,
