@@ -22,7 +22,6 @@ const DEFAULT_SETTINGS = {
         },
     },
     fileView: {
-        type: 'list' as 'list' | 'grid',
         pageSize: 50,
         gridSize: 60,
         hiddenListColumns: ['ac', 'fmt', 'res', 'tdate', 'vc', '.aq', '.fps', '.vq', '.q'],

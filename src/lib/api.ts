@@ -150,6 +150,7 @@ export namespace API {
         tags: string[];
         du: [number, number];
         sort: string | undefined;
+        grid: boolean;
         dir?: string | null;
     }
 
@@ -173,6 +174,7 @@ export namespace API {
                 readmes: res.readmes,
                 tags: res.taglist,
                 sort: res.cfg?.dsort,
+                grid: res.cfg?.dgrid || false,
                 dir: res.dir,
             }));
     }

@@ -53,7 +53,10 @@ const canUpload = computed(
                     $t('free_of', [formatFileSize(diskUsage.free), formatFileSize(diskUsage.total)])
                 }}
             </p>
-            <Progress :model-value="(diskUsage.free / diskUsage.total) * 100" />
+            <Progress
+                :model-value="100 - (diskUsage.free / diskUsage.total) * 100"
+                class="*:transition-none"
+            />
         </div>
         <div class="spacer" />
 

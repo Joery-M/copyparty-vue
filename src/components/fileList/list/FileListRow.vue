@@ -82,7 +82,7 @@ function onClick(event: MouseEvent) {
         @dblclick.prevent="onDoubleClick()"
         v-context-menu="{ data: entry, onOpen: () => fileSelection.setEntry(entry, true) }"
     >
-        <template v-for="cell in row.getVisibleCells()" :key="cell.id" v-once>
+        <template v-for="cell in row.getVisibleCells()" :key="cell.id" v-memo="cell">
             <!-- Options -->
             <TableCell v-if="cell.column.id === 'prefix'">
                 <FileListRowOptions :row />

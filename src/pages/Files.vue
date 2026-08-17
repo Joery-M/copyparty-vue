@@ -2,6 +2,8 @@
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
 import { API } from '@/lib/api';
+import { FileClassification } from '@/lib/classifyExt.ts';
+import { refWithInit } from '@/lib/utils.ts';
 import { useDiskUsage } from '@/stores/useDiskUsage.ts';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 
@@ -69,6 +71,18 @@ const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((
 const MarkdownViewer = defineAsyncComponent(
     () => import('@/components/viewers/markdown/MarkdownViewer.vue')
 );
+
+const gridView = refWithInit(() => {
+    if (listDirQuery.data.value?.grid) return true;
+    const items = listDirQuery.data.value?.entries ?? [];
+    const mediaItems = items.filter(
+        (e) =>
+            e.classification === FileClassification.RasterImage ||
+            e.classification === FileClassification.VectorImage ||
+            e.classification === FileClassification.Video
+    );
+    return mediaItems.length / items.length > 0.4;
+});
 
 const dropzone = useDropZone(document.body, {
     onDrop(files, event) {
@@ -138,11 +152,7 @@ useShortcut('Escape', () => {
         toast.dismiss();
     }
 });
-useShortcut('g', () =>
-    settings.fileView.type === 'grid'
-        ? (settings.fileView.type = 'list')
-        : (settings.fileView.type = 'grid')
-);
+useShortcut('g', () => (gridView.value = !gridView.value));
 useShortcut(
     (e) => e.key === 'i' && e.ctrlKey,
     (e) => (e.preventDefault(), fileSelection.invertSelection())
@@ -184,8 +194,8 @@ function onCopy(event: ClipboardEvent) {
                         v-if="canOnlyUpload"
                         :file-over="dropzone.isOverDropZone.value"
                     />
-                    <FileListView v-else-if="settings.fileView.type === 'list'" />
-                    <FileGridView v-else-if="settings.fileView.type === 'grid'" />
+                    <FileListView v-if="!gridView" />
+                    <FileGridView v-else />
                     <Separator v-if="readmes.length" class="mt-5" />
                 </div>
                 <template v-slot:menu="{ data }">
