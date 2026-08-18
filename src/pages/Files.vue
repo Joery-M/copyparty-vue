@@ -42,14 +42,12 @@ import { useAuth } from '@/stores/useAuth';
 import { useFileSelection } from '@/stores/useFileSelection.ts';
 import { useHandlers } from '@/stores/useHandlers.ts';
 import { useRouteState } from '@/stores/useRouteState';
-import { useSettings } from '@/stores/useSettings';
 import { useUploader } from '@/stores/useUploader';
 
 import TreeView from '../components/TreeView.vue';
 
 import { Separator } from '@shadcn/separator';
 
-const settings = useSettings();
 const uploader = useUploader();
 const routeState = useRouteState();
 const authStore = useAuth();
@@ -188,7 +186,7 @@ function onCopy(event: ClipboardEvent) {
                 <div class="flex flex-col gap-3 p-6" :class="{ grow: !readmes.length }">
                     <div class="flex sm:items-center sm:h-7 max-sm:flex-col max-sm:gap-2">
                         <RouteBreadCrumb class="flex-1" />
-                        <ViewSelector v-if="!canOnlyUpload" />
+                        <ViewSelector v-if="!canOnlyUpload" v-model:grid-view="gridView" />
                     </div>
                     <OnlyUploadCard
                         v-if="canOnlyUpload"

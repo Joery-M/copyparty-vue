@@ -18,6 +18,8 @@ function commit() {
     settings.fileView.gridSize = gridSize.value;
     gridSize.reset();
 }
+
+const gridView = defineModel<boolean>('gridView', { default: false });
 </script>
 
 <template>
@@ -25,15 +27,15 @@ function commit() {
         type="single"
         required
         orientation="horizontal"
-        :model-value="settings.fileView.type"
-        @update:model-value="$event && (settings.fileView.type = $event as 'grid' | 'list')"
+        :model-value="Number(gridView) /* The things we do for type checking */"
+        @update:model-value="$event && (gridView = !!$event)"
     >
-        <ToggleGroupItem variant="outline" value="list" :aria-label="$t('list_view')">
+        <ToggleGroupItem variant="outline" :value="0" :aria-label="$t('list_view')">
             <List />
         </ToggleGroupItem>
-        <HoverCard v-if="settings.fileView.type === 'grid'">
+        <HoverCard v-if="gridView">
             <HoverCardTrigger as-child>
-                <ToggleGroupItem variant="outline" value="grid" :aria-label="$t('grid_view')">
+                <ToggleGroupItem variant="outline" :value="1" :aria-label="$t('grid_view')">
                     <Grid2X2 />
                 </ToggleGroupItem>
             </HoverCardTrigger>
