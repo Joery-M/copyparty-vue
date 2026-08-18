@@ -1,4 +1,3 @@
 {
-  "files": [],
   "references": [{ "path": "./tsconfig.worker.json" }, { "path": "./tsconfig.lib.json" }]
 }

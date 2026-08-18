@@ -133,10 +133,7 @@ const table = computed(() =>
         enableRowSelection: true,
         enableMultiRowSelection: true,
         getRowId: (r) => r.name,
-        onRowSelectionChange: (u) => {
-            console.log(typeof u === 'function' ? u(rowSelection.value) : u);
-            valueUpdater(u, rowSelection);
-        },
+        onRowSelectionChange: (u) => valueUpdater(u, rowSelection),
     })
 );
 

@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3';
 
-import type { IndexedFile } from '.';
+import type { IndexedFile } from './hash.internal';
 
 import { Hasher } from './hasher';
 import { Uploader } from './uploader';

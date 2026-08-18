@@ -1,8 +1,12 @@
 import { createBirpc } from 'birpc';
 import EventEmitter from 'eventemitter3';
 
-import type { IndexedFile } from '.';
-import type { HashWorkerPayload, OrchestratorFunctions, WorkerFunctions } from './hash.internal';
+import type {
+    HashWorkerPayload,
+    IndexedFile,
+    OrchestratorFunctions,
+    WorkerFunctions,
+} from './hash.internal';
 
 export interface HasherEvents {
     /** @internal Internal event used to queue new tasks */

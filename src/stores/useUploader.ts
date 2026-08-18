@@ -21,7 +21,6 @@ export const useUploader = defineStore('uploader', () => {
             files: DataTransferItemList | FileList | File[] | File,
             dir: string[]
         ): Promise<Map<string, File>> => {
-            const start = performance.now();
             const baseUrl = new URL(withTrailingSlash(getApiUrl(dir)));
             const up2k = new Up2K({ baseUrl, hashConcurrency: 1 });
             const allFiles = await up2k.collectInput(files);
@@ -75,7 +74,6 @@ export const useUploader = defineStore('uploader', () => {
                 duration: Infinity,
             });
             await pool.execute();
-            console.log('Done', performance.now() - start);
 
             queryCache.invalidateQueries({ key: ['ls', ...dir] });
             queryCache.invalidateQueries({ key: ['tree', ...dir] });

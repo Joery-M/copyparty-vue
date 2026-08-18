@@ -1,4 +1,8 @@
-import type { IndexedFile } from '.';
+export type IndexedFile<Hashed extends boolean = false> = {
+    file: File;
+    name: string;
+    chunkSize: number;
+} & (Hashed extends true ? { hashes: string[] } : { hashes?: string[] });
 
 export interface HashWorkerPayload {
     id: number;

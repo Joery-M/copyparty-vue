@@ -12,7 +12,8 @@
     "format": "oxfmt",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "build": "vite build",
+    "check": "vue-tsc --noEmit --project tsconfig.app.json --project up2k/tsconfig.lib.json --project up2k/tsconfig.worker.json",
+    "build": "pnpm check && vite build",
     "build-copyparty": "bash -e scripts/build.sh"
   },
   "dependencies": {

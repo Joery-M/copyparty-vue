@@ -1,5 +1,6 @@
 import { defu } from 'defu';
 
+import type { IndexedFile } from './hash.internal';
 import type { TaskPoolOptions } from './taskPool';
 import type { PartialExcept } from './utils';
 
@@ -40,12 +41,6 @@ interface ReadDirState {
     pf: Set<string>;
     spins: number;
 }
-
-export type IndexedFile<Hashed extends boolean = false> = {
-    file: File;
-    name: string;
-    chunkSize: number;
-} & (Hashed extends true ? { hashes: string[] } : { hashes?: string[] });
 
 export class Up2K {
     private options: Up2KOptions;

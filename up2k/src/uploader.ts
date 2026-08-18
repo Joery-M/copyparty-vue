@@ -3,7 +3,7 @@ import EventEmitter from 'eventemitter3';
 import { basename, dirname } from 'pathe';
 import { withoutLeadingSlash } from 'ufo';
 
-import type { IndexedFile } from '.';
+import type { IndexedFile } from './hash.internal';
 import type { PartialExcept } from './utils';
 
 interface UploaderOptions {
