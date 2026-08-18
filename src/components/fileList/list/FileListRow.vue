@@ -32,7 +32,7 @@ function onDoubleClick() {
     deselectAll();
     const entry = props.row.original;
     if (entry instanceof Directory || entry.classification === FileClassification.Directory) {
-        router.push({ name: 'viewer', params: { path: entry.fullPath.concat('') } });
+        return router.push({ name: 'viewer', params: { path: entry.fullPath.concat('') } });
     }
 
     if (canView(entry.classification)) {
