@@ -21,6 +21,9 @@ export default defineConfig((env) => ({
         __DEV__: env.mode !== 'production',
         __PROD__: env.mode === 'production',
     },
+    html: {
+        cspNonce: '{{ js_nonce }}',
+    },
     server: {
         proxy: {
             '/api': {

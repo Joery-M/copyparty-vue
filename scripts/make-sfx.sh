@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-git submodule update
-
 scripts/build.sh
 
 cd copyparty
