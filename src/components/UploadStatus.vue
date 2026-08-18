@@ -127,18 +127,19 @@ whenever(
     { once: true }
 );
 whenever(
-    () => totalUploaded.value === totalSize,
-    () => (uploadSpeedInterval.pause(), calculateUploadSpeed()),
-    { once: true }
-);
-whenever(
     () => totalHashed.value > 0 && totalHashed.value < totalSize,
     () => ((startHashTime = performance.now()), hashSpeedInterval.resume()),
     { once: true }
 );
+// Stop all intervals when everything is done
 whenever(
-    () => totalHashed.value === totalSize,
-    () => (hashSpeedInterval.pause(), calculateHashSpeed()),
+    () => totalHashed.value === totalSize || totalDone.value === totalSize,
+    () => hashSpeedInterval.isActive.value && (hashSpeedInterval.pause(), calculateHashSpeed()),
+    { once: true }
+);
+whenever(
+    () => totalUploaded.value === totalSize || totalDone.value === totalSize,
+    () => uploadSpeedInterval.isActive.value && (uploadSpeedInterval.pause(), calculateUploadSpeed()),
     { once: true }
 );
 </script>
