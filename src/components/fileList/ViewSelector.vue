@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import type { AcceptableValue } from 'reka-ui';
+
 import { Grid2X2, List } from '@lucide/vue';
-import { usePreferredReducedMotion } from '@vueuse/core';
+import { createReusableTemplate, syncRef, usePreferredReducedMotion } from '@vueuse/core';
+import { defineModel, ref } from 'vue';
 
 import { refWithInit } from '@/lib/utils';
 import { useSettings } from '@/stores/useSettings';
@@ -20,24 +23,38 @@ function commit() {
 }
 
 const gridView = defineModel<boolean>('gridView', { default: false });
+const curView = ref<AcceptableValue | AcceptableValue[]>();
+
+syncRef(gridView, curView, {
+    transform: {
+        ltr: (v) => (v ? 'grid' : 'list'),
+        rtl: (v) => {
+            if (v === undefined) return gridView.value;
+            console.log(v);
+            const v1 = Array.isArray(v) ? v[0] : v;
+            return v1 === 'grid';
+        },
+    },
+});
+
+const [DefineGridToggleItem, ReuseGridToggleItem] = createReusableTemplate();
 </script>
 
 <template>
-    <ToggleGroup
-        type="single"
-        required
-        orientation="horizontal"
-        :model-value="Number(gridView) /* The things we do for type checking */"
-        @update:model-value="$event && (gridView = !!$event)"
-    >
-        <ToggleGroupItem variant="outline" :value="0" :aria-label="$t('list_view')">
+    <ToggleGroup type="single" required orientation="horizontal" v-model="curView">
+        <ToggleGroupItem variant="outline" value="list" :aria-label="$t('list_view')">
             <List />
         </ToggleGroupItem>
+
+        <DefineGridToggleItem>
+            <ToggleGroupItem variant="outline" value="grid" :aria-label="$t('grid_view')">
+                <Grid2X2 />
+            </ToggleGroupItem>
+        </DefineGridToggleItem>
+
         <HoverCard v-if="gridView">
             <HoverCardTrigger as-child>
-                <ToggleGroupItem variant="outline" :value="1" :aria-label="$t('grid_view')">
-                    <Grid2X2 />
-                </ToggleGroupItem>
+                <ReuseGridToggleItem />
             </HoverCardTrigger>
             <HoverCardContent class="max-w-36! p-0 px-2.5" align="end">
                 <Slider
@@ -63,8 +80,6 @@ const gridView = defineModel<boolean>('gridView', { default: false });
                 />
             </HoverCardContent>
         </HoverCard>
-        <ToggleGroupItem v-else variant="outline" value="grid" :aria-label="$t('grid_view')">
-            <Grid2X2 />
-        </ToggleGroupItem>
+        <ReuseGridToggleItem v-else />
     </ToggleGroup>
 </template>
