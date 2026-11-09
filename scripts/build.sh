@@ -1,4 +1,7 @@
 #!/bin/bash -e
+set -euo pipefail
+
+. "$(dirname -- "${BASH_SOURCE[0]}")/utils.sh"
 
 #
 # This file is meant to be called after Vite has finished building and does 3 things:
@@ -6,31 +9,6 @@
 #  2. Create copyparty/_vue_assets with paths to each file for python to use
 #  3. Create copyparty/scripts/sfx-vue.ls with paths to each file for sfx bundling
 #
-
-RED='\033[1;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;36m'
-NC='\033[0m' # No Color
-debug() {
-	echo -ne "${BLUE}"
-	echo -ne "$@"
-	echo -e "${NC}"
-}
-error() {
-	echo -ne "${RED}" >&2
-	echo -ne "$@" >&2
-	echo -e "${NC}" >&2
-}
-info() {
-	echo -ne "${GREEN}"
-	echo -ne "$@"
-	echo -e "${NC}"
-}
-fatal() {
-	# shellcheck disable=SC2068
-	error "$@"
-	exit 1
-}
 
 # https://stackoverflow.com/a/17841619
 function join_with_newlines {

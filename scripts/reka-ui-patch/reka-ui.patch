@@ -1,0 +1,9 @@
+diff --git a/packages/core/src/internal.ts b/packages/core/src/internal.ts
+index 2429c11..5d39b50 100644
+--- a/packages/core/src/internal.ts
++++ b/packages/core/src/internal.ts
+@@ -6,3 +6,4 @@
+  */
+ 
+ export * from './Menu'
++export { injectPopperRootContext } from './Popper'
