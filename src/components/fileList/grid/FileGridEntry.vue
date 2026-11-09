@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import type { Row } from '@tanstack/vue-table';
+
 import { computedAsync } from '@vueuse/core';
 import { extname } from 'pathe';
 import { computed, ref, toRaw } from 'vue';
 import { useRouter } from 'vue-router';
 
+import type { TableFeatures } from '@/components/fileList/FileList.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { getApiUrl } from '@/lib/api';
@@ -16,20 +19,21 @@ const router = useRouter();
 const fileSelection = useFileSelection();
 
 const props = defineProps<{
-    entry: AnyDirectoryEntry;
+    entry: Row<TableFeatures, AnyDirectoryEntry>;
     dir: string[];
     data: () => AnyDirectoryEntry[];
 }>();
 
-const isSelected = computed(() => fileSelection.selectedFiles.has(toRaw(props.entry)));
+const originalEntry = computed(() => props.entry.original);
+const isSelected = computed(() => fileSelection.selectedFiles.has(toRaw(originalEntry.value)));
 
 const imageUrls = computed(() => ({
-    webp: getApiUrl(props.entry.fullPath, { th: 'w', no_fallback: '', cache: '' }),
-    jxl: getApiUrl(props.entry.fullPath, { th: 'x', no_fallback: '', cache: '' }),
-    jpeg: getApiUrl(props.entry.fullPath, { th: 'j', no_fallback: '', cache: '' }),
+    webp: getApiUrl(originalEntry.value.fullPath, { th: 'w', no_fallback: '', cache: '' }),
+    jxl: getApiUrl(originalEntry.value.fullPath, { th: 'x', no_fallback: '', cache: '' }),
+    jpeg: getApiUrl(originalEntry.value.fullPath, { th: 'j', no_fallback: '', cache: '' }),
 }));
 
-const ext = computed(() => extname(props.entry.name));
+const ext = computed(() => extname(originalEntry.value.name));
 const color = computedAsync(() => seededRandom(ext.value), 0);
 const fallbackBg = computed(() => HSVtoRGB(color.value, 0.9, 0.2));
 const fallbackText = computed(() => HSVtoRGB(color.value, 0.8, 1));
@@ -38,31 +42,34 @@ const hasLoaded = ref(false);
 
 function onDoubleClick() {
     if (
-        props.entry instanceof Directory ||
-        props.entry.classification === FileClassification.Directory
+        originalEntry.value instanceof Directory ||
+        originalEntry.value.classification === FileClassification.Directory
     ) {
-        return router.push({ name: 'viewer', params: { path: props.entry.fullPath.concat('') } });
+        return router.push({
+            name: 'viewer',
+            params: { path: originalEntry.value.fullPath.concat('') },
+        });
     }
 
-    if (canView(props.entry.classification)) {
+    if (canView(originalEntry.value.classification)) {
         router.push({
             name: 'viewer',
             params: { path: props.dir.concat('') },
-            hash: '#' + props.entry.name,
+            hash: '#' + originalEntry.value.name,
         });
     } else {
-        location.href = getApiUrl(props.entry.fullPath);
+        location.href = getApiUrl(originalEntry.value.fullPath);
     }
 }
 
 const openNewTab = () => {
     const url =
-        props.entry.classification === FileClassification.Directory
+        originalEntry.value.classification === FileClassification.Directory
             ? router.resolve({
                   name: 'viewer',
-                  params: { path: props.entry.fullPath.concat('') },
+                  params: { path: originalEntry.value.fullPath.concat('') },
               }).href
-            : getApiUrl(props.entry.fullPath);
+            : getApiUrl(originalEntry.value.fullPath);
     const aTag = document.createElement('a');
     aTag.setAttribute('href', url);
     aTag.setAttribute('target', '_blank');
@@ -72,22 +79,22 @@ const openNewTab = () => {
 
 function onClick(event: MouseEvent) {
     if (event.ctrlKey) {
-        fileSelection.toggleEntry(props.entry);
+        fileSelection.toggleEntry(originalEntry.value);
     } else if (event.shiftKey && fileSelection.lastSelectedNonRange) {
         // Not so fancy inject
         const rows = props.data();
         const lastSelectedIndex = rows.indexOf(fileSelection.lastSelectedNonRange);
-        const curIndex = rows.indexOf(props.entry);
+        const curIndex = rows.indexOf(originalEntry.value);
         if (lastSelectedIndex >= 0 && curIndex >= 0 && lastSelectedIndex !== curIndex) {
             const lowerBound = Math.min(lastSelectedIndex, curIndex);
             const upperBound = Math.max(lastSelectedIndex, curIndex);
             fileSelection.selectedFiles = new Set(rows.slice(lowerBound, upperBound + 1));
-            fileSelection.lastSelected = props.entry;
+            fileSelection.lastSelected = originalEntry.value;
             deselectAll();
         }
     } else {
         fileSelection.selectNone();
-        fileSelection.setEntry(props.entry, true);
+        fileSelection.setEntry(originalEntry.value, true);
     }
 }
 </script>
@@ -99,9 +106,12 @@ function onClick(event: MouseEvent) {
         @click="onClick"
         role="gridcell"
         :data-state="isSelected ? 'selected' : undefined"
-        :data-active="fileSelection.lastSelected === entry ? 'active' : undefined"
+        :data-active="fileSelection.lastSelected === originalEntry ? 'active' : undefined"
         class="entry group/card"
-        v-context-menu="{ data: entry, onOpen: () => fileSelection.setEntry(entry, true) }"
+        v-context-menu="{
+            data: originalEntry,
+            onOpen: () => fileSelection.setEntry(originalEntry, true),
+        }"
     >
         <div class="thumbnail">
             <picture :aria-hidden="!hasLoaded">
@@ -126,12 +136,16 @@ function onClick(event: MouseEvent) {
                 :aria-hidden="hasLoaded"
             >
                 <p aria-hidden="true" :style="{ color: `rgb(${fallbackText})` }">
-                    {{ entry.classification === FileClassification.Directory ? $t('folder') : ext }}
+                    {{
+                        originalEntry.classification === FileClassification.Directory
+                            ? $t('folder')
+                            : ext
+                    }}
                 </p>
             </div>
         </div>
         <div class="entry-title">
-            <label id="filename">{{ entry.tags.get('title') || entry.name }}</label>
+            <label id="filename">{{ originalEntry.tags.get('title') || originalEntry.name }}</label>
         </div>
     </div>
 </template>

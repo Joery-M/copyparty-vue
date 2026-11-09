@@ -4,13 +4,18 @@ import type { Column } from '@tanstack/vue-table';
 import { SortAsc, SortDesc } from '@lucide/vue';
 import { computed } from 'vue';
 
+import type { TableFeatures } from '@/components/fileList/FileList.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import Tooltip from '@/components/Tooltip.vue';
 
 import { Button } from '@shadcn/button';
 
-const props = defineProps<{ tag: string; text: string; column: Column<AnyDirectoryEntry> }>();
+const props = defineProps<{
+    tag: string;
+    text: string;
+    column: Column<TableFeatures, AnyDirectoryEntry>;
+}>();
 const emit = defineEmits<{ resetSort: [] }>();
 
 function click() {

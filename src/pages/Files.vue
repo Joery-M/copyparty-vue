@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineColadaLoader } from 'vue-router/experimental/pinia-colada';
 
+import FileList from '@/components/fileList/FileList.vue';
 import { API } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt.ts';
 import { refWithInit } from '@/lib/utils.ts';
@@ -192,8 +193,7 @@ function onCopy(event: ClipboardEvent) {
                         v-if="canOnlyUpload"
                         :file-over="dropzone.isOverDropZone.value"
                     />
-                    <FileListView v-if="!gridView" />
-                    <FileGridView v-else />
+                    <FileList :grid-view />
                     <Separator v-if="readmes.length" class="mt-5" />
                 </div>
                 <template v-slot:menu="{ data }">

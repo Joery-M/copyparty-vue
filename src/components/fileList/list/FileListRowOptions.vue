@@ -5,13 +5,14 @@ import { MoreHorizontal } from '@lucide/vue';
 import { unrefElement } from '@vueuse/core';
 import { useTemplateRef } from 'vue';
 
+import type { TableFeatures } from '@/components/fileList/FileList.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { injectCustomContextMenuRootContext } from '@/lib/ContextMenu/utils';
 
 import { Button } from '@shadcn/button';
 
-const props = defineProps<{ row: Row<AnyDirectoryEntry> }>();
+const props = defineProps<{ row: Row<TableFeatures, AnyDirectoryEntry> }>();
 
 const btn = useTemplateRef('btn');
 const rootContext = injectCustomContextMenuRootContext();

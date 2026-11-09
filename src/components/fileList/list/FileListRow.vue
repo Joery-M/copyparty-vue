@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Row, Table } from '@tanstack/vue-table';
+import type { Row } from '@tanstack/vue-table';
 
 import { computed, defineProps } from 'vue';
 import { useRouter } from 'vue-router';
 
-import type { TableFeatures } from '@/components/fileList/list/FileListView.vue';
+import type { TableFeatures, TableType } from '@/components/fileList/FileList.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { getApiUrl } from '@/lib/api.ts';
@@ -28,7 +28,7 @@ const sizeFormat = dedupedComputed(() => settings.format.fileSizes);
 
 const props = defineProps<{
     row: Row<TableFeatures, AnyDirectoryEntry>;
-    table: Table<TableFeatures, AnyDirectoryEntry>;
+    table: TableType;
 }>();
 const entry = computed(() => props.row.original);
 

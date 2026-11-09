@@ -1,24 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import type { TableType } from '@/components/fileList/FileList.vue';
+import type { AnyDirectoryEntry } from '@/lib/interop.ts';
 
-import { useListDirQuery } from '@/pages/Files.vue';
+import LoadingGrid from '@/components/fileList/grid/LoadingGrid.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 
 import FileGridEntry from './FileGridEntry.vue';
 
 const settings = useSettings();
-const listDirQuery = useListDirQuery();
 const routeState = useRouteState();
 
-const data = computed(() => listDirQuery.data.value?.entries ?? []);
+const props = defineProps<{
+    isLoading: boolean;
+    table: TableType;
+    data: AnyDirectoryEntry[];
+}>();
 </script>
 
 <template>
     <div class="wrapper">
+        <LoadingGrid v-if="isLoading" />
         <FileGridEntry
-            v-for="entry in data"
-            :key="entry.name"
+            v-else
+            v-for="entry in table.getRowModel().rows"
+            :key="entry.id"
             :dir="routeState.dir"
             :data="() => data"
             :entry
