@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { Row, Table } from '@tanstack/vue-table';
 
-import { computed } from 'vue';
+import { computed, defineProps } from 'vue';
 import { useRouter } from 'vue-router';
 
+import type { TableFeatures } from '@/components/fileList/list/FileListView.vue';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { getApiUrl } from '@/lib/api.ts';
@@ -25,7 +26,10 @@ const fileSelection = useFileSelection();
 const settings = useSettings();
 const sizeFormat = dedupedComputed(() => settings.format.fileSizes);
 
-const props = defineProps<{ row: Row<AnyDirectoryEntry>; table: Table<AnyDirectoryEntry> }>();
+const props = defineProps<{
+    row: Row<TableFeatures, AnyDirectoryEntry>;
+    table: Table<TableFeatures, AnyDirectoryEntry>;
+}>();
 const entry = computed(() => props.row.original);
 
 function onDoubleClick() {

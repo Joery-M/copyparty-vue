@@ -3,7 +3,7 @@ import type { AcceptableValue } from 'reka-ui';
 
 import { Grid2X2, List } from '@lucide/vue';
 import { createReusableTemplate, syncRef, usePreferredReducedMotion } from '@vueuse/core';
-import { defineModel, ref } from 'vue';
+import { ref } from 'vue';
 
 import { refWithInit } from '@/lib/utils';
 import { useSettings } from '@/stores/useSettings';
@@ -30,7 +30,6 @@ syncRef(gridView, curView, {
         ltr: (v) => (v ? 'grid' : 'list'),
         rtl: (v) => {
             if (v === undefined) return gridView.value;
-            console.log(v);
             const v1 = Array.isArray(v) ? v[0] : v;
             return v1 === 'grid';
         },

@@ -20,8 +20,8 @@ class BaseDirectoryEntry {
         input: API.ListDirectoryEntry
     ) {
         this.name = decodeURIComponent(input.href.replace(/\/?$/, ''));
-        if (input.sz != null) this.size = input.sz;
-        if (input.ts != null) this.created = new Date(input.ts * 1000);
+        if (input.sz) this.size = input.sz;
+        if (input.ts) this.created = new Date(input.ts * 1000);
         this.tags = new Map(Object.entries(input.tags ?? {}));
     }
 }

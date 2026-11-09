@@ -3,11 +3,15 @@ import type { Column, ColumnDef, RowSelectionState, SortingState } from '@tansta
 
 import { valueUpdater } from '@shadcn/table/utils';
 import {
+    columnSizingFeature,
+    columnVisibilityFeature,
+    createSortedRowModel,
     FlexRender,
-    getCoreRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useVueTable,
+    rowPaginationFeature,
+    rowSelectionFeature,
+    rowSortingFeature,
+    tableFeatures,
+    useTable,
 } from '@tanstack/vue-table';
 import { isEqual } from '@ver0/deep-equal';
 import { watchImmediate, whenever } from '@vueuse/core';
@@ -47,8 +51,19 @@ const tagHeaders = computed(() => {
     return Object.fromEntries(Object.entries(tags).map(([k, v]) => [k, i18n.rt(v)]));
 });
 
-const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
-    const getSortableHeader = (text: string, column: Column<AnyDirectoryEntry>) =>
+const features = tableFeatures({
+    rowSortingFeature,
+    sortedRowModel: createSortedRowModel(),
+    rowPaginationFeature,
+    rowSelectionFeature,
+    columnVisibilityFeature,
+    columnSizingFeature,
+});
+
+export type TableFeatures = typeof features;
+
+const columns = computed<ColumnDef<TableFeatures, AnyDirectoryEntry>[]>(() => {
+    const getSortableHeader = (text: string, column: Column<TableFeatures, AnyDirectoryEntry>) =>
         h(SortableHeader, {
             tag: column.id,
             text,
@@ -84,7 +99,7 @@ const columns = computed<ColumnDef<AnyDirectoryEntry>[]>(() => {
                 id: tag,
                 accessorFn: (v) => v.tags.get(tag),
                 header: ({ column }) => getSortableHeader(tagHeaders.value[tag] ?? tag, column),
-            } satisfies ColumnDef<AnyDirectoryEntry>;
+            } satisfies ColumnDef<TableFeatures, AnyDirectoryEntry>;
         }),
     ];
 });
@@ -107,7 +122,7 @@ whenever(
     { once: true }
 );
 
-const rowSelectionDeduped = dedupedComputed(() =>
+const rowSelectionDeduped = dedupedComputed<RowSelectionState>(() =>
     Object.fromEntries(
         Array.from(fileSelection.selectedFiles.keys()).map(({ name }) => [name, true])
     )
@@ -118,24 +133,21 @@ const rowSelection = computed<RowSelectionState>({
 });
 
 const data = computed(() => listDirQuery.data.value?.entries ?? []);
-const table = computed(() =>
-    useVueTable({
-        data,
-        state: {
-            sorting: sorting.value,
-            rowSelection: rowSelection.value,
-        },
-        columns: columns.value,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        onSortingChange: (u) => valueUpdater(u, sorting),
-        getPaginationRowModel: getPaginationRowModel(),
-        enableRowSelection: true,
-        enableMultiRowSelection: true,
-        getRowId: (r) => r.name,
-        onRowSelectionChange: (u) => valueUpdater(u, rowSelection),
-    })
-);
+
+const table = useTable<TableFeatures, AnyDirectoryEntry>({
+    data: computed(() => data.value),
+    state: computed(() => ({
+        sorting: sorting.value,
+        rowSelection: rowSelection.value,
+    })),
+    features,
+    columns,
+    onSortingChange: (u) => valueUpdater(u, sorting),
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
+    getRowId: (r) => r.name,
+    onRowSelectionChange: (u) => valueUpdater(u, rowSelection),
+});
 
 const pageSizes = [50, 100, 250, 500];
 const pageIndex = ref(1);
@@ -147,16 +159,16 @@ onBeforeRouteUpdate((to, from) => {
     }
 });
 
-watchEffect(() => table.value.setPageIndex(pageIndex.value - 1));
+watchEffect(() => table.setPageIndex(pageIndex.value - 1));
 watchImmediate(
-    () => [settings.fileView.pageSize, table.value] as const,
-    ([size, table]) => table.setPageSize(size)
+    () => settings.fileView.pageSize,
+    (size) => table.setPageSize(size)
 );
 
 const hiddenCols = computed(() => settings.fileView.hiddenListColumns);
 watch(
-    () => [hiddenCols.value, table.value] as const,
-    ([hiddenCols, table]) => {
+    hiddenCols,
+    (hiddenCols) => {
         const def = Object.fromEntries(hiddenCols.map((k) => [k, false]));
         table.setColumnVisibility(def);
     },
