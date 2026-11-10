@@ -2,6 +2,7 @@ import type { QueryObject } from 'ufo';
 
 import { useQueryCache } from '@pinia/colada';
 import { defineStore } from 'pinia';
+import { withTrailingSlash } from 'ufo';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
@@ -10,6 +11,7 @@ import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { API, getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
+import { Directory } from '@/lib/interop';
 import { useConfirm } from '@/stores/useConfirm';
 import { usePrompt } from '@/stores/usePrompt';
 
@@ -40,8 +42,15 @@ export const useHandlers = defineStore('handlers', () => {
             aTag.remove();
         },
         downloadArchive(dir: string[], files: AnyDirectoryEntry[], params: QueryObject) {
+            // Check if it is a single directory that's being downloaded
+            const isSingleDir = files.length === 1 && files[0] instanceof Directory;
+            if (isSingleDir) {
+                const target = withTrailingSlash(getApiUrl(files[0].fullPath, params), true);
+                open(target, '_blank');
+                return;
+            }
             const form = document.createElement('form');
-            form.action = getApiUrl(dir, params);
+            form.action = withTrailingSlash(getApiUrl(dir, params), true);
             form.method = 'post';
             form.target = '_blank';
             form.enctype = 'multipart/form-data';
@@ -49,7 +58,8 @@ export const useHandlers = defineStore('handlers', () => {
             const act = document.createElement('input');
             act.name = 'act';
             act.value = 'zip';
-            const filesInput = document.createElement('input');
+
+            const filesInput = document.createElement('textarea');
             filesInput.name = 'files';
             filesInput.value = files.map((v) => encodeURIComponent(v.name)).join('\n');
 
