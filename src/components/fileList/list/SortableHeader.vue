@@ -4,9 +4,10 @@ import type { Column } from '@tanstack/vue-table';
 import { SortAsc, SortDesc } from '@lucide/vue';
 import { computed } from 'vue';
 
-import type { TableFeatures } from '@/components/fileList/FileList.vue';
+import type { TableFeatures } from '@/components/fileList/file-list';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
+import { useFileTable } from '@/components/fileList/file-list';
 import Tooltip from '@/components/Tooltip.vue';
 
 import { Button } from '@shadcn/button';
@@ -16,7 +17,8 @@ const props = defineProps<{
     text: string;
     column: Column<TableFeatures, AnyDirectoryEntry>;
 }>();
-const emit = defineEmits<{ resetSort: [] }>();
+
+const { resetSorting } = useFileTable();
 
 function click() {
     const curSort = props.column.getIsSorted();
@@ -25,7 +27,7 @@ function click() {
     } else if (curSort === 'desc') {
         props.column.toggleSorting(false);
     } else {
-        emit('resetSort');
+        resetSorting();
     }
 }
 

@@ -4,7 +4,7 @@ import type { Row } from '@tanstack/vue-table';
 import { computed, defineProps } from 'vue';
 import { useRouter } from 'vue-router';
 
-import type { TableFeatures, TableType } from '@/components/fileList/FileList.vue';
+import type { TableFeatures, TableType } from '@/components/fileList/file-list';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { getApiUrl } from '@/lib/api.ts';

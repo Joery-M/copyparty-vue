@@ -1,17 +1,14 @@
 <script lang="ts" setup>
 import { FlexRender } from '@tanstack/vue-table';
 
-import type { TableType } from '@/components/fileList/FileList.vue';
+import { useFileTable } from '@/components/fileList/file-list';
 
 import FileListRow from './FileListRow.vue';
 import LoadingTable from './LoadingTable.vue';
 
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@shadcn/table';
 
-const props = defineProps<{
-    isLoading: boolean;
-    table: TableType;
-}>();
+const { isLoading, table } = useFileTable();
 </script>
 
 <template>
@@ -40,7 +37,6 @@ const props = defineProps<{
 
 <style scoped>
 @reference "@/style.css";
-
 
 th {
     @apply text-center not-last:border-r px-0;

@@ -6,9 +6,10 @@ import { extname } from 'pathe';
 import { computed, ref, toRaw } from 'vue';
 import { useRouter } from 'vue-router';
 
-import type { TableFeatures } from '@/components/fileList/FileList.vue';
+import type { TableFeatures } from '@/components/fileList/file-list';
 import type { AnyDirectoryEntry } from '@/lib/interop';
 
+import { useFileTable } from '@/components/fileList/file-list';
 import { getApiUrl } from '@/lib/api';
 import { canView, FileClassification } from '@/lib/classifyExt';
 import { Directory } from '@/lib/interop';
@@ -21,8 +22,9 @@ const fileSelection = useFileSelection();
 const props = defineProps<{
     entry: Row<TableFeatures, AnyDirectoryEntry>;
     dir: string[];
-    data: () => AnyDirectoryEntry[];
 }>();
+
+const { table } = useFileTable();
 
 const originalEntry = computed(() => props.entry.original);
 const isSelected = computed(() => fileSelection.selectedFiles.has(toRaw(originalEntry.value)));
@@ -78,23 +80,29 @@ const openNewTab = () => {
 };
 
 function onClick(event: MouseEvent) {
+    const entry = props.entry.original;
     if (event.ctrlKey) {
-        fileSelection.toggleEntry(originalEntry.value);
+        fileSelection.toggleEntry(entry);
     } else if (event.shiftKey && fileSelection.lastSelectedNonRange) {
-        // Not so fancy inject
-        const rows = props.data();
-        const lastSelectedIndex = rows.indexOf(fileSelection.lastSelectedNonRange);
-        const curIndex = rows.indexOf(originalEntry.value);
+        const rows = table.getRowModel().rows;
+        const lastSelectedIndex = rows.findIndex((v) =>
+            Object.is(v.original, fileSelection.lastSelectedNonRange)
+        );
+        const curIndex = rows.indexOf(props.entry);
         if (lastSelectedIndex >= 0 && curIndex >= 0 && lastSelectedIndex !== curIndex) {
             const lowerBound = Math.min(lastSelectedIndex, curIndex);
             const upperBound = Math.max(lastSelectedIndex, curIndex);
-            fileSelection.selectedFiles = new Set(rows.slice(lowerBound, upperBound + 1));
-            fileSelection.lastSelected = originalEntry.value;
-            deselectAll();
+            fileSelection.selectedFiles = new Set(
+                rows.slice(lowerBound, upperBound + 1).map((v) => v.original)
+            );
+            fileSelection.lastSelected = entry;
         }
     } else {
         fileSelection.selectNone();
-        fileSelection.setEntry(originalEntry.value, true);
+        fileSelection.setEntry(entry, true);
+    }
+    if (event.shiftKey || event.ctrlKey) {
+        deselectAll();
     }
 }
 </script>
