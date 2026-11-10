@@ -6,7 +6,7 @@ import type { ButtonVariants } from '@/components/ui/button'
 import { reactiveOmit } from '@vueuse/core'
 import { ChevronRightIcon } from '@lucide/vue'
 import { PaginationNext, useForwardProps } from 'reka-ui'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 import { buttonVariants } from '@/components/ui/button'
 
 const props = withDefaults(defineProps<PaginationNextProps & {

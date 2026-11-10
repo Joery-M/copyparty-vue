@@ -4,7 +4,7 @@ import type { HTMLAttributes } from 'vue';
 import { useEventBus, watchImmediate, whenever } from '@vueuse/core';
 import { ref, useTemplateRef } from 'vue';
 
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { useRouteState } from '@/stores/useRouteState';
 import { useTreeView } from '@/stores/useTreeView';
 

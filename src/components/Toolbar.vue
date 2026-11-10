@@ -59,6 +59,14 @@ const canUpload = computed(
             />
         </div>
         <div class="spacer" />
+        <InputGroup>
+            <InputGroupInput placeholder="Search..." />
+            <InputGroupAddon>
+                <Search />
+            </InputGroupAddon>
+            <InputGroupAddon align="inline-end"> 12 results </InputGroupAddon>
+        </InputGroup>
+        <div class="spacer" />
 
         <Tooltip v-if="!canUpload" :content="$t('error.cant_upload')">
             <Button variant="accent" disabled size="lg" class="disabled:pointer-events-auto">

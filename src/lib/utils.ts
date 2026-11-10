@@ -1,4 +1,3 @@
-import type { ClassValue } from 'clsx';
 import type {
     ComputedGetter,
     ComputedRef,
@@ -9,13 +8,7 @@ import type {
 
 import { isEqual } from '@ver0/deep-equal';
 import { useMemoize } from '@vueuse/core';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { computed, ref, shallowRef, toValue } from 'vue';
-
-export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
 
 export function arrayStartsWith(whole: any[], part: any[]) {
     return part.length === 0 || !part.some((v, i) => whole[i] !== v);

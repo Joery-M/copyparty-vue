@@ -2,7 +2,7 @@
 import type { HTMLAttributes, Ref } from 'vue'
 import { defaultDocument, useMediaQuery, useVModel } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 import { provideSidebarContext, SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME, SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON } from './utils'
 
 const props = withDefaults(defineProps<{
