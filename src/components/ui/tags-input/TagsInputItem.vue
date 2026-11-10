@@ -3,8 +3,8 @@ import type { TagsInputItemProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 
 import { reactiveOmit } from '@vueuse/core'
-import { TagsInputItem, useForwardProps } from 'reka-ui'
 import { cn } from 'cn'
+import { TagsInputItem, useForwardProps } from 'reka-ui'
 
 const props = defineProps<TagsInputItemProps & { class?: HTMLAttributes['class'] }>()
 

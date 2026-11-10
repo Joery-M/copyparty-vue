@@ -3,10 +3,10 @@ import type { PaginationFirstProps } from 'reka-ui'
 
 import type { HTMLAttributes } from 'vue'
 import type { ButtonVariants } from '@/components/ui/button'
-import { reactiveOmit } from '@vueuse/core'
 import { ChevronsLeftIcon } from '@lucide/vue'
-import { PaginationFirst, useForwardProps } from 'reka-ui'
+import { reactiveOmit } from '@vueuse/core'
 import { cn } from 'cn'
+import { PaginationFirst, useForwardProps } from 'reka-ui'
 import { buttonVariants } from '@/components/ui/button'
 
 const props = withDefaults(defineProps<PaginationFirstProps & {

@@ -2,14 +2,14 @@
 import type { DropdownMenuRadioItemEmits, DropdownMenuRadioItemProps } from 'reka-ui'
 
 import type { HTMLAttributes } from 'vue'
-import { reactiveOmit } from '@vueuse/core'
 import { CheckIcon } from '@lucide/vue'
+import { reactiveOmit } from '@vueuse/core'
+import { cn } from 'cn'
 import {
   DropdownMenuItemIndicator,
   DropdownMenuRadioItem,
   useForwardPropsEmits,
 } from 'reka-ui'
-import { cn } from 'cn'
 
 const props = defineProps<DropdownMenuRadioItemProps & { class?: HTMLAttributes['class'] }>()
 

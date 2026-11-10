@@ -47,7 +47,7 @@ defineExpose(useSidebar())
         <SheetTitle>Sidebar</SheetTitle>
         <SheetDescription>Displays the mobile sidebar.</SheetDescription>
       </SheetHeader>
-      <div class="flex w-full flex-col">
+      <div class="flex size-full flex-col">
         <slot />
       </div>
     </SheetContent>

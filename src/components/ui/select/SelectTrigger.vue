@@ -2,10 +2,10 @@
 import type { SelectTriggerProps } from 'reka-ui'
 
 import type { HTMLAttributes } from 'vue'
-import { reactiveOmit } from '@vueuse/core'
 import { ChevronDownIcon } from '@lucide/vue'
-import { SelectIcon, SelectTrigger, useForwardProps } from 'reka-ui'
+import { reactiveOmit } from '@vueuse/core'
 import { cn } from 'cn'
+import { SelectIcon, SelectTrigger, useForwardProps } from 'reka-ui'
 
 const props = withDefaults(
   defineProps<SelectTriggerProps & { class?: HTMLAttributes['class'], size?: 'sm' | 'default' }>(),

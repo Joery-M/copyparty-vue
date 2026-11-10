@@ -2,8 +2,8 @@
 import type { PrimitiveProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import type { ButtonVariants } from '.'
-import { Primitive } from 'reka-ui'
 import { cn } from 'cn'
+import { Primitive } from 'reka-ui'
 import { buttonVariants } from '.'
 
 interface Props extends PrimitiveProps {

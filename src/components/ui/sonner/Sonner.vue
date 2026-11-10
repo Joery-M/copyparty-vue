@@ -9,10 +9,10 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from '@lucide/vue'
-import { Toaster as Sonner } from 'vue-sonner'
+import { reactiveOmit } from '@vueuse/core'
 import { cn } from 'cn'
+import { Toaster as Sonner } from 'vue-sonner'
 import { computed } from 'vue';
-import { reactiveOmit } from '@vueuse/core';
 
 const props = defineProps<ToasterProps>()
 

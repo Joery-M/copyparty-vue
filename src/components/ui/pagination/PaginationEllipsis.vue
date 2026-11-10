@@ -2,10 +2,10 @@
 import type { PaginationEllipsisProps } from 'reka-ui'
 
 import type { HTMLAttributes } from 'vue'
-import { reactiveOmit } from '@vueuse/core'
 import { MoreHorizontalIcon } from '@lucide/vue'
-import { PaginationEllipsis } from 'reka-ui'
+import { reactiveOmit } from '@vueuse/core'
 import { cn } from 'cn'
+import { PaginationEllipsis } from 'reka-ui'
 
 const props = defineProps<PaginationEllipsisProps & { class?: HTMLAttributes['class'] }>()
 

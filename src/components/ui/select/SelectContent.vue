@@ -2,13 +2,13 @@
 import type { SelectContentEmits, SelectContentProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
+import { cn } from 'cn'
 import {
   SelectContent,
   SelectPortal,
   SelectViewport,
   useForwardPropsEmits,
 } from 'reka-ui'
-import { cn } from 'cn'
 import { SelectScrollDownButton, SelectScrollUpButton } from '.'
 
 defineOptions({
@@ -47,7 +47,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       <SelectViewport
         :data-position="position"
         :class="cn(
-          'data-[position=popper]:h-[var(--reka-select-trigger-height)] data-[position=popper]:w-full data-[position=popper]:min-w-[var(--reka-select-trigger-width)]',
+          'data-[position=popper]:h-(--reka-select-trigger-height) data-[position=popper]:w-full data-[position=popper]:min-w-(--reka-select-trigger-width)',
         )"
       >
         <slot />

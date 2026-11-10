@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="V">
 import { computed, type HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
-import type { TableFeatures } from "@/components/fileList/list/FileListView.vue";
+import { cn } from "cn";
+import type { TableFeatures } from "@/components/fileList/file-list";
 
 const props = defineProps<{
     class?: HTMLAttributes["class"];

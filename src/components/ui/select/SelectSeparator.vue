@@ -2,8 +2,8 @@
 import type { SelectSeparatorProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
-import { SelectSeparator } from 'reka-ui'
 import { cn } from 'cn'
+import { SelectSeparator } from 'reka-ui'
 
 const props = defineProps<SelectSeparatorProps & { class?: HTMLAttributes['class'] }>()
 
