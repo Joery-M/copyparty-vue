@@ -1,3 +1,5 @@
+import { basename } from 'pathe';
+
 import { API } from '@/lib/api';
 
 import { classifyExtension, FileClassification } from './classifyExt';
@@ -39,5 +41,19 @@ export class FileEntry extends BaseDirectoryEntry {
         super(cwd, classifyExtension(input.ext), input);
 
         if (input.ext != null && input.ext !== '---') this.extension = input.ext;
+    }
+}
+
+export class SearchFileEntry {
+    name: string;
+    size: number | null = null;
+    created: Date | null = null;
+    tags;
+    fullPath: string;
+
+    constructor(input: API.SearchResponseEntry) {
+        this.fullPath = input.rp;
+        this.name = decodeURIComponent(basename(input.rp));
+        this.tags = new Map(Object.entries(input.tags));
     }
 }

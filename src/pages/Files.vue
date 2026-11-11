@@ -21,15 +21,13 @@ export const useListDirQuery = defineColadaLoader({
 <script setup lang="ts">
 import { isEqual } from '@ver0/deep-equal';
 import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
-import { computed, defineAsyncComponent, watch } from 'vue';
+import { computed, defineAsyncComponent, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { onBeforeRouteUpdate } from 'vue-router';
+import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import FileViewContextMenu from '@/components/fileList/FileViewContextMenu.vue';
-import FileGridView from '@/components/fileList/grid/FileGridView.vue';
-import FileListView from '@/components/fileList/list/FileListView.vue';
 import OnlyUploadCard from '@/components/fileList/OnlyUploadCard.vue';
 import ViewSelector from '@/components/fileList/ViewSelector.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
@@ -51,6 +49,8 @@ import { Separator } from '@shadcn/separator';
 
 const uploader = useUploader();
 const routeState = useRouteState();
+const route = useRoute();
+const router = useRouter();
 const authStore = useAuth();
 const fileSelection = useFileSelection();
 const handlers = useHandlers();
@@ -137,6 +137,31 @@ const canOnlyUpload = computed(
         listDirQuery.data.value.perms.includes('write') &&
         !listDirQuery.data.value.perms.includes('read')
 );
+
+onMounted(() => {
+    whenever(
+        () => !listDirQuery.isLoading.value && route.query.s,
+        () => {
+            try {
+                router.push({ query: {}, replace: true });
+                const sel = JSON.parse(
+                    typeof route.query['s'] === 'string' ? route.query['s'] : ''
+                );
+                const dirEntries = listDirQuery.data.value?.entries ?? [];
+                const selection = new Set([sel].flat());
+                const entries = dirEntries.filter(({ name }) => selection.has(name));
+                for (let i = 0; i < entries.length; i++) {
+                    const entry = entries[i];
+
+                    fileSelection.selectedFiles.add(entry);
+                    if (i === entries.length - 1) {
+                        fileSelection.lastSelected = entry;
+                    }
+                }
+            } catch {}
+        }
+    );
+});
 onBeforeRouteUpdate((to, from) => {
     if (!isEqual(getDirFromRouteParams(to.params), getDirFromRouteParams(from.params))) {
         fileSelection.selectNone();

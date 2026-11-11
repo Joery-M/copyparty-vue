@@ -1,13 +1,11 @@
 import type { KeyFilter, OnKeyStrokeOptions } from '@vueuse/core';
 import type { InjectionKey, MaybeRefOrGetter } from 'vue';
 
-import { onKeyStroke } from '@vueuse/core';
+import { injectLocal, onKeyStroke, provideLocal } from '@vueuse/core';
 import {
     computed,
     hasInjectionContext,
-    inject,
     onScopeDispose,
-    provide,
     shallowReactive,
     shallowRef,
     toRef,
@@ -35,7 +33,7 @@ export function useShortcut(
 ) {
     if (!hasInjectionContext())
         throw new Error('useShortcut has to be used inside an injection context');
-    const guard = inject(CurrentGuard, undefined);
+    const guard = injectLocal(CurrentGuard, undefined);
     const predicate = createKeyPredicate(filter);
     if (guard) {
         onKeyStroke((event) => GuardStack.value[0] === guard && predicate(event), ...args);
@@ -47,7 +45,7 @@ export function useShortcut(
 export function isCurrentGuardActive() {
     if (!hasInjectionContext())
         throw new Error('isCurrentGuardActive has to be used inside an injection context');
-    const guard = inject(CurrentGuard, undefined);
+    const guard = injectLocal(CurrentGuard, undefined);
     if (guard) {
         return computed(() => GuardStack.value[0] === guard);
     } else {
@@ -68,7 +66,7 @@ export function useShortcutGuard(name: string, enabled: MaybeRefOrGetter<boolean
 
     /* @__PURE__ */ AllGuards.add(name);
     const isEnabled = toRef(enabled);
-    provide(CurrentGuard, name);
+    provideLocal(CurrentGuard, name);
     let isOnStack = false;
     watchEffect(() => {
         if (isEnabled.value) {

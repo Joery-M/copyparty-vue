@@ -131,5 +131,7 @@
     "hashed": "Hashed",
     "uploaded": "Uploaded",
     "queue": "Queue"
-  }
+  },
+  "search": "Search...",
+  "search_empty": "No results found"
 }

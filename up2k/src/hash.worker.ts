@@ -1,4 +1,3 @@
-
 import { createBirpc } from 'birpc';
 
 import type { HashWorkerPayload, OrchestratorFunctions, WorkerFunctions } from './hash.internal';

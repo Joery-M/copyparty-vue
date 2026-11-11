@@ -4,6 +4,7 @@ import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
 import { cn } from 'cn'
 import { SliderRange, SliderRoot, SliderThumb, SliderTrack, useForwardPropsEmits } from 'reka-ui'
+import Tooltip from '@/components/Tooltip.vue'
 
 const props = defineProps<SliderRootProps & { class?: HTMLAttributes['class'], loaded?: number, formattedValue?: string | number, tooltip?: boolean }>()
 const emits = defineEmits<SliderRootEmits>()

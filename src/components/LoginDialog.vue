@@ -104,9 +104,7 @@ useShortcutGuard('login-dialog', () => loginDialog.isRevealed && !!data);
                                 }"
                                 @click="loginDialog.cancel()"
                             >
-                                <li>
-                                    - <code>/{{ dir.join('/') }}/</code>
-                                </li>
+                                <li>- <code>/{{ dir.join('/') }}/</code></li>
                             </RouterLink>
                         </template>
                     </ul>
@@ -125,7 +123,6 @@ useShortcutGuard('login-dialog', () => loginDialog.isRevealed && !!data);
                             <Input
                                 :disabled="form.isSubmitting.value"
                                 type="text"
-                                minlength="1"
                                 v-bind="componentField"
                             />
                         </FormControl>
@@ -142,7 +139,6 @@ useShortcutGuard('login-dialog', () => loginDialog.isRevealed && !!data);
                             <Input
                                 :disabled="form.isSubmitting.value"
                                 type="password"
-                                minlength="1"
                                 v-bind="componentField"
                             />
                         </FormControl>

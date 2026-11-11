@@ -4,8 +4,8 @@ import type { Column, ColumnDef, RowSelectionState, SortingState } from '@tansta
 import { valueUpdater } from '@shadcn/table/utils';
 import { useTable } from '@tanstack/vue-table';
 import { isEqual } from '@ver0/deep-equal';
-import { watchImmediate } from '@vueuse/core';
-import { computed, h, ref, watch, watchEffect } from 'vue';
+import { watchImmediate, whenever } from '@vueuse/core';
+import { computed, h, onMounted, ref, watch, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate } from 'vue-router';
 
@@ -96,14 +96,15 @@ const columns = computed<ColumnDef<TableFeatures, AnyDirectoryEntry>[]>(() => {
 });
 
 const defaultSorting = computed<SortingState>(() => {
-    const sortKey = listDirQuery.data.value?.sort;
-    if (sortKey && sortKey !== 'href') {
-        const asc = sortKey.startsWith('-');
-        const id = asc ? sortKey.slice(1) : sortKey;
-        return [{ id, desc: !asc }];
-    } else {
-        return [{ id: 'href', desc: true }];
-    }
+    const sortKey = listDirQuery.data.value?.sort ?? 'href';
+    const desc = !sortKey.startsWith('-');
+    const id = desc ? sortKey : sortKey.slice(1);
+    return id === 'href'
+        ? [
+              { id: 'isFile', desc: !desc },
+              { id, desc },
+          ]
+        : [{ id, desc }];
 });
 const sorting = refWithInit(defaultSorting);
 

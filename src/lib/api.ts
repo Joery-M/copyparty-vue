@@ -9,7 +9,7 @@ import { readonly, ref, toRef, watch } from 'vue';
 
 import type { AnyDirectoryEntry } from './interop';
 
-import { Directory as DirectoryEntry, FileEntry } from './interop';
+import { Directory as DirectoryEntry, FileEntry, SearchFileEntry } from './interop';
 
 const baseUrl = stringifyParsedURL({
     ...parseURL(location.origin),
@@ -289,6 +289,35 @@ export namespace API {
             headers: { 'Content-Encoding': 'application/json' },
             body: JSON.stringify(body),
         }).then(extractError);
+    }
+
+    export interface SearchResponse {
+        hits: SearchResponseEntry[];
+        tag_order: string[];
+        trunc: boolean;
+    }
+
+    export interface SearchResponseEntry {
+        ts: number;
+        sz: number;
+        rp: string;
+        tags: Record<string, _JSONPrimitive>;
+    }
+
+    export function search(signal: AbortSignal, query: string, count?: number) {
+        const body = {
+            q: query,
+            n: count,
+        };
+        return fetch(getApiUrl([], { srch: '' }), {
+            method: 'POST',
+            signal,
+            headers: { 'Content-Encoding': 'application/json' },
+            body: JSON.stringify(body),
+        })
+            .then(extractError)
+            .then((r) => jsonResponse<SearchResponse>(r))
+            .then((res) => res.hits.map((e) => new SearchFileEntry(e)));
     }
 }
 

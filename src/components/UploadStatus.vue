@@ -139,7 +139,8 @@ whenever(
 );
 whenever(
     () => totalUploaded.value === totalSize || totalDone.value === totalSize,
-    () => uploadSpeedInterval.isActive.value && (uploadSpeedInterval.pause(), calculateUploadSpeed()),
+    () =>
+        uploadSpeedInterval.isActive.value && (uploadSpeedInterval.pause(), calculateUploadSpeed()),
     { once: true }
 );
 </script>

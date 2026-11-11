@@ -119,7 +119,7 @@ export class Uploader {
         );
 
         const missingHashes = new Set(handshake.hash);
-        for (let i = 0; i < entry.hashes.length; ) {
+        for (let i = 0; i < entry.hashes.length;) {
             if (this.options.signal?.aborted) return;
 
             const hash = entry.hashes[i];

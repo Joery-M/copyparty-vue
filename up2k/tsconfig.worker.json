@@ -11,7 +11,7 @@
     "noFallthroughCasesInSwitch": true,
 
     "composite": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*.worker.ts"]
 }

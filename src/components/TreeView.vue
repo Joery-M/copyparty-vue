@@ -2,9 +2,10 @@
 import type { HTMLAttributes } from 'vue';
 
 import { useEventBus, watchImmediate, whenever } from '@vueuse/core';
+import { cn } from 'cn';
 import { ref, useTemplateRef } from 'vue';
 
-import { cn } from 'cn';
+import DiskUsage from '@/components/DiskUsage.vue';
 import { useRouteState } from '@/stores/useRouteState';
 import { useTreeView } from '@/stores/useTreeView';
 
@@ -64,6 +65,7 @@ export const sidebarBusKey: EventBusKey<boolean> = Symbol('sidebar-bus-key');
             :variant="sidebar?.isMobile ? 'sidebar' : 'floating'"
             :collapsible="sidebar?.isMobile ? 'icon' : 'offcanvas'"
         >
+            <DiskUsage v-if="sidebar?.isMobile" class="mx-5 mt-5" />
             <SidebarHeader>
                 <SidebarMenu> </SidebarMenu>
             </SidebarHeader>
