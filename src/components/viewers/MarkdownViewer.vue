@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue';
+import type { RouteLocationResolvedGeneric } from 'vue-router';
 
 import { fromHighlighter } from '@shikijs/markdown-exit';
 import { computedAsync, useDark } from '@vueuse/core';
 import DOMPurify from 'dompurify';
 import { createMarkdownExit } from 'markdown-exit';
 import { joinRelativeURL, parseURL } from 'ufo';
-import { effect, shallowRef, triggerRef } from 'vue';
+import { effect, shallowRef, triggerRef, useTemplateRef, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { getApiUrl } from '@/lib/api';
@@ -26,6 +27,7 @@ const parser = shallowRef(
 );
 const sanitizer = DOMPurify(window);
 
+const anchorTagLinks = new WeakMap<HTMLAnchorElement, RouteLocationResolvedGeneric>();
 // This hook replaces relative image urls with their respective paths
 sanitizer.addHook('afterSanitizeElements', (node) => {
     if (!(node instanceof HTMLImageElement)) return;
@@ -40,28 +42,45 @@ sanitizer.addHook('afterSanitizeElements', (node) => {
 
     // Create URL relative to cwd
     const path = joinRelativeURL(...routeState.dir, parsed.pathname).split('/');
-    node.src = getApiUrl(path);
-
-    // Get filename and set last element to empty string for trailing slash
-    const filename = path[path.length - 1];
-    path[path.length - 1] = '';
+    node.src = getApiUrl(path, { raw: '', cache: '' }, true);
 
     // If the img is not directly wrapped in an anchor tag, add our own
     if (!(node.parentNode instanceof HTMLAnchorElement)) {
+        // Get filename and set last element to empty string for trailing slash
+        const filename = path[path.length - 1];
+        path[path.length - 1] = '';
+
         const anchor = document.createElement('a');
         anchor.appendChild(node.cloneNode());
         const routeLink = router.resolve({
             name: 'viewer',
             params: { path },
-            hash: '#' + filename,
+            hash: '#' + decodeURIComponent(filename),
         });
         anchor.href = routeLink.href;
-        anchor.onclick = (e) => {
-            e.stopPropagation();
+        anchor.onclick = () => {
             router.push(routeLink);
+            return false;
         };
+        anchorTagLinks.set(anchor, routeLink);
         node.replaceWith(anchor);
     }
+});
+
+// This hook replaces relative video urls with their respective paths
+sanitizer.addHook('afterSanitizeElements', (node) => {
+    if (!(node instanceof HTMLVideoElement)) return;
+    node.crossOrigin = 'anonymous';
+
+    const src = node.getAttribute('src');
+    if (!src) return;
+    const parsed = parseURL(src);
+    // If not relative, exit
+    if (parsed.host) return;
+
+    // Create URL relative to cwd
+    const path = joinRelativeURL(...routeState.dir, parsed.pathname).split('/');
+    node.src = getApiUrl(path, { raw: '', cache: '' }, true);
 });
 // This hook adds target="_blank" to anchor tags that aren't in this page
 sanitizer.addHook('afterSanitizeElements', (node) => {
@@ -96,14 +115,21 @@ const renderedHtml = computedAsync(async () => {
 
     return sanitizer.sanitize(rendered, {
         USE_PROFILES: { html: true },
+        RETURN_DOM: true,
         ADD_ATTR: (attr, elem) => attr === 'target' && elem === 'a',
     });
-}, '');
+});
+
+const markdownBody = useTemplateRef('markdown-body');
+
+watchEffect(() => {
+    if (renderedHtml.value) markdownBody.value?.replaceChildren(renderedHtml.value);
+});
 </script>
 
 <template>
     <div class="wrapper" :class>
-        <div class="markdown-body" v-html="renderedHtml"></div>
+        <div class="markdown-body" ref="markdown-body"></div>
     </div>
 </template>
 
