@@ -5,6 +5,7 @@ import { computed, shallowRef } from 'vue';
 import { useRouter } from 'vue-router';
 
 import type { FileClassification } from '@/lib/classifyExt';
+import type { AnyDirectoryEntry } from '@/lib/interop';
 
 import { FileEntry } from '@/lib/interop';
 import { useRouteState } from '@/stores/useRouteState';
@@ -12,6 +13,10 @@ import { useRouteState } from '@/stores/useRouteState';
 export const usePreview = defineStore('preview', () => {
     const routeState = useRouteState();
     const router = useRouter();
+    const nextPrevItems = shallowRef([null, null] as [
+        AnyDirectoryEntry | null,
+        AnyDirectoryEntry | null,
+    ]);
     const openedFile = computed(() => {
         if (routeState.file) {
             return new FileEntry(routeState.dir, {
@@ -35,6 +40,7 @@ export const usePreview = defineStore('preview', () => {
     return {
         openedFile,
         forceEditorType,
+        nextPrevItems,
         close() {
             // Go to the exact same route, just without a hash
             router.push({ ...router.currentRoute.value, hash: undefined });

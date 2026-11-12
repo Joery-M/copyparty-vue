@@ -4,8 +4,8 @@ import type { Column, ColumnDef, RowSelectionState, SortingState } from '@tansta
 import { valueUpdater } from '@shadcn/table/utils';
 import { useTable } from '@tanstack/vue-table';
 import { isEqual } from '@ver0/deep-equal';
-import { watchImmediate, whenever } from '@vueuse/core';
-import { computed, h, onMounted, ref, watch, watchEffect } from 'vue';
+import { watchImmediate } from '@vueuse/core';
+import { computed, h, ref, watch, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate } from 'vue-router';
 
@@ -19,10 +19,12 @@ import FileListView from '@/components/fileList/list/FileListView.vue';
 import SortableHeader from '@/components/fileList/list/SortableHeader.vue';
 import Paginator from '@/components/fileList/Paginator.vue';
 import { useLoadingState } from '@/lib/api';
+import { FileClassification } from '@/lib/classifyExt';
 import { FileEntry } from '@/lib/interop';
 import { dedupedComputed, refWithInit } from '@/lib/utils';
 import { useListDirQuery } from '@/pages/Files.vue';
 import { useFileSelection } from '@/stores/useFileSelection.ts';
+import { usePreview } from '@/stores/usePreview';
 import { getDirFromRouteParams } from '@/stores/useRouteState';
 import { useSettings } from '@/stores/useSettings';
 
@@ -185,6 +187,35 @@ watch(
     },
     { deep: 2, immediate: true }
 );
+
+const previewStore = usePreview();
+const nextPrevItems = computed<[AnyDirectoryEntry | null, AnyDirectoryEntry | null]>(() => {
+    const file = previewStore.openedFile;
+    if (!file) return [null, null];
+    const entries = table.getPrePaginatedRowModel().rows.map((e) => e.original);
+    const entryIndex = entries.findIndex((e) => isEqual(e.fullPath, file.fullPath));
+    if (entryIndex < 0) return [null, null];
+    let prevViewable: AnyDirectoryEntry | null = null;
+    let nextViewable: AnyDirectoryEntry | null = null;
+
+    const canViewMedia = (entry: FileClassification) =>
+        entry === FileClassification.RasterImage ||
+        entry === FileClassification.VectorImage ||
+        entry === FileClassification.Video;
+
+    for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        if (canViewMedia(entry.classification)) {
+            if (i < entryIndex) {
+                prevViewable = entry;
+            } else if (i > entryIndex && nextViewable == null) {
+                nextViewable = entry;
+            }
+        }
+    }
+    return [prevViewable, nextViewable];
+});
+watch(nextPrevItems, (i) => (previewStore.nextPrevItems = i));
 
 provideFileTable({
     isLoading: computed(() => isLoading.value),

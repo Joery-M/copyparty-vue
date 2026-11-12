@@ -2,6 +2,8 @@
 import type { ComponentPublicInstance } from 'vue';
 
 import {
+    ChevronLeft,
+    ChevronRight,
     Fullscreen,
     Maximize,
     Minimize,
@@ -22,9 +24,11 @@ import {
     useKeyModifier,
     usePreferredReducedMotion,
     useTimeoutFn,
+    watchImmediate,
     whenever,
 } from '@vueuse/core';
 import { computed, ref, useTemplateRef, watchEffect } from 'vue';
+import { useRouter } from 'vue-router';
 
 import type { FileEntry } from '@/lib/interop';
 
@@ -35,6 +39,9 @@ import VideoControls from '@/components/viewers/VideoControls.vue';
 import { getApiUrl } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { useShortcut } from '@/lib/keyboard.ts';
+import { refWithInit } from '@/lib/utils.ts';
+import { usePreview } from '@/stores/usePreview.ts';
+import { useRouteState } from '@/stores/useRouteState.ts';
 import { useSettings } from '@/stores/useSettings';
 
 import DialogFooter from '../ui/dialog/DialogFooter.vue';
@@ -45,10 +52,13 @@ import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
 
 const props = defineProps<{ file: FileEntry }>();
 
-const mediaUrl = getApiUrl(props.file.fullPath, { cache: '', raw: '' });
+const mediaUrl = computed(() => getApiUrl(props.file.fullPath, { cache: '', raw: '' }));
 
 const settings = useSettings();
 const preferrersReducedMotion = usePreferredReducedMotion();
+const previewStore = usePreview();
+const router = useRouter();
+const routeState = useRouteState();
 
 const backgroundClass = computed(() => {
     if (isLoading.value) return {};
@@ -139,11 +149,7 @@ const containerMiddle = computed<[number, number]>(() => [
     containerSize.height.value / 2,
 ]);
 
-const _zoomedMediaSize = ref<[number, number]>();
-const zoomedMediaSize = computed<[number, number]>({
-    get: () => _zoomedMediaSize.value ?? mediaSize.value,
-    set: (v) => (_zoomedMediaSize.value = v),
-});
+const zoomedMediaSize = refWithInit<[number, number]>(mediaSize);
 const smallestMediaAxis = computed(() =>
     Math.min(zoomedMediaSize.value[0], zoomedMediaSize.value[1])
 );
@@ -277,10 +283,23 @@ useShortcut(
     }
 );
 
+useShortcut(['p'], () => gotoSiblingMedia(0));
+useShortcut(['n'], () => gotoSiblingMedia(1));
+
 function isVideo(elem: any): elem is HTMLVideoElement {
     return (
         props.file.classification === FileClassification.Video && elem instanceof HTMLVideoElement
     );
+}
+
+function gotoSiblingMedia(index: 0 | 1) {
+    const media = previewStore.nextPrevItems[index];
+    if (!media) return;
+    router.push({
+        name: 'viewer',
+        params: { path: routeState.dir.concat('') },
+        hash: '#' + media.name,
+    });
 }
 </script>
 
@@ -314,6 +333,7 @@ function isVideo(elem: any): elem is HTMLVideoElement {
                 :alt="file.name"
                 @transitionend="disableTransition()"
                 @load="isLoading = false"
+                @loadstart="isLoading = true"
                 @click="zoom(isHoldingShift ? zoomOutFactor : zoomInFactor)"
             />
             <video
@@ -331,6 +351,7 @@ function isVideo(elem: any): elem is HTMLVideoElement {
                 @transitionend="disableTransition()"
                 @loadedmetadata="isLoading = false"
                 @loadeddata="isLoading = false"
+                @loadstart="isLoading = true"
                 @dblclick="fullscreenElement.toggle()"
                 autoplay
                 playsinline
@@ -348,6 +369,19 @@ function isVideo(elem: any): elem is HTMLVideoElement {
             :class="{ hide: hideControls, overlap: isOverlappingControls }"
             class="flex-row sm:flex-row flex-wrap sm:justify-center max-w-full"
         >
+            <ButtonGroup>
+                <Tooltip :content="$t('viewer.media.prev') + ' (P)'">
+                    <Button
+                        variant="accent"
+                        size="icon-lg"
+                        :disabled="!previewStore.nextPrevItems[0]"
+                        shortcut="p"
+                        @click="gotoSiblingMedia(0)"
+                    >
+                        <ChevronLeft />
+                    </Button>
+                </Tooltip>
+            </ButtonGroup>
             <ButtonGroup>
                 <Tooltip :content="$t('viewer.media.background') + ' (B)'">
                     <Button
@@ -375,8 +409,10 @@ function isVideo(elem: any): elem is HTMLVideoElement {
                         variant="accent"
                         size="icon-lg"
                         :aria-label="$t('viewer.media.smoothing')"
-                        v-html="settings.preview.pixelated ? ImagePixelated : ImageSmooth"
                     >
+                        <div
+                            v-html="settings.preview.pixelated ? ImagePixelated : ImageSmooth"
+                        ></div>
                     </Button>
                 </Tooltip>
                 <Tooltip
@@ -492,6 +528,19 @@ function isVideo(elem: any): elem is HTMLVideoElement {
                         :aria-label="$t('viewer.media.rotate_cw')"
                     >
                         <RotateCw />
+                    </Button>
+                </Tooltip>
+            </ButtonGroup>
+            <ButtonGroup>
+                <Tooltip :content="$t('viewer.media.next') + ' (N)'">
+                    <Button
+                        variant="accent"
+                        size="icon-lg"
+                        :disabled="!previewStore.nextPrevItems[1]"
+                        shortcut="n"
+                        @click="gotoSiblingMedia(1)"
+                    >
+                        <ChevronRight />
                     </Button>
                 </Tooltip>
             </ButtonGroup>

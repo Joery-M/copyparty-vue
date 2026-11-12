@@ -104,7 +104,9 @@
       "background": "Background",
       "smoothing": "Pixel smoothing",
       "rotate_ccw": "Rotate counter-clockwise",
-      "rotate_cw": "Rotate clockwise"
+      "rotate_cw": "Rotate clockwise",
+      "prev": "Previous",
+      "next": "Next"
     }
   },
   "actions": {
