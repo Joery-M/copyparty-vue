@@ -17,7 +17,8 @@ Missing features:
 - Audio playback (you just download the file atm)
 - Moving, copying and pasting files (across tabs)
 - upget/recent uploads
-- Grid view sorting and pagination
+- ~~Search~~
+- ~~Grid view sorting and pagination~~
 
 ## Showcase
 
