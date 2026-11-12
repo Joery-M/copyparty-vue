@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery } from '@pinia/colada';
-import { refThrottled, useFocusWithin, whenever } from '@vueuse/core';
+import { refThrottled, useFocus, useFocusWithin, whenever } from '@vueuse/core';
 import { extname } from 'pathe';
 import { computed, ref, useTemplateRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -10,7 +10,7 @@ import type { SearchFileEntry } from '@/lib/interop.ts';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { API } from '@/lib/api.ts';
 import { canView, classifyExtension } from '@/lib/classifyExt.ts';
-import { useShortcut, useShortcutGuard } from '@/lib/keyboard';
+import { useRootShortcut, useShortcut, useShortcutGuard } from '@/lib/keyboard';
 
 import SearchBarInput from './SearchBarInput.vue';
 import SearchEntry from './SearchEntry.vue';
@@ -28,6 +28,15 @@ useShortcut('Escape', () => {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     query.value = '';
 });
+
+function openSearch() {
+    useFocus(input.value?.input).focused.value = true;
+}
+useRootShortcut(
+    (e) => e.ctrlKey && e.key === 'k',
+    (e) => (e.preventDefault(), openSearch())
+);
+useRootShortcut('/', (e) => (e.preventDefault(), openSearch()));
 
 const queryDebounced = refThrottled(query, 500, true);
 watch(

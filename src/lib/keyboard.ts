@@ -42,6 +42,17 @@ export function useShortcut(
     }
 }
 
+export function useRootShortcut(
+    filter: KeyFilter,
+    // Vueuse checks number of arguments to see if options exists
+    ...args: [handler: (event: KeyboardEvent) => void, options?: OnKeyStrokeOptions]
+) {
+    if (!hasInjectionContext())
+        throw new Error('useShortcut has to be used inside an injection context');
+    const predicate = createKeyPredicate(filter);
+    onKeyStroke((event) => GuardStack.value.length === 0 && predicate(event), ...args);
+}
+
 export function isCurrentGuardActive() {
     if (!hasInjectionContext())
         throw new Error('isCurrentGuardActive has to be used inside an injection context');
