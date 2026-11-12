@@ -10,11 +10,8 @@ import { compileQuery, MultiSearchQuery, SingleSearchQuery } from '@/lib/searchA
 
 const rootContext = injectPopoverRootContext();
 
-const props = defineProps<{ itemCount: number }>();
-
 const input = useTemplateRef('input');
 const model = defineModel<string>({ required: true });
-const selectedIndex = defineModel<number>('selected-index', { required: true });
 
 defineExpose({ input });
 
