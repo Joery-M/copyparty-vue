@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import { useQuery } from '@pinia/colada';
-import { refThrottled, unrefElement } from '@vueuse/core';
-import { ref, useTemplateRef, watch } from 'vue';
+import { refThrottled, useFocusWithin, whenever } from '@vueuse/core';
+import { extname } from 'pathe';
+import { computed, ref, useTemplateRef, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
-import SearchEntry from '@/components/searchBar/SearchEntry.vue';
+import type { SearchFileEntry } from '@/lib/interop.ts';
+
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { API } from '@/lib/api.ts';
+import { canView, classifyExtension } from '@/lib/classifyExt.ts';
 import { useShortcut, useShortcutGuard } from '@/lib/keyboard';
 
 import SearchBarInput from './SearchBarInput.vue';
+import SearchEntry from './SearchEntry.vue';
 
 const query = ref('');
 
@@ -16,7 +21,6 @@ const isOpen = ref(false);
 const selectedIndex = ref(-1);
 
 const input = useTemplateRef('input');
-const items = useTemplateRef('items');
 
 useShortcutGuard('search', isOpen);
 
@@ -27,36 +31,18 @@ useShortcut('Escape', () => {
 
 const queryDebounced = refThrottled(query, 500, true);
 watch(
-    () => [isOpen.value, queryDebounced.value],
-    () => (selectedIndex.value = -1),
+    () => [isOpen.value, queryDebounced.value] as const,
+    ([isOpen]) => isOpen && (selectedIndex.value = 0),
     { immediate: true }
 );
 
-useShortcut('ArrowDown', () => {
-    if (selectedIndex.value + 1 >= (items.value?.length ?? 0)) {
+const { focused } = useFocusWithin(computed(() => input.value?.input));
+whenever(
+    () => focused,
+    () => {
         selectedIndex.value = -1;
-    } else {
-        selectedIndex.value++;
     }
-});
-useShortcut('ArrowUp', () => {
-    if (selectedIndex.value - 1 < -1) {
-        selectedIndex.value = (items.value?.length ?? 0) - 1;
-    } else {
-        selectedIndex.value--;
-    }
-});
-
-watch(selectedIndex, (index) => {
-    if (index < 0) {
-        const inputElem = unrefElement(input.value?.input);
-        console.log(inputElem);
-        inputElem?.focus();
-    } else if (index < (items.value?.length ?? 0)) {
-        const item = items.value?.[index];
-        unrefElement(item)?.focus();
-    }
-});
+);
 
 const searchQuery = useQuery({
     enabled: isOpen,
@@ -68,18 +54,74 @@ const searchQuery = useQuery({
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
 });
+
+const router = useRouter();
+function navigate(entry: SearchFileEntry) {
+    const path = [...entry.path];
+    if (path.length > 1) path[path.length - 1] = '';
+
+    if (canView(classifyExtension(extname(entry.name)))) {
+        router.push({
+            name: 'viewer',
+            params: { path },
+            hash: '#' + entry.name,
+            query: { s: JSON.stringify(entry.name) },
+        });
+    } else {
+        router.push({
+            name: 'viewer',
+            params: { path },
+            query: { s: JSON.stringify(entry.name) },
+        });
+    }
+    isOpen.value = false;
+}
+
+function search() {
+    const index = Math.max(selectedIndex.value, 0);
+    const entry = searchQuery.data.value?.[index];
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    if (entry) navigate(entry);
+}
+
+function moveSelection(dir: number) {
+    const newI = selectedIndex.value + dir;
+    const items = searchQuery.data.value?.length ?? 0;
+    if (newI >= items) {
+        selectedIndex.value = -1;
+    } else if (newI < -1) {
+        if (items <= 0) return;
+
+        let j = newI;
+        while (j < -1) {
+            j += items;
+        }
+        selectedIndex.value = j + 1;
+    } else {
+        selectedIndex.value = newI;
+    }
+}
 </script>
 
 <template>
     <Popover v-model:open="isOpen" modal>
-        <SearchBarInput class="max-w-full" ref="input" v-model="query" />
+        <SearchBarInput
+            class="max-w-full"
+            ref="input"
+            :item-count="searchQuery.data.value?.length ?? 0"
+            v-model="query"
+            v-model:selected-index="selectedIndex"
+            @search="search"
+            @move-selection="moveSelection($event)"
+        />
         <PopoverContent class="w-150" :trap-focus="false">
             <div id="search-autocomplete-menu" role="listbox">
                 <SearchEntry
-                    v-for="entry in searchQuery.data.value ?? []"
+                    v-for="(entry, i) in searchQuery.data.value ?? []"
                     :key="entry.fullPath"
-                    ref="items"
                     :entry
+                    :active="i === selectedIndex"
+                    @selected="navigate(entry)"
                 />
                 <p v-if="!searchQuery.data.value?.length" class="text-center text-muted-foreground">
                     {{ $t('search_empty') }}

@@ -1,6 +1,7 @@
 import { basename } from 'pathe';
 
 import { API } from '@/lib/api';
+import { pathToParts } from '@/lib/utils';
 
 import { classifyExtension, FileClassification } from './classifyExt';
 
@@ -50,9 +51,11 @@ export class SearchFileEntry {
     created: Date | null = null;
     tags;
     fullPath: string;
+    path: string[];
 
     constructor(input: API.SearchResponseEntry) {
         this.fullPath = input.rp;
+        this.path = pathToParts(input.rp).map(decodeURIComponent);
         this.name = decodeURIComponent(basename(input.rp));
         this.tags = new Map(Object.entries(input.tags));
     }

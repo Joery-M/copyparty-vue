@@ -1,75 +1,24 @@
 <script setup lang="ts">
-import { extname } from 'pathe';
-import { injectPopoverRootContext } from 'reka-ui';
-import { useRouter } from 'vue-router';
-
 import type { SearchFileEntry } from '@/lib/interop';
 
-import { canView, classifyExtension } from '@/lib/classifyExt';
-import { pathToParts } from '@/lib/utils';
+const props = defineProps<{ entry: SearchFileEntry; active: boolean }>();
 
-const props = defineProps<{ entry: SearchFileEntry }>();
-const rootContext = injectPopoverRootContext();
-
-const path = pathToParts(props.entry.fullPath).map(decodeURIComponent);
+const path = [...props.entry.path];
 path.pop();
-
-let prefixSections: string | undefined;
-let suffixSections: string | undefined;
-
-let chars = 0;
-const total = path.reduce((i, s) => i + s.length, 0);
-let cutStart;
-let cutEnd;
-if (total > 60) {
-    for (let i = 0; i < path.length; i++) {
-        const section = path[i];
-        chars += section.length;
-        if (chars > 20 && cutStart === undefined) {
-            cutStart = i;
-        }
-        if (cutStart !== undefined && total - chars < 20 && cutEnd === undefined) {
-            cutEnd = i;
-        }
-    }
-}
-if (cutStart === cutEnd) {
-    prefixSections = path.join('/');
-} else {
-    prefixSections = path.slice(0, cutStart).join('/');
-    suffixSections = path.slice(cutEnd).join('/');
-}
-
-const router = useRouter();
-async function navigate() {
-    if (canView(classifyExtension(extname(props.entry.name)))) {
-        router.push({
-            name: 'viewer',
-            params: { path: path.concat('') },
-            hash: '#' + props.entry.name,
-        });
-    } else {
-        router.push({
-            name: 'viewer',
-            params: { path: path.concat('') },
-            query: { s: JSON.stringify(props.entry.name) },
-        });
-    }
-    rootContext.open.value = false;
-}
+const pathString = '/' + path.join('/');
 </script>
 
 <template>
-    <div role="option" class="search-result" tabindex="-1" @click="navigate">
+    <div
+        role="option"
+        class="search-result"
+        tabindex="-1"
+        @click="$emit('selected')"
+        @keydown.enter="$emit('selected')"
+        :data-active="active ? '' : undefined"
+    >
         <label>
-            <span class="path">
-                <span class="prefix">/{{ prefixSections }}</span>
-                <template v-if="suffixSections">
-                    ...
-                    <span class="suffix">{{ suffixSections }}</span>
-                </template>
-            </span>
-            <span class="name">/{{ entry.name }}</span>
+            <span class="path">{{ pathString }}</span><span class="name">/{{ entry.name }}</span>
         </label>
     </div>
 </template>
@@ -78,12 +27,22 @@ async function navigate() {
 @reference "@/style.css";
 
 .search-result {
-    @apply py-1;
+    @apply py-1 px-1 rounded-md;
     .path {
-        @apply text-muted-foreground;
+        @apply text-muted-foreground text-ellipsis overflow-x-clip shrink min-w-0;
     }
     .name {
-        @apply text-foreground text-sm;
+        @apply text-foreground text-sm grow text-ellipsis overflow-x-clip max-w-full;
+    }
+    > label {
+        @apply flex items-baseline whitespace-nowrap max-w-full;
+    }
+    cursor: pointer;
+
+    &[data-active],
+    &:hover {
+        @apply bg-accent;
+        outline: none;
     }
 }
 </style>

@@ -20,7 +20,7 @@ export const useListDirQuery = defineColadaLoader({
 
 <script setup lang="ts">
 import { isEqual } from '@ver0/deep-equal';
-import { useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
+import { until, useDropZone, useEventListener, useTitle, whenever } from '@vueuse/core';
 import { computed, defineAsyncComponent, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
@@ -140,22 +140,28 @@ const canOnlyUpload = computed(
 
 onMounted(() => {
     whenever(
-        () => !listDirQuery.isLoading.value && route.query.s,
-        () => {
+        () => route.query.s,
+        async () => {
+            const sel = JSON.parse(typeof route.query['s'] === 'string' ? route.query['s'] : '');
+            router.push({
+                ...router.currentRoute.value,
+                query: {},
+                replace: true,
+            });
+            await until(listDirQuery.isPending).not.toBeTruthy();
+            const queryRes = listDirQuery.data.value;
             try {
-                router.push({ query: {}, replace: true });
-                const sel = JSON.parse(
-                    typeof route.query['s'] === 'string' ? route.query['s'] : ''
-                );
-                const dirEntries = listDirQuery.data.value?.entries ?? [];
+                const dirEntries = queryRes?.entries ?? [];
                 const selection = new Set([sel].flat());
                 const entries = dirEntries.filter(({ name }) => selection.has(name));
+                fileSelection.selectNone();
                 for (let i = 0; i < entries.length; i++) {
                     const entry = entries[i];
 
                     fileSelection.selectedFiles.add(entry);
                     if (i === entries.length - 1) {
                         fileSelection.lastSelected = entry;
+                        fileSelection.lastSelectedNonRange = entry;
                     }
                 }
             } catch {}

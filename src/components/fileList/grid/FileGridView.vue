@@ -65,7 +65,7 @@ const sortDirection = computed({
             </Button>
             <Select :items="sortableColumns" v-model:model-value="sortedColumn">
                 <SelectTrigger class="bg-clip-padding border-border">
-                    <SelectValue :placeholder="$t('Sort')" />
+                    <SelectValue :placeholder="$t('sorting')" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectGroup>
