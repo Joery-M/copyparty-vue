@@ -80,6 +80,7 @@ const backgroundTypeButton = useTemplateRef('backgroundTypeButton');
 const backgroundTypeSelectOpen = ref(false);
 
 const isLoading = ref(true);
+watchImmediate(mediaUrl, () => (isLoading.value = true));
 const enableZoomToFit = ref(true);
 const enableTransition = refWithControl(false, {
     onBeforeChange(value) {
@@ -322,6 +323,7 @@ function gotoSiblingMedia(index: 0 | 1) {
                     file.classification === FileClassification.RasterImage ||
                     file.classification === FileClassification.VectorImage
                 "
+                v-show="!isLoading"
                 class="media"
                 :style="{
                     ...computedStyle,
@@ -340,6 +342,7 @@ function gotoSiblingMedia(index: 0 | 1) {
                 ref="media"
                 v-else-if="file.classification === FileClassification.Video"
                 class="media"
+                v-show="!isLoading"
                 :class="{
                     ...backgroundClass,
                     'transition-all': enableTransition,
@@ -351,7 +354,6 @@ function gotoSiblingMedia(index: 0 | 1) {
                 @transitionend="disableTransition()"
                 @loadedmetadata="isLoading = false"
                 @loadeddata="isLoading = false"
-                @loadstart="isLoading = true"
                 @dblclick="fullscreenElement.toggle()"
                 autoplay
                 playsinline

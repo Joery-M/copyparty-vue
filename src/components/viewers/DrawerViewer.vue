@@ -16,12 +16,7 @@ const props = defineProps<{ title: string; description: string }>();
 const isOpen = defineModel<boolean>('open', { required: true });
 const emits = defineEmits<{ closing: []; closed: [] }>();
 
-function closed() {
-    if (isOpen.value) return;
-    emits('closed');
-}
-
-useShortcutGuard('viewer');
+useShortcutGuard('drawer-viewer');
 </script>
 
 <template>
@@ -30,7 +25,6 @@ useShortcutGuard('viewer');
         :set-background-color-on-scale="false"
         v-model:open="isOpen"
         handle-only
-        @animation-end="closed"
         @close="$emit('closing')"
     >
         <DrawerPortal>
@@ -38,7 +32,7 @@ useShortcutGuard('viewer');
             <DrawerContent
                 class="bg-background flex flex-col rounded-t-[10px] h-full mt-24 max-h-[90%] fixed bottom-0 left-0 right-0 outline-accent outline-2"
             >
-                <FocusScope trapped class="overflow-y-auto">
+                <FocusScope @vue:unmounted="$emit('closed')" trapped class="overflow-y-auto">
                     <DrawerTitle class="text-lg font-bold w-full text-center my-3">
                         {{ title }}
                     </DrawerTitle>
@@ -48,7 +42,10 @@ useShortcutGuard('viewer');
                     <div class="p-4 rounded-t-[10px] focus-visible:outline-none **:z-10">
                         <button
                             class="z-10 fixed right-0 top-0 size-13 flex justify-center items-center opacity-70 hover:opacity-100 cursor-pointer"
-                            @click="isOpen = false"
+                            @click="
+                                isOpen = false;
+                                $router.push({ hash: undefined });
+                            "
                         >
                             <X />
                         </button>

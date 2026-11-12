@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { whenever } from '@vueuse/core';
 import { VisuallyHidden } from 'reka-ui';
 
 import { useShortcutGuard } from '@/lib/keyboard';
@@ -16,10 +17,15 @@ const isOpen = defineModel<boolean>('open', { required: true });
 const emits = defineEmits<{ closing: []; closed: [] }>();
 
 useShortcutGuard('viewer');
+
+whenever(
+    () => !isOpen.value,
+    () => emits('closing')
+);
 </script>
 
 <template>
-    <Dialog v-model:open="isOpen" @update:open="$event || $emit('closing')">
+    <Dialog v-model:open="isOpen">
         <DialogContent full-screen :show-close-button="false">
             <VisuallyHidden>
                 <DialogHeader @vue:unmounted="$emit('closed')">

@@ -3,7 +3,7 @@ import { computedAsync, whenever } from '@vueuse/core';
 import { computed, shallowRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import type { File } from '@/lib/interop';
+import type { FileEntry } from '@/lib/interop';
 
 import { FileClassification } from '@/lib/classifyExt';
 import { usePreview } from '@/stores/usePreview';
@@ -16,7 +16,7 @@ const routeState = useRouteState();
 const previewStore = usePreview();
 
 const viewerType = computed(() => {
-    switch (lastFile.value?.classification) {
+    switch (previewStore.openedFile?.classification) {
         case FileClassification.RichText:
         case FileClassification.PlainText:
             return 'drawer';
@@ -42,7 +42,13 @@ const currentEditor = computedAsync(async () => {
     }
 });
 
-const lastFile = shallowRef<FileEntry | null>(null);
+const lastDrawerFile = shallowRef<FileEntry | null>(null);
+const lastDialogFile = shallowRef<FileEntry | null>(null);
+const lastFile = computed({
+    get: () => (viewerType.value === 'drawer' ? lastDrawerFile.value : lastDialogFile.value),
+    set: (f) =>
+        viewerType.value === 'drawer' ? (lastDrawerFile.value = f) : (lastDialogFile.value = f),
+});
 whenever(
     () => previewStore.openedFile,
     (f) => (lastFile.value = f),
@@ -64,33 +70,51 @@ const description = computed(() => {
         return i18n.t('viewer.default_description');
     }
 });
+
+function closing(type: string) {
+    if (type !== viewerType.value) return;
+    previewStore.close();
+}
+function closed(type: string) {
+    if (type === 'drawer') {
+        lastDrawerFile.value = null;
+    } else if (type === 'dialog') {
+        lastDialogFile.value = null;
+    }
+}
 </script>
 
 <template>
     <drawer-viewer
-        v-if="viewerType === 'drawer'"
-        :open="!!routeState.file"
+        :open="!!routeState.file && viewerType === 'drawer' && !lastDialogFile"
         :title
         :description
-        @closing="previewStore.close()"
-        @closed="lastFile = null"
+        @closing="closing('drawer')"
+        @closed="closed('drawer')"
     >
-        <suspense v-if="lastFile && currentEditor">
-            <component :is="currentEditor" :file="lastFile" />
+        <suspense v-if="lastDrawerFile && currentEditor">
+            <component :is="currentEditor" :file="lastDrawerFile" />
         </suspense>
     </drawer-viewer>
     <dialog-viewer
-        v-else-if="viewerType === 'dialog'"
-        :open="!!routeState.file"
+        :open="!!routeState.file && viewerType === 'dialog' && !lastDrawerFile"
         :title
         :description
         @closed="
-            previewStore.close();
-            lastFile = null;
+            closing('dialog');
+            closed('dialog');
         "
     >
-        <suspense v-if="lastFile && currentEditor">
-            <component :is="currentEditor" :file="lastFile" />
+        <suspense v-if="lastDialogFile && currentEditor">
+            <component :is="currentEditor" :file="lastDialogFile" />
         </suspense>
     </dialog-viewer>
 </template>
+
+<style>
+[data-vaul-overlay],
+[data-vaul-drawer] {
+    animation-duration: 0.3s !important;
+    animation-timing-function: cubic-bezier(0.61, 1, 0.88, 1);
+}
+</style>
