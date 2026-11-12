@@ -68,7 +68,7 @@ watch(
 
 const readmes = computed(() => (listDirQuery.data.value?.readmes ?? []).filter((v) => !!v));
 const MarkdownViewer = defineAsyncComponent(
-    () => import('@/components/viewers/markdown/MarkdownViewer.vue')
+    () => import('@/components/viewers/MarkdownViewer.vue')
 );
 
 const gridView = refWithInit(() => {
