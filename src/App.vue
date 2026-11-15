@@ -13,5 +13,5 @@ useDark();
     <TooltipProvider>
         <RouterView />
     </TooltipProvider>
-    <Toaster position="bottom-right" close-button />
+    <Toaster position="bottom-right" close-button class="z-49!" />
 </template>
