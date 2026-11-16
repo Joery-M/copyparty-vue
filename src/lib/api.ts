@@ -3,9 +3,9 @@ import type { QueryObject } from 'ufo';
 import type { MaybeRefOrGetter } from 'vue';
 
 import { defineQueryOptions } from '@pinia/colada';
-import { useTimeoutFn } from '@vueuse/core';
+import { useTimeoutFn, watchImmediate } from '@vueuse/core';
 import { parseURL, resolveURL, stringifyParsedURL, withQuery } from 'ufo';
-import { readonly, ref, toRef, watch } from 'vue';
+import { readonly, ref, toRef } from 'vue';
 
 import type { AnyDirectoryEntry } from './interop';
 
@@ -330,7 +330,7 @@ export function useLoadingState(loading: MaybeRefOrGetter<boolean>, time = 200) 
     const timer = useTimeoutFn(() => (output.value = true), time, {
         immediate: false,
     });
-    watch(state, (state) => {
+    watchImmediate(state, (state) => {
         if (state) {
             if (!timer.isPending.value) timer.start();
         } else {

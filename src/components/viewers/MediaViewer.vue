@@ -320,17 +320,17 @@ function gotoSiblingMedia(index: 0 | 1) {
     >
         <div class="container" ref="container">
             <div
-                v-if="settings.preview.bgType === 'grid' && !isLoading"
-                class="background-grid"
-                :class="{ 'transition-all': enableTransition }"
-                :style="computedStyle"
-            />
-            <div
-                v-else-if="isLoadingDebounced"
+                v-if="isLoadingDebounced"
                 class="loading-element size-full flex items-center justify-center"
             >
                 <Loader2 class="animate-spin" :size="48" />
             </div>
+            <div
+                v-else-if="settings.preview.bgType === 'grid'"
+                class="background-grid"
+                :class="{ 'transition-all': enableTransition }"
+                :style="computedStyle"
+            />
             <img
                 ref="media"
                 v-if="
