@@ -107,7 +107,8 @@
       "rotate_cw": "Rotate clockwise",
       "prev": "Previous",
       "next": "Next"
-    }
+    },
+    "error": "There was an error showing this file,\nplease try downloading it and viewing it outside the browser"
   },
   "actions": {
     "view": "View",

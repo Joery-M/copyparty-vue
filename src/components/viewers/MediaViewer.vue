@@ -81,8 +81,9 @@ const backgroundTypeButton = useTemplateRef('backgroundTypeButton');
 const backgroundTypeSelectOpen = ref(false);
 
 const isLoading = ref(true);
+const isError = ref(false);
 const isLoadingDebounced = useLoadingState(isLoading);
-watchImmediate(mediaUrl, () => (isLoading.value = true));
+watchImmediate(mediaUrl, () => ((isLoading.value = true), (isError.value = false)));
 const enableZoomToFit = ref(true);
 const enableTransition = refWithControl(false, {
     onBeforeChange(value) {
@@ -323,7 +324,8 @@ function gotoSiblingMedia(index: 0 | 1) {
                 v-if="isLoadingDebounced"
                 class="loading-element size-full flex items-center justify-center"
             >
-                <Loader2 class="animate-spin" :size="48" />
+                <Loader2 v-if="!isError" class="animate-spin" :size="48" />
+                <p v-else class="error-message">{{ $t('viewer.error') }}</p>
             </div>
             <div
                 v-else-if="settings.preview.bgType === 'grid'"
@@ -350,6 +352,7 @@ function gotoSiblingMedia(index: 0 | 1) {
                 @transitionend="disableTransition()"
                 @load="isLoading = false"
                 @loadstart="isLoading = true"
+                @error="isError = true"
                 @click="zoom(isHoldingShift ? zoomOutFactor : zoomInFactor)"
             />
             <video
@@ -665,5 +668,9 @@ function gotoSiblingMedia(index: 0 | 1) {
     &.overlap {
         box-shadow: 0 4px 9px rgb(0 0 0 / 0.6);
     }
+}
+
+.error-message {
+    @apply font-bold text-accent dark:text-accent-foreground text-shadow-lg text-shadow-black/60 text-lg text-center whitespace-pre-line;
 }
 </style>
