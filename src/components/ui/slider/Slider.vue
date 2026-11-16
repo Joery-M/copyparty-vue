@@ -42,9 +42,9 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 
     <template v-for="(v, key) in modelValue" :key="key">
       <Tooltip v-if="tooltip" :content="formattedValue ?? v" disable-closing-trigger>
-    <SliderThumb
-      data-slot="slider-thumb"
-      :data-vertical="props.orientation === 'vertical' ? '' : undefined"
+        <SliderThumb
+          data-slot="slider-thumb"
+          :data-vertical="props.orientation === 'vertical' ? '' : undefined"
           class="relative size-3 rounded-md border bg-foreground ring-foreground transition-[color,box-shadow] after:absolute after:-inset-2 hover:ring-1 focus-visible:ring-1 focus-visible:outline-hidden block shrink-0 select-none disabled:pointer-events-none disabled:opacity-50"
         />
       </Tooltip>

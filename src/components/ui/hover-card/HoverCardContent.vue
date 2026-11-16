@@ -14,20 +14,20 @@ defineOptions({
 })
 
 const props = withDefaults(
-  defineProps<HoverCardContentProps & { class?: HTMLAttributes['class'] }>(),
+  defineProps<HoverCardContentProps & { class?: HTMLAttributes['class'], teleportTo?: string | HTMLElement }>(),
   {
     align: 'center',
     sideOffset: 4,
   },
 )
 
-const delegatedProps = reactiveOmit(props, 'class')
+const delegatedProps = reactiveOmit(props, ['class', 'teleportTo'])
 
 const forwardedProps = useForwardProps(delegatedProps)
 </script>
 
 <template>
-  <HoverCardPortal>
+  <HoverCardPortal :to="teleportTo">
     <HoverCardContent
       data-slot="hover-card-content"
       v-bind="{ ...$attrs, ...forwardedProps }"

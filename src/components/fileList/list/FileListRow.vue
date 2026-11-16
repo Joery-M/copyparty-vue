@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Row } from '@tanstack/vue-table';
 
-import { computed, defineProps } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 import type { TableFeatures, TableType } from '@/components/fileList/file-list';

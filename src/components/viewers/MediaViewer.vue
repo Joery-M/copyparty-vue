@@ -5,6 +5,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Fullscreen,
+    Loader2,
     Maximize,
     Minimize,
     PaintBucket,
@@ -36,7 +37,7 @@ import ImagePixelated from '@/assets/image-pixelated.svg?raw';
 import ImageSmooth from '@/assets/image-smooth.svg?raw';
 import Tooltip from '@/components/Tooltip.vue';
 import VideoControls from '@/components/viewers/VideoControls.vue';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, useLoadingState } from '@/lib/api';
 import { FileClassification } from '@/lib/classifyExt';
 import { useShortcut } from '@/lib/keyboard.ts';
 import { refWithInit } from '@/lib/utils.ts';
@@ -52,7 +53,7 @@ import { Select, SelectContent, SelectGroup, SelectItem } from '@shadcn/select';
 
 const props = defineProps<{ file: FileEntry }>();
 
-const mediaUrl = computed(() => getApiUrl(props.file.fullPath, { cache: '', raw: '' }));
+const mediaUrl = computed(() => getApiUrl(props.file.fullPath, { raw: '' }));
 
 const settings = useSettings();
 const preferrersReducedMotion = usePreferredReducedMotion();
@@ -80,6 +81,7 @@ const backgroundTypeButton = useTemplateRef('backgroundTypeButton');
 const backgroundTypeSelectOpen = ref(false);
 
 const isLoading = ref(true);
+const isLoadingDebounced = useLoadingState(isLoading);
 watchImmediate(mediaUrl, () => (isLoading.value = true));
 const enableZoomToFit = ref(true);
 const enableTransition = refWithControl(false, {
@@ -118,11 +120,11 @@ const mediaSize = computed<[number, number]>(() => {
 });
 
 const isOverlappingControls = refDebounced(
-    computed(() => mediaBounds.top.value <= controlsBounds.bottom.value),
+    computed(() => !isLoading.value && mediaBounds.top.value <= controlsBounds.bottom.value),
     50
 );
 const isOverlappingVideoControls = refDebounced(
-    computed(() => mediaBounds.bottom.value >= videoControlsBounds.top.value),
+    computed(() => !isLoading.value && mediaBounds.bottom.value >= videoControlsBounds.top.value),
     50
 );
 
@@ -144,6 +146,9 @@ const hideVideoControls = computed(
         isOverlappingVideoControls.value &&
         (isIdle.idle.value || !isCursorInside.value)
 );
+
+// Acts as if we opened another tooltip
+whenever(hideControls, () => document.dispatchEvent(new CustomEvent('tooltip.open')));
 
 const containerMiddle = computed<[number, number]>(() => [
     containerSize.width.value / 2,
@@ -308,7 +313,10 @@ function gotoSiblingMedia(index: 0 | 1) {
     <div
         class="wrapper"
         ref="wrapper"
-        :class="{ isFullScreen: fullscreenElement.isFullscreen.value }"
+        :class="{
+            isFullScreen: fullscreenElement.isFullscreen.value,
+            hideCursor: isIdle.idle.value,
+        }"
     >
         <div class="container" ref="container">
             <div
@@ -317,6 +325,12 @@ function gotoSiblingMedia(index: 0 | 1) {
                 :class="{ 'transition-all': enableTransition }"
                 :style="computedStyle"
             />
+            <div
+                v-else-if="isLoadingDebounced"
+                class="loading-element size-full flex items-center justify-center"
+            >
+                <Loader2 class="animate-spin" :size="48" />
+            </div>
             <img
                 ref="media"
                 v-if="
@@ -346,7 +360,6 @@ function gotoSiblingMedia(index: 0 | 1) {
                 :class="{
                     ...backgroundClass,
                     'transition-all': enableTransition,
-                    'cursor-none': isIdle.idle.value,
                 }"
                 :style="computedStyle"
                 :src="mediaUrl"
@@ -365,6 +378,7 @@ function gotoSiblingMedia(index: 0 | 1) {
             :video="mediaElem"
             :class="{ hide: hideVideoControls, overlap: isOverlappingVideoControls }"
             :file
+            :hide="hideVideoControls"
         />
         <DialogFooter
             ref="controls"
@@ -611,8 +625,13 @@ function gotoSiblingMedia(index: 0 | 1) {
         will-change: transform, top, left;
     }
 }
-.wrapper.isFullScreen .container {
-    @apply m-0;
+.wrapper {
+    &.isFullScreen .container {
+        @apply m-0;
+    }
+    &.hideCursor .media {
+        cursor: none !important;
+    }
 }
 
 [data-slot='dialog-footer'] {
@@ -625,6 +644,9 @@ function gotoSiblingMedia(index: 0 | 1) {
 
     &.hide > [data-slot='button-group'] {
         @apply opacity-0;
+        * {
+            @apply cursor-none;
+        }
     }
 
     &.overlap > [data-slot='button-group'] {
@@ -635,6 +657,10 @@ function gotoSiblingMedia(index: 0 | 1) {
     @apply opacity-100 transition-[opacity,box-shadow];
     &.hide {
         @apply opacity-0;
+        /* Idk why the & is required */
+        & * {
+            @apply cursor-none;
+        }
     }
     &.overlap {
         box-shadow: 0 4px 9px rgb(0 0 0 / 0.6);

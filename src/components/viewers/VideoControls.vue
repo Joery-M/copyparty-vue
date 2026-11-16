@@ -4,7 +4,7 @@ import type { HTMLAttributes } from 'vue';
 
 import { Pause, Play, Volume, Volume1, Volume2, VolumeOff } from '@lucide/vue';
 import { useQueryCache } from '@pinia/colada';
-import { useEventListener, watchThrottled } from '@vueuse/core';
+import { useEventListener, watchThrottled, whenever } from '@vueuse/core';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watchEffect } from 'vue';
 
 import type { FileEntry } from '@/lib/interop';
@@ -23,12 +23,15 @@ const props = defineProps<{
     video: HTMLVideoElement;
     class?: HTMLAttributes['class'];
     file: FileEntry;
+    hide: boolean;
 }>();
 
 const queryCache = useQueryCache();
 const settings = useSettings();
 
 const duration = ref(0);
+const isDragging = ref(false);
+const wasPlaying = ref(false);
 const time = computedWithExternalSetter(0, (v) => (props.video.currentTime = v));
 const isPlaying = computedWithExternalSetter(false, (v) =>
     v ? props.video.play() : props.video.pause()
@@ -37,6 +40,23 @@ const muted = computedWithExternalSetter(false, (v) => (props.video.muted = v));
 const volume = computedWithExternalSetter(
     settings.preview.video.volume,
     (v) => (props.video.volume = settings.preview.video.volume = Math.max(0, Math.min(v, 1)))
+);
+
+function writeTime(newTime: number[] | undefined) {
+    const newTime0 = newTime?.[0];
+    if (newTime0 == null) return;
+    time.setInternal(newTime0);
+    if (newTime && !Number.isNaN(newTime0) && Number.isFinite(newTime0)) {
+        try {
+            props.video.fastSeek(newTime0);
+        } catch {}
+    }
+}
+
+const volumeCardOpen = ref(false);
+whenever(
+    () => props.hide,
+    () => (volumeCardOpen.value = false)
 );
 
 // For HMR mostly
@@ -49,8 +69,10 @@ onMounted(() => {
     updateBuffered();
 });
 
-useEventListener(props.video, ['timeupdate', 'seeked', 'seeking'], () =>
-    time.setInternal(props.video.currentTime)
+useEventListener(
+    props.video,
+    ['timeupdate', 'seeked', 'seeking'],
+    () => !isDragging.value && time.setInternal(props.video.currentTime)
 );
 useEventListener(props.video, ['play', 'playing'], () => isPlaying.setInternal(true));
 useEventListener(props.video, 'pause', () => isPlaying.setInternal(false));
@@ -178,14 +200,15 @@ onBeforeUnmount(() => {
         </Button>
         <Slider
             :model-value="[time]"
-            @update:model-value="
-                (ev) => {
-                    if (ev && !Number.isNaN(ev[0]) && Number.isFinite(ev[0])) {
-                        try {
-                            video.fastSeek(ev[0]);
-                        } catch {}
-                    }
-                }
+            @update:model-value="writeTime"
+            @pointerdown="
+                wasPlaying = !video.paused;
+                isDragging = true;
+                video.pause();
+            "
+            @pointerup="
+                isDragging = false;
+                wasPlaying ? video.play() : video.pause();
             "
             @value-commit="time = $event[0]"
             :max="duration"
@@ -194,7 +217,7 @@ onBeforeUnmount(() => {
         />
         <span class="timestamp"> {{ formatTimeNoMs(time) }} / {{ formatTimeNoMs(duration) }} </span>
 
-        <HoverCard :open-delay="0">
+        <HoverCard :open-delay="0" v-model:open="volumeCardOpen">
             <HoverCardTrigger>
                 <Button
                     variant="ghost"
@@ -214,7 +237,7 @@ onBeforeUnmount(() => {
                     <Volume v-else />
                 </Button>
             </HoverCardTrigger>
-            <HoverCardContent class="w-min h-min p-0 py-2.5">
+            <HoverCardContent class="w-min h-min p-0 py-2.5" teleport-to=".wrapper">
                 <Slider
                     class="min-h-24! px-2.5"
                     @wheel="volume += $event.deltaY / -1000"
